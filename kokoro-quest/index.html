@@ -169,6 +169,24 @@ a{color:var(--text);text-underline-offset:3px}
 .appbar .logo{color:var(--ink-dunkel);text-transform:uppercase;letter-spacing:.08em;
   text-shadow:1.5px 1.5px 0 #FFF8F3}
 .appbar .btn{background:#FFF8F3;color:var(--ink-dunkel)}
+.appbar .wrap{gap:8px}
+#btn-handbuch{white-space:nowrap;padding-inline:12px}
+/* Auf schmalen Geräten teilen sich Wortmarke und zwei Knöpfe eine Zeile –
+   die Wortmarke gibt nach, damit nichts umbricht oder seitlich scrollt. */
+@media (max-width:440px){
+  .appbar .wrap{gap:6px}
+  .logo{font-size:.88rem;letter-spacing:.02em}
+  .logo .dot{width:22px;height:22px}
+  #btn-handbuch{padding-inline:8px;font-size:.82rem;gap:6px}
+  #btn-settings{padding-inline:10px}
+}
+.logo .kurz{display:none}
+@media (max-width:380px){          /* sehr schmal: nur noch der Markenkern */
+  .logo .lang{display:none}
+  .logo .kurz{display:inline}
+  .logo{font-size:.84rem}
+  #btn-handbuch{font-size:.78rem;padding-inline:7px}
+}
 .appbar .wrap{display:flex;align-items:center;gap:10px;padding-block:10px}
 .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:1.05rem}
 .logo .dot{width:26px;height:26px;border-radius:50%;background:var(--sakura);
@@ -660,7 +678,7 @@ input[type=text],input[type=tel],input[type=time],input[type=number],textarea,se
 @media (max-width:400px){
   .panic{width:66px;height:66px;font-size:.68rem;bottom:132px}
   .tab{font-size:.54rem;padding:6px 1px}
-  .tabbar .wrap{gap:2px;padding-inline:10px}
+  .tabbar .wrap{gap:2px;padding-inline:8px}
   .artwahl{grid-template-columns:repeat(2,1fr)}
   .card[data-titel]::before{font-size:.72rem;padding-right:58px}
   h1{font-size:1.3rem}
@@ -681,10 +699,15 @@ input[type=text],input[type=tel],input[type=time],input[type=number],textarea,se
           <path d="M12 20s-7-4.6-7-9.3A3.7 3.7 0 0 1 12 8a3.7 3.7 0 0 1 7 2.7C19 15.4 12 20 12 20z"/>
         </svg>
       </span>
-      <span>Kokoro&nbsp;Quest</span>
+      <span class="wort lang">Kokoro&nbsp;Quest</span><span class="wort kurz">Kokoro</span>
     </div>
     <div class="grow"></div>
-    <button class="btn sm ghost" id="btn-handbuch" aria-label="Handbuch öffnen">?<span class="sr-only">Handbuch</span></button>
+    <button class="btn sm" id="btn-handbuch">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+        <rect x="4" y="3" width="16" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2.4"/>
+        <path d="M9.6 9.2a2.6 2.6 0 1 1 3.4 2.5c-.7.3-1 .8-1 1.6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+        <circle cx="12" cy="17" r="1.2" fill="currentColor"/>
+      </svg>Handbuch</button>
     <button class="btn sm ghost" id="btn-settings" aria-label="Einstellungen öffnen">⚙︎<span class="sr-only">Einstellungen</span></button>
   </div>
 </header>
