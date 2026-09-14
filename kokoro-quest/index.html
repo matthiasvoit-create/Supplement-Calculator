@@ -518,6 +518,48 @@ body.no-motion .confetti{display:none}
 .artwahl.klein .bild{max-width:86px}
 .artwahl.klein .artkarte{padding:8px 4px}
 
+/* Elite-Quests: Regenbogen-Chrom, damit sie sofort auffallen */
+.quest.elite{
+  background:
+    linear-gradient(135deg, rgba(255,183,197,.55), rgba(160,216,241,.55) 45%, rgba(255,231,154,.55));
+  border-color:var(--ink-dunkel);
+  box-shadow:var(--hart), 0 0 0 3px var(--butter) inset;
+}
+.quest.elite .ic{background:var(--butter)}
+.quest.elite h3::before{content:"★ ";color:var(--koralle)}
+.elite-band{
+  background:linear-gradient(90deg,var(--butter),var(--sakura));
+  border:2px solid var(--ink-dunkel);border-radius:8px;padding:8px 12px;
+  font-size:.88rem;color:var(--ink-dunkel);box-shadow:var(--hart-klein);
+}
+
+/* Attributwerte direkt unter dem Avatar */
+.attr-reihe{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.attr-reihe .pill{justify-content:center;font-size:.78rem;padding:5px 6px}
+
+/* Goldmedaillen neben dem Avatar */
+.goldreihe{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;
+  width:100%;font:inherit;color:var(--text);cursor:pointer;
+  background:var(--surface-2);border:2px solid var(--ink-dunkel);border-radius:8px;
+  padding:6px 10px;box-shadow:inset 2px 2px 0 rgba(59,48,84,.12);
+}
+.goldreihe.leer{border-style:dashed;background:transparent;box-shadow:none}
+.gold-m{display:block;line-height:0}
+.gold-m svg{display:block}
+.vitrine{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  background:var(--surface-2);border:2px solid var(--ink-dunkel);border-radius:8px;padding:10px}
+.medaille-karte.gold{box-shadow:var(--hart), 0 0 0 3px var(--butter)}
+.flex-none{flex:none;line-height:0}
+.stufenmarke{
+  border:2px solid var(--line);border-radius:999px;padding:2px 8px;
+  font-size:.72rem;font-weight:700;color:var(--text-muted);white-space:nowrap;
+}
+.stufenmarke.erreicht{color:var(--ink-dunkel);border-color:var(--ink-dunkel)}
+.stufenmarke.erreicht.bronze{background:#E8BE9E}
+.stufenmarke.erreicht.silber{background:#DDE3EC}
+.stufenmarke.erreicht.gold{background:var(--butter)}
+
 /* Sticker-Zeile als Trenner: ▶▶▶ */
 .pfeile{display:flex;gap:4px;justify-content:center;color:var(--koralle);
   font-size:.8rem;letter-spacing:.3em;font-weight:800}
@@ -669,6 +711,12 @@ const TEXTE = {
   sanftTag:
     "Sanfter Tag: drei sehr kleine Schritte statt des vollen Pensums. Zählt genauso, deine Serie bleibt erhalten."
 };
+
+/* --- A.2b  ELITE ---------------------------------------------------------
+   Der Mensch, mit dem die Elite-Aktivitäten gemacht werden. Frei änderbar
+   in den Einstellungen; im Text steht überall der Platzhalter {elite}.     */
+const ELITE_PARTNER_STANDARD = "Gremlinwithabow";
+const ELITE_TAGE_PRO_WOCHE = 3;
 
 /* --- A.3  Die vier Attribute -------------------------------------------- */
 const ATTRIBUTE = {
@@ -1205,6 +1253,149 @@ const QUESTS = [
     "Wenn du es nicht abschickst, zählt es trotzdem."],
   warumEsWirkt:"Ausgesprochene Dankbarkeit wirkt bei beiden Seiten und stärker als gedachte. Sie richtet die Aufmerksamkeit auf Beziehungen, die tragen – das ist bei Angst besonders wertvoll, weil sie den Blick sonst auf das Bedrohliche verengt." },
 
+/* ===== ELITE · Aktivitäten mit {elite} ================================
+   Eigene Kategorie: gemeinsame Freizeit mit einem festen Menschen.
+   Fachlicher Hintergrund: Soziale Bindung ist einer der stärksten
+   Schutzfaktoren bei Angst – und Angst zieht Menschen zuverlässig aus
+   Kontakten heraus. Diese Quests arbeiten genau dagegen und verbinden
+   Verhaltensaktivierung (etwas Schönes tun, bevor die Lust da ist) mit
+   sanfter Exposition im Alltag (Menschen, Lautstärke, öffentlicher Raum).
+   Der Name in {elite} kommt aus den Einstellungen und ist frei änderbar.
+   Diese Quests werden garantiert an drei Tagen pro Woche vorgeschlagen
+   (siehe eliteTage() in §C).
+   ------------------------------------------------------------------- */
+{ id:"elite-clubnacht", titel:"Clubnacht mit {elite}", kategorie:"elite", attribute:{verbundenheit:35, mut:25}, dauerMin:120,
+  intensitaet:"normal", tool:"timer", bevorzugt:"wochenende",
+  anleitung:[
+    "Verabredet euch konkret: welcher Laden, wann, wie kommt ihr hin und wieder zurück.",
+    "Macht vorher einen Ausstieg aus: „Wenn eine von uns raus will, gehen wir raus – ohne Diskussion.“",
+    "Geht rein. Die erste halbe Stunde ist erfahrungsgemäß die schwerste.",
+    "Nehmt euch draußen oder am Rand eine Pause, wenn es zu viel wird – und geht dann wieder rein.",
+    "Bleibt so lange, wie es gut ist. Früher gehen ist kein Abbruch, sondern eine Entscheidung."],
+  warumEsWirkt:"Ein Club ist viel auf einmal: Menschen, Lautstärke, Enge, ein schneller Puls. Genau deshalb ist es wirksam – du erlebst körperliche Erregung in einem Zusammenhang, den du selbst gewählt hast und der Spaß macht. Zusammen mit jemandem, dem du vertraust, wird aus einer gemiedenen Situation eine geteilte Erinnerung.",
+  sicherheitshinweis:"Alkohol nicht als Beruhigungsmittel einsetzen – ein Glas zum Genuss ist etwas anderes als zwei, damit es überhaupt geht. Beim Abbau schlägt Alkohol in Unruhe um, deshalb ist die Angst am Morgen danach oft stärker. Ohrstöpsel dagegen sind kein Sicherheitsverhalten, sondern sinnvolle Reizregulation." },
+
+{ id:"elite-konzert", titel:"Live-Musik mit {elite}", kategorie:"elite", attribute:{verbundenheit:32, mut:20}, dauerMin:120,
+  intensitaet:"normal", tool:"timer", bevorzugt:"wochenende",
+  anleitung:[
+    "Sucht euch etwas aus – Konzert, offene Bühne, Festival, egal wie klein.",
+    "Klärt vorher, wo ihr euch trefft, falls ihr euch verliert.",
+    "Stellt euch anfangs dorthin, wo ihr leicht wieder rauskommt. Das ist Planung, keine Flucht.",
+    "Lasst euch auf mindestens ein Stück ganz ein – Augen zu, wenn das hilft."],
+  warumEsWirkt:"Musik verändert messbar Herzfrequenz und Anspannung, und gemeinsames Erleben verstärkt das. Nebenbei übst du, in einer vollen Umgebung zu bleiben, ohne dass es sich wie eine Übung anfühlt – das ist die angenehmste Form von Exposition, die es gibt.",
+  sicherheitshinweis:"Ohrstöpsel mitnehmen. Bei Reizüberflutung kurz rausgehen und wieder reinkommen – das Wiederreingehen ist der wichtige Teil." },
+
+{ id:"elite-spaziergang", titel:"Spazieren mit {elite}", kategorie:"elite", attribute:{verbundenheit:28, koerper:15}, dauerMin:45,
+  intensitaet:"sanft", tool:"timer", bevorzugt:"egal",
+  anleitung:[
+    "Schreib {elite}, ob ihr eine Runde gehen wollt – heute oder morgen.",
+    "45 Minuten reichen, ein Ziel braucht es nicht.",
+    "Nebeneinander gehen macht Reden leichter als gegenübersitzen.",
+    "Verabredet am Ende gleich die nächste Runde."],
+  warumEsWirkt:"Zwei Schutzfaktoren auf einmal: Bewegung senkt die Grundanspannung, Kontakt fängt das auf, was Angst sonst nach innen zieht. Gemeinsame Termine sagt man außerdem seltener ab als eigene Vorsätze." },
+
+{ id:"elite-telefonat", titel:"Telefonieren mit {elite}", kategorie:"elite", attribute:{verbundenheit:26}, dauerMin:25,
+  intensitaet:"sanft", tool:"timer", bevorzugt:"abend",
+  anleitung:[
+    "Ruf an, ohne vorher zu überlegen, ob es gerade passt – zur Not fragst du genau das.",
+    "Kein Anlass nötig. „Ich wollte nur kurz quatschen“ reicht vollständig.",
+    "Leg das Handy nicht nebenbei weg: 25 Minuten wirklich dabei sein.",
+    "Wenn es gut läuft, wird es länger. Wenn nicht, ist auch das in Ordnung."],
+  warumEsWirkt:"Die Stimme eines vertrauten Menschen wirkt auf das Nervensystem anders als eine Textnachricht – sie beruhigt messbar schneller. Und Anrufen ist für viele eine kleine Mutprobe, die sich mit jedem Mal abschleift." },
+
+{ id:"elite-videocall", titel:"Videocall mit {elite}", kategorie:"elite", attribute:{verbundenheit:24}, dauerMin:40,
+  intensitaet:"sanft", tool:"timer", bevorzugt:"abend",
+  anleitung:[
+    "Verabredet eine Uhrzeit, statt auf den passenden Moment zu warten.",
+    "Macht etwas nebenher gemeinsam: kochen, aufräumen, zeichnen.",
+    "Nichts müssen. Stille ist erlaubt.",
+    "Vor dem Auflegen den nächsten Termin ausmachen."],
+  warumEsWirkt:"Gemeinsames Tun auf Distanz erzeugt erstaunlich viel Nähe und nimmt den Druck, ein Gespräch füllen zu müssen. Für Tage, an denen Rausgehen zu viel wäre, ist das die vollwertige Variante – nicht die Notlösung." },
+
+{ id:"elite-cafe", titel:"Café mit {elite}", kategorie:"elite", attribute:{verbundenheit:26, mut:12}, dauerMin:60,
+  intensitaet:"normal", tool:"timer", bevorzugt:"egal",
+  anleitung:[
+    "Sucht euch ein Café aus – gern eines, das du bisher gemieden hast.",
+    "Setzt euch bewusst nicht neben die Tür.",
+    "Bleibt mindestens eine Stunde, auch wenn es anfangs unruhig ist.",
+    "Bestell selbst, statt bestellen zu lassen."],
+  warumEsWirkt:"Sitzenbleiben an einem Ort, von dem man nicht sofort weg kann, ist klassische Exposition – hier aber mit Kuchen und Gesellschaft. Der Platz nicht am Ausgang ist dabei die eigentliche Übung: Er nimmt dem Fluchtgedanken seine Selbstverständlichkeit.",
+  sicherheitshinweis:"Wenn der Platz weg vom Ausgang heute zu viel ist: erst mal in der Nähe der Tür sitzen und beim nächsten Mal eine Reihe weiter. Kleinere Schritte sind kluge Schritte." },
+
+{ id:"elite-essen", titel:"Essen gehen mit {elite}", kategorie:"elite", attribute:{verbundenheit:28, mut:12}, dauerMin:90,
+  intensitaet:"normal", tool:"timer", bevorzugt:"wochenende",
+  anleitung:[
+    "Sucht ein Lokal aus, auf das ihr beide Lust habt.",
+    "Reserviert, damit es nicht am Zögern scheitert.",
+    "Handys weg für die Dauer des Essens.",
+    "Nehmt euch Zeit für den Nachtisch – das ist der Teil, in dem geredet wird."],
+  warumEsWirkt:"Gemeinsame Mahlzeiten sind über alle Kulturen hinweg das, was Beziehungen hält. Gleichzeitig übst du, in einem vollen Raum zu sitzen und nicht jederzeit gehen zu können – ohne dass es sich nach Training anfühlt." },
+
+{ id:"elite-kino", titel:"Kino mit {elite}", kategorie:"elite", attribute:{verbundenheit:22, mut:10}, dauerMin:120,
+  intensitaet:"normal", tool:"timer", bevorzugt:"wochenende",
+  anleitung:[
+    "Sucht einen Film aus, auf den ihr beide Lust habt.",
+    "Setzt euch in die Mitte der Reihe, nicht an den Rand – wenn das heute geht.",
+    "Bleibt bis zum Abspann sitzen.",
+    "Redet danach auf dem Heimweg darüber."],
+  warumEsWirkt:"Ein dunkler, voller Raum, aus dem man nicht unauffällig rauskommt, ist für viele Menschen mit Panik eine echte Hürde. Zwei Stunden dort zu sitzen und festzustellen, dass nichts passiert ist, wirkt stärker als jede Beruhigung von außen." },
+
+{ id:"elite-abend", titel:"Spiele- oder Serienabend mit {elite}", kategorie:"elite", attribute:{verbundenheit:22}, dauerMin:90,
+  intensitaet:"sanft", tool:"timer", bevorzugt:"egal",
+  anleitung:[
+    "Einigt euch auf Spiel, Serie oder Film – notfalls entscheidet das Los.",
+    "Zusammen auf dem Sofa oder zusammen über Bildschirm, beides zählt.",
+    "Snacks nicht vergessen, die gehören dazu.",
+    "Keine Leistung nötig: Dabei sein ist die ganze Quest."],
+  warumEsWirkt:"Nicht jede Verbindung braucht ein tiefes Gespräch. Gemeinsam Zeit verbringen, ohne etwas leisten zu müssen, ist für das Nervensystem die entspannteste Form von Nähe – und an schlechten Tagen die einzige, die geht." },
+
+{ id:"elite-neues", titel:"Etwas Neues mit {elite} ausprobieren", kategorie:"elite", attribute:{verbundenheit:28, mut:22}, dauerMin:90,
+  intensitaet:"normal", tool:"timer", bevorzugt:"wochenende",
+  anleitung:[
+    "Sammelt drei Ideen, die ihr beide noch nie gemacht habt: Bouldern, Ausstellung, Flohmarkt, Töpferkurs, Karaoke.",
+    "Wählt per Los aus – das spart die Diskussion und das Zögern.",
+    "Macht einen Termin daraus, nicht ein „demnächst mal“.",
+    "Haltet danach in einem Satz fest, wie es war."],
+  warumEsWirkt:"Neues zusammen zu erleben bindet stärker als Vertrautes zu wiederholen, und es erweitert nebenbei den Radius, den Angst über die Zeit verengt hat. Dass ihr zu zweit seid, macht den ersten Schritt deutlich leichter." },
+
+{ id:"elite-nachtluft", titel:"Nachtluft mit {elite}", kategorie:"elite", attribute:{verbundenheit:22, koerper:10}, dauerMin:40,
+  intensitaet:"sanft", tool:"timer", bevorzugt:"abend",
+  anleitung:[
+    "Geht abends noch mal raus – Sonnenuntergang, Stadtlichter, Sterne.",
+    "40 Minuten, ohne Ziel.",
+    "Schaut bewusst in die Ferne statt aufs Handy.",
+    "Sagt euch zum Schluss je eine Sache, die heute gut war."],
+  warumEsWirkt:"Draußen zu sein senkt Anspannung und Grübelneigung, der Blick in die Weite entspannt zusätzlich die Augenmuskulatur – ein Zustand, den der Körper mit Sicherheit verbindet. Abends wirkt das außerdem als Übergang in die Nacht, der besser einschlafen lässt als der Bildschirm.",
+  sicherheitshinweis:"Wege wählen, die an sich sicher und beleuchtet sind." },
+
+{ id:"elite-plan", titel:"Etwas mit {elite} planen", kategorie:"elite", attribute:{verbundenheit:20}, dauerMin:20,
+  intensitaet:"sanft", tool:"timer", bevorzugt:"egal",
+  anleitung:[
+    "Setzt euch zusammen – am Telefon reicht – und plant etwas für die nächsten Wochen.",
+    "Es muss nichts Großes sein: ein Tagesausflug, ein Konzert, ein Besuch.",
+    "Tragt es beide direkt in den Kalender ein.",
+    "Schickt euch danach je ein Bild von dem, worauf ihr euch freut."],
+  warumEsWirkt:"Vorfreude wirkt nachweislich auf die Stimmung – oft stärker als das Ereignis selbst. Und ein fester Termin mit einem anderen Menschen ist die zuverlässigste Methode, eine gute Absicht vor dem Vergessen zu schützen." },
+
+{ id:"elite-rueckblick", titel:"Nachbesprechung mit {elite}", kategorie:"elite", attribute:{geist:18, verbundenheit:14}, dauerMin:20,
+  intensitaet:"sanft", tool:"exporeview", bevorzugt:"egal",
+  anleitung:[
+    "Nimm dir eine gemeinsame Unternehmung vor, bei der du Angst hattest.",
+    "Was hattest du vorher befürchtet?",
+    "Was ist tatsächlich passiert?",
+    "Erzähl {elite} davon – laut ausgesprochen bleibt es besser hängen.",
+    "Halte fest, was du daraus für das nächste Mal mitnimmst."],
+  warumEsWirkt:"Der Vergleich von Befürchtung und Wirklichkeit ist der eigentliche Wirkfaktor jeder Konfrontation – ohne ihn bleibt nur die Erinnerung an die Anstrengung. Mit jemandem darüber zu sprechen verankert die neue Erfahrung zusätzlich." },
+
+{ id:"elite-mini-sprachnachricht", titel:"Sprachnachricht an {elite}", kategorie:"mini", attribute:{verbundenheit:12}, dauerMin:2,
+  intensitaet:"sanft", tool:"timer", elite:true,
+  anleitung:[
+    "Nimm eine kurze Sprachnachricht auf – dreißig Sekunden reichen.",
+    "Erzähl irgendetwas Kleines vom Tag.",
+    "Einmal aufnehmen, abschicken, nicht nochmal anhören.",
+    "Fertig."],
+  warumEsWirkt:"An Tagen, an denen nichts geht, hält eine Stimme den Kontakt am Leben. Nicht nochmal anzuhören ist Teil der Übung: Es nimmt dem inneren Prüfer die Arbeit." },
+
 /* ===== MINI-QUESTS für den „Sanften Tag“ =============================== */
 { id:"mini-drei-atemzuege", titel:"Drei bewusste Atemzüge", kategorie:"mini", attribute:{koerper:10}, dauerMin:2,
   intensitaet:"sanft", tool:"atem", atem:{ein:4, halten:0, aus:6, runden:3},
@@ -1295,6 +1486,68 @@ const COPING_VORLAGEN = [
 const WERTE = ["Verbundenheit","Gesundheit","Selbstbestimmung","Neugier","Verlässlichkeit",
   "Kreativität","Mut","Fürsorge","Humor","Ruhe","Lernen","Natur","Ehrlichkeit","Freiheit"];
 
+/* --- A.10  Medaillen ------------------------------------------------------
+   Anders als die Abzeichen (die einmalige Momente festhalten) messen
+   Medaillen Ausdauer: dieselbe Art von Aktivität, viele Male gemacht.
+   Jede Medaille hat drei Stufen – Bronze, Silber, Gold. Nur Gold erscheint
+   neben dem Avatar, sonst wäre die Auszeichnung nichts Besonderes mehr.
+   Neue Medaille anlegen: Eintrag ergänzen, `wert` liefert den Zählerstand.
+   ------------------------------------------------------------------------ */
+const MEDAILLEN_STUFEN = [
+  { key:"bronze", name:"Bronze", farbe:"#D8A07A", glanz:"#F3CBAE" },
+  { key:"silber", name:"Silber", farbe:"#C7CEDA", glanz:"#EEF2F8" },
+  { key:"gold",   name:"Gold",   farbe:"#F0C23C", glanz:"#FFE9A6" }
+];
+const MEDAILLEN = [
+  { id:"med-atem", name:"Ruhiger Atem", symbol:"atem", einheit:"Atemübungen",
+    stufen:[10,25,50], wert:s => zaehleKategorie(s,"atem"),
+    text:"Atmen ist die Fertigkeit, die im Ernstfall als Letztes noch funktioniert – weil sie am häufigsten geübt wurde." },
+  { id:"med-bewegung", name:"In Bewegung", symbol:"bewegung", einheit:"Bewegungs-Quests",
+    stufen:[10,25,50], wert:s => zaehleKategorie(s,"bewegung"),
+    text:"Regelmäßige Bewegung senkt die Grundanspannung messbar. Das hier ist der Beleg dafür, dass du drangeblieben bist." },
+  { id:"med-kopf", name:"Kopfarbeit", symbol:"kognitiv", einheit:"Kopf-Quests",
+    stufen:[10,25,50], wert:s => zaehleKategorie(s,"kognitiv"),
+    text:"Jedes Protokoll, jede geprüfte Befürchtung macht den nächsten Katastrophengedanken ein Stück leiser." },
+  { id:"med-stille", name:"Stille", symbol:"achtsamkeit", einheit:"Achtsamkeitsübungen",
+    stufen:[10,25,50], wert:s => zaehleKategorie(s,"achtsamkeit"),
+    text:"Nicht das Nicht-Abschweifen ist die Übung, sondern das Zurückkommen. Du bist oft zurückgekommen." },
+  { id:"med-mut", name:"Mutproben", symbol:"mut", einheit:"Mut-Quests",
+    stufen:[5,15,30], wert:s => zaehleKategorie(s,"mut"),
+    text:"Vermeidung abbauen ist die anstrengendste und die wirksamste Arbeit in diesem ganzen Programm." },
+  { id:"med-verbunden", name:"Verbundenheit", symbol:"verbundenheit_k", einheit:"Verbundenheits-Quests",
+    stufen:[10,25,50], wert:s => zaehleKategorie(s,"verbundenheit"),
+    text:"Der Schutzfaktor, der am häufigsten vergessen wird – und bei dir offensichtlich nicht." },
+  { id:"med-elite", name:"Elite", symbol:"elite", einheit:"Elite-Aktivitäten",
+    stufen:[5,15,30], wert:s => zaehleKategorie(s,"elite"),
+    text:"Gemeinsame Zeit, immer wieder. Das ist keine Nebensache – das ist das Fundament." },
+  { id:"med-ausdauer", name:"Ausdauer", symbol:"koerper", einheit:"Tage längste Serie",
+    stufen:[7,21,50], wert:s => s.streak.longest,
+    text:"Nicht die einzelne Übung entscheidet, sondern die Wiederholung über Wochen." },
+  { id:"med-chronik", name:"Chronik", symbol:"geist", einheit:"Journaleinträge",
+    stufen:[10,30,75], wert:s => s.journal.length,
+    text:"Aufgeschriebene Angst wird zu Daten. Und Daten kann man anschauen, statt ihnen zu glauben." },
+  { id:"med-berg", name:"Bergsteigen", symbol:"mut", einheit:"Gipfel-Durchgänge",
+    stufen:[5,15,40], wert:s => alleDurchgaenge(s).length,
+    text:"Jeder Durchgang ein Abgleich zwischen Befürchtung und Wirklichkeit." },
+  { id:"med-strecke", name:"Wegstrecke", symbol:"verbundenheit", einheit:"Übungen insgesamt",
+    stufen:[25,100,300], wert:s => s.completions.length,
+    text:"Die schlichteste Zahl der App – und die, die am meisten über Beharrlichkeit sagt." },
+  { id:"med-vielfalt", name:"Entdeckung", symbol:"atem", einheit:"verschiedene Übungen",
+    stufen:[10,25,45], wert:s => new Set(s.completions.map(c=>c.questId).filter(id=>!/^gipfel-/.test(id))).size,
+    text:"Breit geübt statt nur das Bequeme wiederholt – das macht die Werkzeugkiste erst brauchbar." }
+];
+/* Wie weit ist eine Medaille? Liefert Stand, erreichte Stufe und Ziel. */
+function medaillenStand(m, s){
+  const wert = Math.max(0, Number(m.wert(s || S)) || 0);
+  const stufe = m.stufen.filter(x => wert >= x).length;       // 0 = noch keine
+  const naechstesZiel = stufe < 3 ? m.stufen[stufe] : m.stufen[2];
+  const vorher = stufe === 0 ? 0 : m.stufen[stufe-1];
+  const prozent = stufe >= 3 ? 100
+    : clamp(Math.round((wert - vorher) / (naechstesZiel - vorher) * 100), 0, 100);
+  return { wert, stufe, naechstesZiel, prozent };
+}
+const goldMedaillen = () => MEDAILLEN.filter(m => medaillenStand(m).stufe >= 3);
+
 /* --- A.9  Achievements --------------------------------------------------
    pruef(state, ctx) liefert true, sobald das Abzeichen verdient ist.        */
 const ACHIEVEMENTS = [
@@ -1362,7 +1615,22 @@ const ACHIEVEMENTS = [
   { id:"vorhersage-pruefer", name:"Nachgeprüft", text:"Zehnmal Befürchtung und Wirklichkeit verglichen.",
     pruef:s=>alleDurchgaenge(s).filter(d=>d.vorhersage && d.wasPassierte).length>=10 },
   { id:"gipfelstuermer", name:"Gipfelstürmerin", text:"Einen ganzen Gipfel erreicht.",
-    pruef:s=>(s.gipfelArchiv||[]).length>0 || (s.gipfel && s.gipfel.status==="abgeschlossen") }
+    pruef:s=>(s.gipfelArchiv||[]).length>0 || (s.gipfel && s.gipfel.status==="abgeschlossen") },
+
+  /* --- Elite ----------------------------------------------------------- */
+  { id:"elite-erste", name:"Zu zweit", text:"Die erste Elite-Aktivität gemeinsam gemacht.",
+    pruef:s=>zaehleKategorie(s,"elite")>=1 },
+  { id:"elite-zehn", name:"Eingespieltes Team", text:"Zehn Elite-Aktivitäten zusammen.",
+    pruef:s=>zaehleKategorie(s,"elite")>=10 },
+  { id:"elite-nachtaktiv", name:"Nachtaktiv", text:"Dreimal gemeinsam ausgegangen.",
+    pruef:s=>["elite-clubnacht","elite-konzert","elite-essen","elite-kino"]
+      .reduce((a,id)=>a+zaehleQuest(s,id),0)>=3 },
+  { id:"elite-woche", name:"Volle Woche", text:"Drei Elite-Aktivitäten in sieben Tagen.",
+    pruef:s=>{
+      const daten = s.completions.filter(c=>{const q=questById(c.questId);return q&&q.kategorie==="elite";})
+        .map(c=>c.date).sort();
+      return daten.some(d0 => daten.filter(d => tage(d0,d) >= 0 && tage(d0,d) < 7).length >= 3);
+    } }
 ];
 /* Alle Durchgänge – aktueller Gipfel plus Archiv. */
 function alleDurchgaenge(s){
@@ -1402,13 +1670,16 @@ function leererState(){
   return {
     version: VERSION,
     createdAt: new Date().toISOString(),
-    profile: { name:"", avatarName:"", art:"mochi", startDate: heute(), intensity:"normal", wert:"" },
+    profile: { name:"", avatarName:"", art:"mochi", startDate: heute(), intensity:"normal", wert:"",
+               elitePartner: ELITE_PARTNER_STANDARD },
     xp: { koerper:0, geist:0, mut:0, verbundenheit:0 },
     totalXp: 0,
     level: 1,
     streak: { current:0, longest:0, lastActiveDate:null, shields:2 },
     completions: [],
     achievements: [],
+    medals: [],                   // erreichte Medaillenstufen
+
     journal: [],
     copingCards: [],
     avoidanceMap: [],
@@ -1419,7 +1690,7 @@ function leererState(){
     daily: { date:null, questIds:[], sanft:false, done:[] },
     stats: { sanfteTage:0, islandOpened:0, letzterWochenSchild:0 },
     onboarded: false,
-    settings: { reducedMotion:false, sound:false, dailyReminderTime:"" }
+    settings: { reducedMotion:false, sound:false, dailyReminderTime:"", eliteAktiv:true }
   };
 }
 
@@ -1441,7 +1712,7 @@ function migrate(state){
   out.playlists = Object.assign({}, std.playlists, state.playlists || {});
 
   // Arrays absichern
-  ["completions","achievements","journal","copingCards","avoidanceMap","emergencyContacts","gipfelArchiv"]
+  ["completions","achievements","medals","journal","copingCards","avoidanceMap","emergencyContacts","gipfelArchiv"]
     .forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   /* Gipfel absichern: fehlende Teilstrukturen ergänzen, Unfertiges verwerfen */
   if (out.gipfel && typeof out.gipfel === "object"){
@@ -1470,6 +1741,7 @@ function migrate(state){
   out.journal      = out.journal.map(j => j.id ? j : Object.assign({id:neueId()}, j));
 
   if (!ARTEN[out.profile.art]) out.profile.art = "mochi";   // unbekannte Art abfangen
+  if (!out.profile.elitePartner) out.profile.elitePartner = ELITE_PARTNER_STANDARD;
   out.level = levelFuer(out.totalXp).stufe;
   return out;
 }
@@ -1512,8 +1784,11 @@ function speichern(){
 /* --- Level -------------------------------------------------------------- */
 /* Stufe 1 heißt bei jeder Art anders; ab Stufe 2 ist der Bogen gemeinsam. */
 const levelName = lvl => lvl.stufe === 1 ? meineArt().stufe1Name : lvl.name;
-/* Ersetzt {figur} durch den selbst gewählten Namen der Figur. */
-const mitFigur = text => String(text).replace(/\{figur\}/g, figurName());
+/* Ersetzt die Platzhalter {figur} und {elite} durch die gewählten Namen. */
+const elitePartner = () => (S && S.profile && S.profile.elitePartner) || ELITE_PARTNER_STANDARD;
+const mitNamen = text => String(text)
+  .replace(/\{figur\}/g, figurName())
+  .replace(/\{elite\}/g, elitePartner());
 
 function levelFuer(total){
   let l = LEVELS[0];
@@ -1597,11 +1872,47 @@ function seedZahl(text){
   return Math.abs(h);
 }
 const POOL = {
-  klein:  () => QUESTS.filter(q => q.kategorie!=="mut" && q.kategorie!=="mini" && q.dauerMin<=10),
-  mittel: () => QUESTS.filter(q => q.kategorie!=="mut" && q.kategorie!=="mini" && q.dauerMin>10),
+  klein:  () => QUESTS.filter(q => !["mut","mini","elite"].includes(q.kategorie) && q.dauerMin<=10),
+  mittel: () => QUESTS.filter(q => !["mut","mini","elite"].includes(q.kategorie) && q.dauerMin>10),
   mut:    () => QUESTS.filter(q => q.kategorie==="mut"),
-  mini:   () => QUESTS.filter(q => q.kategorie==="mini")
+  mini:   () => QUESTS.filter(q => q.kategorie==="mini"),
+  elite:  () => QUESTS.filter(q => q.kategorie==="elite")
 };
+
+/* --- Elite-Tage ---------------------------------------------------------
+   Garantiert drei Tage pro Woche mit einer Elite-Aktivität im Tagespensum.
+   Die Auswahl ist pro Kalenderwoche stabil (deterministisch aus dem Montag
+   der Woche), damit sich der Vorschlag nicht bei jedem Öffnen ändert.
+   Einer der drei Tage ist immer Freitag oder Samstag – dort passt Ausgehen
+   am ehesten in ein normales Leben.                                        */
+function wochenSchluessel(datum){
+  const d = new Date(datum + "T12:00:00");
+  d.setDate(d.getDate() - ((d.getDay()+6) % 7));       // zurück auf Montag
+  return d.toISOString().slice(0,10);
+}
+function eliteTage(datum){
+  const seed = seedZahl("elite|" + wochenSchluessel(datum) + "|" + S.createdAt);
+  const ausgeh = [4,5][seed % 2];                       // Freitag oder Samstag
+  const rest = [0,1,2,3,6].filter(x => x !== ausgeh);
+  const a = rest[seed % rest.length];
+  const uebrig = rest.filter(x => x !== a);
+  const b = uebrig[(seed >> 3) % uebrig.length];
+  return new Set([ausgeh, a, b]);
+}
+const wochentagVon = datum => (new Date(datum + "T12:00:00").getDay() + 6) % 7;
+function istEliteTag(datum){
+  if (!S.settings.eliteAktiv) return false;
+  if (!POOL.elite().length) return false;
+  return eliteTage(datum).has(wochentagVon(datum));
+}
+/* Passende Elite-Quest für den Wochentag: Ausgehen eher am Wochenende. */
+function eliteFuerTag(datum, seed){
+  const tag = wochentagVon(datum);
+  const wunsch = tag >= 4 ? "wochenende" : (tag === 6 ? "egal" : "abend");
+  const passend = POOL.elite().filter(q => q.bevorzugt === wunsch || q.bevorzugt === "egal");
+  const pool = passend.length ? passend : POOL.elite();
+  return pool[seed % pool.length];
+}
 function tagesplanSicherstellen(){
   const t = heute();
   if (S.daily.date === t && S.daily.questIds.length) return;
@@ -1625,6 +1936,12 @@ function planBauen(datum, sanft){
     ids[2] = alt[seed % alt.length].id;
   }
   if (ids[2]==="eine-sprosse" && !S.avoidanceMap.length) ids[2] = "landkarte-vermeidung";
+  /* An Elite-Tagen ersetzt die gemeinsame Aktivität einen der beiden
+     Alltagsslots – das Tagespensum bleibt bei drei Quests. */
+  if (istEliteTag(datum)){
+    const e = eliteFuerTag(datum, seed);
+    ids[e.dauerMin <= 25 ? 0 : 1] = e.id;
+  }
   return ids;
 }
 /* Eine einzelne Quest gegen eine andere aus derselben Kategorie tauschen */
@@ -1639,7 +1956,7 @@ function questTauschen(index){
   S.daily.questIds[index] = neu.id;
   speichern();
   render();
-  toast("Getauscht: " + neu.titel);
+  toast("Getauscht: " + mitNamen(neu.titel));
 }
 /* Sanfter Tag – jederzeit umlegbar, die Serie bleibt erhalten */
 function sanftUmschalten(){
@@ -1703,9 +2020,49 @@ function punkteGutschreiben(attribute, opts){
   toast("✨ " + teile.join("  ·  "));
 
   const neue = pruefeAchievements();
+  const medaillen = pruefeMedaillen();
+  const gold = medaillen.filter(x => x.stufe >= 3);
+  /* Reihenfolge der Feiern: Stufenaufstieg, dann Gold, dann Abzeichen. */
   if (S.level > altesLevel) zeigeLevelUp(LEVELS[S.level-1]);
+  else if (gold.length) zeigeMedaille(gold[0].m, 3);
   else if (neue.length) zeigeAchievement(neue[0]);
+  else if (medaillen.length) zeigeMedaille(medaillen[0].m, medaillen[0].stufe);
   return gewinn;
+}
+
+/* --- Medaillen prüfen ----------------------------------------------------
+   Liefert die neu erreichten Stufen zurück; Gold wird gefeiert, Bronze und
+   Silber melden sich mit einem Hinweis.                                    */
+function pruefeMedaillen(){
+  const neu = [];
+  for (const m of MEDAILLEN){
+    const st = medaillenStand(m);
+    if (!st.stufe) continue;
+    const bekannt = S.medals.find(x => x.id === m.id);
+    if (!bekannt){
+      S.medals.push({ id:m.id, stufe:st.stufe, unlockedAt:new Date().toISOString() });
+      neu.push({ m, stufe:st.stufe });
+    } else if (st.stufe > bekannt.stufe){
+      bekannt.stufe = st.stufe;
+      bekannt.unlockedAt = new Date().toISOString();
+      neu.push({ m, stufe:st.stufe });
+    }
+  }
+  if (neu.length) speichern();
+  return neu;
+}
+function zeigeMedaille(m, stufe){
+  const st = MEDAILLEN_STUFEN[stufe-1];
+  if (stufe >= 3) konfetti();
+  overlay(`
+    <div class="center">${medailleSvg(m, stufe, 120)}</div>
+    <h2 class="center">${esc(st.name)}medaille: ${esc(m.name)}</h2>
+    <p class="center">${esc(m.text)}</p>
+    ${stufe >= 3
+      ? `<p class="center small muted">Gold erscheint ab jetzt neben deinem Avatar.</p>`
+      : `<p class="center small muted">Nächste Stufe bei ${medaillenStand(m).naechstesZiel} ${esc(m.einheit)}.</p>`}
+    <button class="btn primary block" data-close>Schön</button>`);
+  melde(st.name + "medaille erreicht: " + m.name);
 }
 
 /* --- Achievements prüfen ------------------------------------------------ */
@@ -2195,7 +2552,9 @@ const SYMBOLE = {
   kognitiv:`<path d="M9 20v-2a5 5 0 1 1 6 0v2z" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M10 20h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`,
   achtsamkeit:`<path d="M12 4c4 4 6 6 6 9a6 6 0 0 1-12 0c0-3 2-5 6-9z" fill="none" stroke="currentColor" stroke-width="2.2"/>`,
   verbundenheit_k:`<circle cx="8" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="16" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M4 19c1-3 3-4 4-4m8 0c1 0 3 1 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`,
-  mini:`<circle cx="12" cy="12" r="4" fill="currentColor"/>`
+  mini:`<circle cx="12" cy="12" r="4" fill="currentColor"/>`,
+  elite:`<path d="M12 3l2.6 6.1 6.4.5-5 4.2 1.6 6.2L12 16.6 6.4 20l1.6-6.2-5-4.2 6.4-.5z" fill="currentColor"/>`,
+  elite_ic:`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.8 6.4 6.8.6-5.2 4.5 1.6 6.7L12 17.2 6 20.8l1.6-6.7L2.4 9.6l6.8-.6z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><circle cx="12" cy="12" r="2" fill="currentColor"/></svg>`
 };
 const katIcon = kat => `<svg viewBox="0 0 24 24" aria-hidden="true">${
   SYMBOLE[kat === "verbundenheit" ? "verbundenheit_k" : (kat === "mut" ? "mut" : kat)] || SYMBOLE.mini}</svg>`;
@@ -2297,7 +2656,7 @@ function zeigeLevelUp(level){
     <h2 class="center">Neue Stufe: ${esc(levelName(level))}</h2>
     <p class="center">Du hast ${anzahl} Mal geübt, auch wenn es unbequem war.
        Deshalb sieht ${esc(figurName())} jetzt so aus.</p>
-    <p class="center muted">${esc(mitFigur(level.satz))}</p>
+    <p class="center muted">${esc(mitNamen(level.satz))}</p>
     <button class="btn primary block" data-close>Weiter</button>`);
   melde("Neue Stufe erreicht: " + level.name);
 }
@@ -2351,6 +2710,7 @@ function render(){
     case "bibliothek":  html = screenBibliothek(); break;
     case "fortschritt": html = screenFortschritt(); break;
     case "journal":     html = screenJournal(); break;
+    case "medaillen":   html = screenMedaillen(); break;
     case "einstellungen": html = screenEinstellungen(); break;
     case "krisen":      html = screenKrisen(); break;
     default:            html = screenHeim();
@@ -2508,6 +2868,11 @@ function screenHeim(){
         <i style="width:${fort.prozent}%"></i>
       </div>
       <p class="center small" style="margin:0"><strong>${esc(fort.text)}</strong></p>
+      ${goldReiheHtml()}
+      <div class="attr-reihe">
+        ${ATTR_KEYS.map(k => `<span class="pill ${k}" title="${esc(ATTRIBUTE[k].wirkprinzip)}">
+          ${attrIcon(k)} ${esc(ATTRIBUTE[k].name)} <strong>${S.xp[k]}</strong></span>`).join("")}
+      </div>
       <div class="streak">
         <span class="pill">🔥 ${S.streak.current} ${S.streak.current===1?"Tag":"Tage"} in Folge</span>
         <span class="pill">Punkte ×${mult.toFixed(2)}</span>
@@ -2565,16 +2930,17 @@ function gipfelHeimKarte(){
 }
 
 function questKarte(q, index, mitTausch){
+  const elite = q.kategorie === "elite" || q.elite;
   const erledigt = S.daily.done.includes(q.id) ||
     S.completions.some(c => c.questId===q.id && c.date===heute());
   const punkte = Object.keys(q.attribute).map(k =>
     `<span class="pill ${k}">${attrIcon(k)} +${q.attribute[k]}</span>`).join("");
   return `<div class="stack">
-    <button class="quest ${erledigt?'done':''}" data-go-quest="${q.id}">
-      <span class="ic">${katIcon(q.kategorie)}</span>
+    <button class="quest ${erledigt?'done':''} ${elite?'elite':''}" data-go-quest="${q.id}">
+      <span class="ic">${elite ? SYMBOLE.elite_ic : katIcon(q.kategorie)}</span>
       <span class="grow">
-        <h3>${esc(q.titel)}</h3>
-        <span class="small muted">${q.dauerMin} Min · ${esc(kategorieName(q.kategorie))}</span>
+        <h3>${esc(mitNamen(q.titel))}</h3>
+        <span class="small muted">${elite ? "★ Elite · mit " + esc(elitePartner()) + " · " : ""}${q.dauerMin} Min · ${esc(kategorieName(q.kategorie))}</span>
         <span class="meta">${punkte}</span>
       </span>
     </button>
@@ -2583,7 +2949,8 @@ function questKarte(q, index, mitTausch){
 }
 const KATEGORIE_NAMEN = {
   atem:"Atem & Entspannung", bewegung:"Bewegung & Rhythmus", kognitiv:"Kopfarbeit",
-  achtsamkeit:"Achtsamkeit & Akzeptanz", mut:"Mut", verbundenheit:"Verbundenheit", mini:"Mini-Schritt"
+  achtsamkeit:"Achtsamkeit & Akzeptanz", mut:"Mut", verbundenheit:"Verbundenheit",
+  elite:"Elite", mini:"Mini-Schritt"
 };
 const kategorieName = k => KATEGORIE_NAMEN[k] || k;
 function karteDesTages(){
@@ -2607,9 +2974,9 @@ function screenQuest(id){
   if (QSTATE.phase === "fertig"){
     return `<div class="stack" style="padding-top:14px">
       <div class="card stack" data-titel="Erledigt">
-        <h1>Geschafft: ${esc(q.titel)}</h1>
+        <h1>Geschafft: ${esc(mitNamen(q.titel))}</h1>
         <p class="center" style="font-size:2rem">🌸</p>
-        <div class="why"><h3>Warum das wirkt</h3><p>${esc(q.warumEsWirkt)}</p></div>
+        <div class="why"><h3>Warum das wirkt</h3><p>${esc(mitNamen(q.warumEsWirkt))}</p></div>
         ${QSTATE.moodBefore!=null&&QSTATE.moodAfter!=null ? `<p class="small muted">
           Deine Einschätzung: vorher ${QSTATE.moodBefore} – nachher ${QSTATE.moodAfter}.
           Das ist keine Bewertung, nur dein persönlicher Verlauf.</p>`:""}
@@ -2621,14 +2988,17 @@ function screenQuest(id){
   return `<div class="stack" style="padding-top:14px">
     <button class="btn sm ghost" data-go="heim">← Zurück</button>
     <div class="card stack" data-titel="${esc(kategorieName(q.kategorie))}">
-      <h1>${esc(q.titel)}</h1>
+      <h1>${esc(mitNamen(q.titel))}</h1>
       <div class="row">
         <span class="pill">${q.dauerMin} Min</span>
         <span class="pill">${esc(kategorieName(q.kategorie))}</span>
         <span class="pill">${q.intensitaet === "sanft" ? "sanft" : "normal"}</span>
         ${punkte}
       </div>
-      ${q.sicherheitshinweis ? `<div class="warnbox"><strong>Hinweis:</strong> ${esc(q.sicherheitshinweis)}</div>` : ""}
+      ${q.kategorie === "elite" ? `<div class="elite-band">★ Elite-Aktivität – zusammen mit
+        <strong>${esc(elitePartner())}</strong>. Diese Quests zählen doppelt für deine Verbundenheit
+        und werden dreimal pro Woche vorgeschlagen.</div>` : ""}
+      ${q.sicherheitshinweis ? `<div class="warnbox"><strong>Hinweis:</strong> ${esc(mitNamen(q.sicherheitshinweis))}</div>` : ""}
     </div>
 
     ${QSTATE.phase === "vor" ? `
@@ -2642,7 +3012,7 @@ function screenQuest(id){
 
     <div class="card stack" data-titel="Anleitung">
       <h2>So geht's</h2>
-      <ol class="steps">${q.anleitung.map(s => `<li>${esc(s)}</li>`).join("")}</ol>
+      <ol class="steps">${q.anleitung.map(s => `<li>${esc(mitNamen(s))}</li>`).join("")}</ol>
     </div>
 
     ${werkzeugHtml(q)}
@@ -3008,7 +3378,7 @@ function exoReviewHtml(){
 /* --- E.9  Bibliothek ---------------------------------------------------- */
 let BIB_FILTER = "alle";
 function screenBibliothek(){
-  const kats = ["alle","atem","bewegung","kognitiv","achtsamkeit","mut","verbundenheit","mini"];
+  const kats = ["alle","elite","atem","bewegung","kognitiv","achtsamkeit","mut","verbundenheit","mini"];
   const liste = QUESTS.filter(q => BIB_FILTER === "alle" || q.kategorie === BIB_FILTER);
   return `<div class="stack" style="padding-top:14px">
     <h1>Bibliothek</h1>
@@ -3047,6 +3417,16 @@ function screenFortschritt(){
       ${verlaufSvg()}
       <p class="small muted">Aus deinem Angst-Tagebuch. Die Kurve ist eine Beobachtung,
         keine Bewertung – auch Zacken nach oben gehören dazu.</p>
+    </div>
+
+    <div class="card stack" data-titel="Medaillen">
+      <h2>Medaillen</h2>
+      <p class="small">Ausdauer-Ziele über viele Übungen hinweg – Bronze, Silber, Gold.
+        ${goldMedaillen().length ? `Du hast <strong>${goldMedaillen().length}×</strong> Gold.`
+          : "Noch keine Goldmedaille."}</p>
+      ${goldMedaillen().length ? `<div class="vitrine">${goldMedaillen()
+        .map(m => `<span>${medailleSvg(m,3,52)}</span>`).join("")}</div>` : ""}
+      <button class="btn sm primary" data-go="medaillen">Alle Medaillen ansehen</button>
     </div>
 
     <div class="card stack" data-titel="Sammlung">
@@ -3615,6 +3995,93 @@ function screenGipfelUrkunde(){
     </div></div>`;
 }
 
+/* --- D.3  Medaillen-Grafik ----------------------------------------------- */
+function medailleSvg(m, stufe, groesse){
+  const st = MEDAILLEN_STUFEN[clamp(stufe,1,3)-1];
+  const g = groesse || 72;
+  const glyph = SYMBOLE[m.symbol] || SYMBOLE.verbundenheit;
+  return `<svg viewBox="0 0 72 92" width="${g}" height="${g*92/72}" aria-hidden="true" class="medaille-svg">
+    <path d="M20 4 L30 40 L20 44 L10 20 Z" fill="var(--himmel)" stroke="var(--ink-dunkel)" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M52 4 L62 20 L52 44 L42 40 Z" fill="var(--sakura)" stroke="var(--ink-dunkel)" stroke-width="3" stroke-linejoin="round"/>
+    <circle cx="36" cy="60" r="26" fill="${st.farbe}" stroke="var(--ink-dunkel)" stroke-width="3.5"/>
+    <circle cx="36" cy="60" r="19" fill="none" stroke="${st.glanz}" stroke-width="3"/>
+    <path d="M22 48 a20 20 0 0 1 12-6" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" opacity=".85"/>
+    <g transform="translate(24,48)" color="var(--ink-dunkel)">
+      <svg viewBox="0 0 24 24" width="24" height="24">${glyph}</svg>
+    </g>
+    ${stufe >= 3 ? `<g fill="#fff" stroke="var(--ink-dunkel)" stroke-width="1.6">
+      <path d="M64 44 l2 5 5 2 -5 2 -2 5 -2-5 -5-2 5-2z"/>
+      <path d="M8 62 l1.6 4 4 1.6 -4 1.6 -1.6 4 -1.6-4 -4-1.6 4-1.6z"/></g>` : ""}
+  </svg>`;
+}
+
+/* --- Medaillenreihe neben dem Avatar (nur Gold) --------------------------- */
+function goldReiheHtml(){
+  const gold = goldMedaillen();
+  if (!gold.length){
+    const offen = MEDAILLEN.map(m => ({ m, st: medaillenStand(m) }))
+      .filter(x => x.st.stufe < 3)
+      .sort((a,b) => (b.st.wert / b.m.stufen[2]) - (a.st.wert / a.m.stufen[2]))[0];
+    return `<button class="goldreihe leer" data-go="medaillen">
+      <span class="small muted">Noch keine Goldmedaille${offen
+        ? ` · am nächsten dran: ${esc(offen.m.name)} ${offen.st.wert}/${offen.m.stufen[2]}` : ""}</span>
+    </button>`;
+  }
+  return `<button class="goldreihe" data-go="medaillen"
+      aria-label="${gold.length} Goldmedaillen: ${gold.map(m=>m.name).join(", ")}. Öffnet die Medaillen.">
+    ${gold.map(m => `<span class="gold-m" title="${esc(m.name)} – Gold">${medailleSvg(m,3,34)}</span>`).join("")}
+    <span class="small" style="font-weight:800">${gold.length}× Gold</span>
+  </button>`;
+}
+
+/* --- E.14  Medaillen-Bereich --------------------------------------------- */
+function screenMedaillen(){
+  const stand = MEDAILLEN.map(m => ({ m, st: medaillenStand(m) }));
+  const gold = stand.filter(x => x.st.stufe >= 3).length;
+  const gesamt = stand.reduce((a,x) => a + x.st.stufe, 0);
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Medaillen</h1>
+    <div class="card stack" data-titel="Vitrine">
+      <p class="small">Medaillen zählen Ausdauer: dieselbe Art von Übung, viele Male gemacht.
+         Jede hat drei Stufen. <strong>Goldmedaillen erscheinen neben deinem Avatar.</strong></p>
+      <div class="row">
+        <span class="statusfeld">${gold} × Gold</span>
+        <span class="statusfeld">${gesamt} von ${MEDAILLEN.length*3} Stufen</span>
+      </div>
+      ${gold ? `<div class="vitrine">${stand.filter(x=>x.st.stufe>=3)
+        .map(x => `<span>${medailleSvg(x.m,3,56)}</span>`).join("")}</div>`
+        : `<p class="small muted">Die Vitrine ist noch leer. Das ist der normale Anfang.</p>`}
+    </div>
+
+    ${stand.map(x => {
+      const { m, st } = x;
+      const fertig = st.stufe >= 3;
+      return `<div class="card stack medaille-karte ${fertig?'gold':''}" data-titel="${esc(m.name)}">
+        <div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:12px">
+          <span class="flex-none">${medailleSvg(m, Math.max(1,st.stufe), 58)}
+            ${st.stufe === 0 ? '<span class="sr-only">noch keine Stufe erreicht</span>' : ''}</span>
+          <span class="grow">
+            <strong>${st.stufe ? esc(MEDAILLEN_STUFEN[st.stufe-1].name) + (fertig ? " – geschafft" : "")
+                               : "Noch keine Stufe"}</strong>
+            <div class="small muted">${st.wert} ${esc(m.einheit)}${fertig ? "" :
+              " · noch " + Math.max(0, st.naechstesZiel - st.wert) + " bis " + esc(MEDAILLEN_STUFEN[st.stufe].name)}</div>
+            <div class="xpbar" style="height:18px;margin-top:6px"
+                 role="img" aria-label="${fertig ? 'Gold erreicht' : st.prozent + ' Prozent bis ' + st.naechstesZiel}">
+              <i style="width:${st.prozent}%"></i></div>
+            <div class="row small" style="margin-top:6px;gap:6px">
+              ${m.stufen.map((z,i) => `<span class="stufenmarke ${st.stufe>i?'erreicht '+MEDAILLEN_STUFEN[i].key:''}">
+                ${MEDAILLEN_STUFEN[i].name} ${z}</span>`).join("")}
+            </div>
+          </span>
+        </div>
+        <p class="small muted" style="margin:0">${esc(m.text)}</p>
+      </div>`;
+    }).join("")}
+
+    <button class="btn ghost block" data-go="fortschritt">Zurück zum Verlauf</button>
+  </div>`;
+}
+
 /* --- E.13  Einstellungen ------------------------------------------------ */
 function screenEinstellungen(){
   return `<div class="stack" style="padding-top:14px">
@@ -3646,6 +4113,20 @@ function screenEinstellungen(){
           <option value="sanft" ${S.profile.intensity==="sanft"?"selected":""}>sanft – kürzere Übungen bevorzugen</option>
         </select></div>
       <button class="btn sm mint" id="btn-profil-speichern">Speichern</button>
+    </div>
+
+    <div class="card stack" data-titel="Elite">
+      <h2>Elite-Aktivitäten</h2>
+      <p class="small">Gemeinsame Unternehmungen mit einem festen Menschen – sie werden an
+        ${ELITE_TAGE_PRO_WOCHE} Tagen pro Woche im Tagespensum vorgeschlagen.</p>
+      <div class="field"><label for="set-elite">Mit wem?</label>
+        <input type="text" id="set-elite" maxlength="40" value="${esc(S.profile.elitePartner)}"
+               placeholder="${esc(ELITE_PARTNER_STANDARD)}"></div>
+      <label class="row"><input type="checkbox" id="set-elite-an" style="width:auto" ${S.settings.eliteAktiv?"checked":""}>
+        Elite-Aktivitäten vorschlagen</label>
+      <button class="btn sm mint" id="btn-elite-speichern">Speichern</button>
+      <p class="small muted">Wenn du das abschaltest, bleiben die Übungen in der Bibliothek –
+        sie tauchen nur nicht mehr von selbst auf.</p>
     </div>
 
     <div class="card stack" data-titel="Darstellung">
@@ -4375,6 +4856,13 @@ function bindeEinstellungen(){
       S.daily.questIds = planBauen(heute(), false);     // Vorschläge neu dosieren
     }
     speichern(); pruefeAchievements(); toast("Gespeichert."); render();
+  });
+  const el = $("#btn-elite-speichern");
+  if (el) el.addEventListener("click", () => {
+    S.profile.elitePartner = $("#set-elite").value.trim() || ELITE_PARTNER_STANDARD;
+    S.settings.eliteAktiv = $("#set-elite-an").checked;
+    S.daily.questIds = planBauen(heute(), S.daily.sanft);   // Vorschläge neu bauen
+    speichern(); toast("Gespeichert."); render();
   });
   const s = $("#btn-settings-speichern");
   if (s) s.addEventListener("click", () => {

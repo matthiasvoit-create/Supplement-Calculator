@@ -44,6 +44,38 @@ keinen Countdown. Beim Anlegen steht ein Sicherheits-Check, der Symptomprovokati
 ab SUD 80 oder nach wiederholtem Abbruch weist die App ruhig auf Fachbegleitung hin, ohne zu sperren.
 „Etappe halbieren" ist ein eigener Knopf mit eigenem Abzeichen — Verkleinern statt Aufgeben.
 
+## Elite-Aktivitäten
+
+Eine eigene Kategorie für gemeinsame Freizeit mit einem festen Menschen — Clubnacht, Live-Musik,
+spazieren, telefonieren, Café, Kino, etwas Neues ausprobieren. 13 Quests, die höchsten
+Verbundenheits-Werte im ganzen Katalog (bis 60 Punkte, das Maximum).
+
+Sie werden **garantiert an drei Tagen pro Woche** im Tagespensum vorgeschlagen: `eliteTage()`
+wählt pro Kalenderwoche deterministisch drei Wochentage, davon immer einen Freitag oder Samstag.
+An diesen Tagen ersetzt die Elite-Quest einen der beiden Alltagsslots — das Pensum bleibt bei drei
+Quests, damit die Tagesdosis nicht wächst. Der Name steht als Platzhalter `{elite}` in allen Texten
+und kommt aus den Einstellungen (Standard: `ELITE_PARTNER_STANDARD`); abschaltbar, ohne dass die
+Quests aus der Bibliothek verschwinden.
+
+Fachlich: soziale Bindung als Schutzfaktor plus Verhaltensaktivierung, bei Club, Kino und Café
+zusätzlich Exposition im Alltag. Deshalb tragen diese Quests Sicherheitshinweise, die zwei Dinge
+unterscheiden, die leicht verwechselt werden: Ohrstöpsel bei Reizüberflutung sind sinnvolle
+Reizregulation — Alkohol, damit es überhaupt geht, ist Sicherheitsverhalten und macht die Angst
+am Morgen danach größer.
+
+## Medaillen
+
+Abzeichen halten einmalige Momente fest, Medaillen messen Ausdauer: dieselbe Art von Übung, viele
+Male gemacht. 12 KPIs (Atem, Bewegung, Kopfarbeit, Stille, Mut, Verbundenheit, Elite, Serie,
+Journal, Gipfel-Durchgänge, Gesamtzahl, Vielfalt) mit je drei Stufen — Bronze, Silber, Gold.
+
+**Nur Gold erscheint neben dem Avatar** im Status-Fenster, sonst wäre die Auszeichnung nichts
+Besonderes mehr. Solange noch keine Goldmedaille da ist, steht dort, welche am nächsten dran ist.
+Der eigene Bereich zeigt jede Medaille mit Zählerstand, Fortschrittsbalken und den drei Schwellen.
+Neue Medaille anlegen: einen Eintrag in `MEDAILLEN` ergänzen, `wert(state)` liefert den Zähler.
+
+Im Status-Fenster stehen außerdem die vier Attributwerte direkt unter dem Avatar.
+
 ## Vier Wesen zur Auswahl
 
 Reisklößchen, Fledermaus, Axolotl oder Katze. Der Stufenbogen (Haltung, Ausrüstung: Umhang,
@@ -55,7 +87,7 @@ ergänzen, der Rest passt sich an. Wechseln ist jederzeit möglich und ändert n
 
 | Abschnitt | Inhalt |
 |---|---|
-| `§A INHALTE` | Texte, Krisenkontakte, Attribute, Level, 54 Quests, 19 Wissenskarten, Coping-Sätze, 31 Achievements |
+| `§A INHALTE` | Texte, Krisenkontakte, Attribute, Level, 68 Quests (davon 13 Elite), 19 Wissenskarten, Coping-Sätze, 35 Abzeichen, 12 Medaillen |
 | `§B STATE` | Datenmodell, `localStorage`, `migrate()` |
 | `§C LOGIK` | Tagesplan, Punkte, Serie mit Schilden, Level-Ups |
 | `§D AVATAR` | Vier Arten × sieben Stufen als Inline-SVG, Symbole, Abzeichen |
@@ -89,6 +121,7 @@ Alle Inhalte stehen als Konstanten-Objekte in `§A` und lassen sich ohne Logikwi
 | Rückblick nach der Mutprobe | Auswertung als eigentlicher Wirkfaktor der Exposition |
 | Mein Gipfel | Graduierte Exposition über Etappen plus Erwartungsverletzung (Craske): Vorhersage vorher, Abgleich nachher |
 | Freude einplanen, Drei Lichter, Menschen-Zeit | Verhaltensaktivierung und soziale Schutzfaktoren |
+| Elite-Aktivitäten | Soziale Bindung als Schutzfaktor, Verhaltensaktivierung, bei Club/Kino/Café zusätzlich Alltagsexposition |
 
 **Bewusst weggelassen:** interozeptive Exposition, jede Form von Diagnostik oder Screening-Auswertung,
 Atem-Anhalten über 10 Sekunden, Benachrichtigungen und alles, was einen Netzwerk-Request bräuchte.
