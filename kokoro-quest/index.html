@@ -6,6 +6,19 @@
 <meta name="color-scheme" content="light dark">
 <title>Kokoro Quest – Mut wächst in kleinen Schritten</title>
 <meta name="description" content="Kokoro Quest: gamifizierte Selbsthilfe-Übungen gegen Angst und Panik. Alle Daten bleiben im Browser.">
+
+<!-- Zum Startbildschirm hinzufügen: Manifest, Symbole, Statusleistenfarbe.
+     Beim Öffnen als Einzeldatei laufen diese Verweise ins Leere – das
+     stört nicht, die App funktioniert unverändert. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#A0D8F1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#241C38" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kokoro Quest">
 <!--
   ============================================================================
   KOKORO QUEST  ·  Eine einzelne HTML-Datei. Kein Build, keine Abhängigkeiten,
@@ -146,8 +159,10 @@ p{margin:0 0 .8em}
 a{color:var(--text);text-underline-offset:3px}
 :focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:8px}
 
-.wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding-inline:16px}
-.app{padding-block:0 170px}        /* Platz für Navigation + Krisenleiste */
+/* Seitliche Polsterung berücksichtigt die Kerbe im Querformat. */
+.wrap{width:100%;max-width:var(--maxw);margin:0 auto;
+  padding-inline:max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right))}
+.app{padding-block:0 calc(170px + env(safe-area-inset-bottom))}        /* Platz für Navigation + Krisenleiste */
 .stack>*+*{margin-top:12px}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .center{text-align:center}
@@ -162,6 +177,7 @@ a{color:var(--text);text-underline-offset:3px}
    ========================================================================= */
 .appbar{
   position:sticky;top:0;z-index:30;
+  padding-top:env(safe-area-inset-top);      /* unter der Statusleiste durch */
   background-color:var(--chrome-a);
   background-image:linear-gradient(90deg,var(--chrome-a),var(--chrome-b));
   border-bottom:var(--outline) solid var(--ink-dunkel);
@@ -278,7 +294,7 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px}
    5. NAVIGATION (unten, Daumenreichweite)
    ========================================================================= */
 .tabbar{
-  position:fixed;left:0;right:0;bottom:50px;z-index:28;
+  position:fixed;left:0;right:0;bottom:calc(50px + env(safe-area-inset-bottom));z-index:28;
   background-color:var(--surface);
   background-image:linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
   border-top:var(--outline) solid var(--ink-dunkel);
@@ -312,7 +328,8 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px}
   font-size:.86rem;
 }
 @media (prefers-color-scheme: dark){.crisisbar{background:#160F26}}
-.crisisbar .wrap{display:flex;align-items:center;gap:10px;padding-block:8px;justify-content:space-between;flex-wrap:nowrap}
+.crisisbar .wrap{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:nowrap;
+  padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom))}
 .crisisbar .btn{white-space:nowrap}
 .crisisbar a,.crisisbar button{color:#FFF8F3}
 .crisisbar .btn{min-height:32px;padding:2px 12px;font-size:.82rem;
@@ -322,7 +339,7 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px}
    7. PANIK-BUTTON  ·  immer sichtbar, oberhalb der Navigation
    ========================================================================= */
 .panic{
-  position:fixed;right:14px;bottom:136px;z-index:35;
+  position:fixed;right:14px;bottom:calc(136px + env(safe-area-inset-bottom));z-index:35;
   width:74px;height:74px;border-radius:50%;
   border:var(--outline) solid var(--ink-dunkel);
   background-color:var(--himmel);
@@ -436,7 +453,7 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px}
   position:fixed;inset:0;z-index:60;
   background:#20304A;color:#EAF1F8;
   overflow-y:auto;-webkit-overflow-scrolling:touch;
-  padding:18px 0 40px;
+  padding:18px 0 calc(40px + env(safe-area-inset-bottom));
 }
 @media (prefers-color-scheme: dark){.island{background:#162034}}
 .island .card{background:#2A3B58;border-color:#3E5476;color:#EAF1F8;box-shadow:none}
@@ -676,7 +693,7 @@ input[type=text],input[type=tel],input[type=time],input[type=number],textarea,se
    15. KLEINE BILDSCHIRME (ab 360 px) & GROSSE
    ========================================================================= */
 @media (max-width:400px){
-  .panic{width:66px;height:66px;font-size:.68rem;bottom:132px}
+  .panic{width:66px;height:66px;font-size:.68rem;bottom:calc(132px + env(safe-area-inset-bottom))}
   .tab{font-size:.54rem;padding:6px 1px}
   .tabbar .wrap{gap:2px;padding-inline:8px}
   .artwahl{grid-template-columns:repeat(2,1fr)}
@@ -684,7 +701,7 @@ input[type=text],input[type=tel],input[type=time],input[type=number],textarea,se
   h1{font-size:1.3rem}
 }
 @media (min-width:680px){
-  .app{padding-block:0 160px}
+  .app{padding-block:0 calc(160px + env(safe-area-inset-bottom))}
 }
 </style>
 </head>
@@ -6026,7 +6043,20 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape" && $(".island")) inselSchliessen();
 });
 
-/* --- G.9  Start ---------------------------------------------------------- */
+/* --- G.9  Installierbarkeit ---------------------------------------------
+   Der Service Worker macht die App offline startfähig. Registriert wird er
+   nur, wenn die Seite wirklich von einem Server kommt: als Einzeldatei
+   (file://) und eingebettet in einer fremden Seite gibt es keinen.
+   Ohne ihn läuft alles unverändert – nur eben nicht ohne Netz.           */
+if ("serviceWorker" in navigator &&
+    /^https?:$/.test(location.protocol) &&
+    window.top === window.self){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  });
+}
+
+/* --- G.10  Start --------------------------------------------------------- */
 function start(){
   S = ladeState();
   const info = tagesUebergang();
@@ -6035,6 +6065,10 @@ function start(){
   document.body.classList.toggle("no-motion", !!S.settings.reducedMotion);
   render();
   if (!STORAGE_OK) melde("Speichern ist in diesem Browser nicht möglich.");
+  /* Verknüpfung „Ruhe-Insel" vom Startbildschirm: ?ruhe=1 öffnet sie sofort. */
+  try {
+    if (new URLSearchParams(location.search).has("ruhe")) inselOeffnen();
+  } catch(e){ /* alte Browser ohne URLSearchParams: einfach normal starten */ }
 }
 start();
 </script>

@@ -5,9 +5,34 @@ Verhaltenstherapie, Körperarbeit und Achtsamkeit; der Fortschritt wird als Avat
 sichtbar — vom zitternden kleinen Wesen bis zum Superhelden. Optik: Y2K/Kawaii —
 Fensterrahmen im Betriebssystem-Look, Pastellverläufe, harte Konturen und Schlagschatten.
 
-Eine einzige Datei: **`index.html`**. Doppelklick genügt. Kein Build, keine Abhängigkeiten,
-keine Netzwerk-Requests, kein Tracking. Alle Daten bleiben im Browser (`localStorage`,
-Schlüssel `kokoroquest.v1`), Export und Import als JSON-Datei.
+Die App selbst ist eine einzige Datei: **`index.html`**. Doppelklick genügt. Kein Build, keine
+Abhängigkeiten, keine Netzwerk-Requests, kein Tracking. Alle Daten bleiben im Browser
+(`localStorage`, Schlüssel `kokoroquest.v1`), Export und Import als JSON-Datei.
+
+## Auf dem Startbildschirm installieren
+
+Daneben liegen vier Dateien, die die App installierbar machen — `manifest.webmanifest`, `sw.js`
+und die Icons. Sie sind rein additiv: Beim Öffnen der Einzeldatei laufen ihre Verweise ins Leere,
+und der Service Worker registriert sich nur, wenn die Seite wirklich von einem Server kommt
+(nicht über `file://` und nicht eingebettet in einer fremden Seite).
+
+Gehostet — etwa über GitHub Pages aus diesem Ordner — gilt dann:
+
+- **iOS:** Safari → Teilen → „Zum Home-Bildschirm"
+- **Android:** Chrome → Menü → „App installieren"
+
+Danach startet sie im Vollbild mit eigenem Symbol und **ohne Netzverbindung**; der Service Worker
+liefert aus dem Cache und holt eine neue Fassung im Hintergrund nach (`stale-while-revalidate`,
+sichtbar beim übernächsten Start — bei Änderungen die `CACHE`-Zahl in `sw.js` erhöhen).
+
+Ein langer Druck auf das App-Symbol bietet die Verknüpfung **Ruhe-Insel** an: Sie öffnet über
+`?ruhe=1` direkt die Atemhilfe, ohne den Umweg über den Startbildschirm der App.
+
+Die fixierten Leisten respektieren `env(safe-area-inset-*)`, liegen also nicht unter Kerbe oder
+Home-Indikator.
+
+**Wichtig:** Der Fortschritt hängt an der Adresse, unter der die App läuft. Wer von einer
+Adresse auf eine andere wechselt, nimmt ihn nur über „Daten sichern" und „Daten laden" mit.
 
 ## Sicherheitsleitplanken
 
