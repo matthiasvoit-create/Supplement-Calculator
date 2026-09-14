@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supplement-Analyse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#123028;
+  --ink-2:#1B4437;
+  --paper:#E7ECE8;
+  --card:#FFFFFF;
+  --line:#C9D4CD;
+  --line-soft:#E1E8E3;
+  --moss:#2F6F4F;
+  --amber:#B26A16;
+  --clay:#9C3B2A;
+  --slate:#5E6E68;
+  --text:#12211B;
+  --radius:3px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper);
+  color:var(--text);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px;
+  line-height:1.55;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:"Fraunces",Georgia,serif;font-weight:600;letter-spacing:-.01em;margin:0}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+
+/* ---------- Kopfbereich ---------- */
+.band{background:var(--ink);color:#E9F0EB}
+.band-inner{max-width:1080px;margin:0 auto;padding:34px 24px 30px}
+.band h1{font-size:clamp(30px,5vw,46px);line-height:1.05;color:#F2F7F3;max-width:16ch}
+.band h1 em{font-style:italic;font-weight:400}
+.lede{margin:14px 0 0;max-width:56ch;color:#A9C2B4;font-size:15px}
+.legal{
+  margin-top:22px;padding-top:16px;border-top:1px solid rgba(255,255,255,.14);
+  color:#8FAE9E;font-size:13px;max-width:70ch;
+}
+
+/* ---------- Schritt-Navigation ---------- */
+.steps{background:var(--ink-2);border-top:1px solid rgba(255,255,255,.08);position:sticky;top:0;z-index:20}
+.steps-inner{max-width:1080px;margin:0 auto;padding:0 24px;display:flex;gap:2px;overflow-x:auto}
+.step{
+  background:none;border:0;cursor:pointer;padding:13px 16px;color:#8FAE9E;
+  font-size:13.5px;font-weight:500;white-space:nowrap;border-bottom:2px solid transparent;
+}
+.step .num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:19px;height:19px;border-radius:50%;border:1px solid currentColor;
+  font-size:11px;margin-right:8px;vertical-align:1px;
+}
+.step[aria-selected="true"]{color:#F2F7F3;border-bottom-color:var(--amber)}
+.step .cnt{color:var(--amber);margin-left:7px;font-weight:600}
+
+/* ---------- Layout ---------- */
+main{max-width:1080px;margin:0 auto;padding:28px 24px 90px}
+.panel{display:none;animation:fade .25s ease}
+.panel.on{display:block}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+.panel-head{margin-bottom:22px;max-width:62ch}
+.panel-head h2{font-size:23px;margin-bottom:6px}
+.panel-head p{margin:0;color:var(--slate);font-size:14px}
+
+.group{margin-bottom:26px}
+.group-title{
+  font-size:13px;font-weight:600;color:var(--ink);margin-bottom:10px;
+  padding-bottom:6px;border-bottom:1px solid var(--line);
+}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+  padding:7px 12px;cursor:pointer;font-size:14px;color:var(--text);
+  transition:border-color .12s,background .12s;
+}
+.chip:hover{border-color:var(--ink)}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#F2F7F3}
+.chip.on::before{content:"✓ ";font-size:12px;color:var(--amber)}
+.chip.risk.on{background:var(--clay);border-color:var(--clay)}
+
+/* ---------- Aktionsleiste ---------- */
+.bar{
+  position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:#E9F0EB;z-index:30;
+  border-top:1px solid rgba(255,255,255,.12);
+}
+.bar-inner{
+  max-width:1080px;margin:0 auto;padding:12px 24px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.bar-status{font-size:13px;color:#A9C2B4}
+.bar-status b{color:#F2F7F3;font-weight:600}
+.btns{display:flex;gap:9px;flex-shrink:0}
+.btn{
+  border:1px solid var(--amber);background:var(--amber);color:#1A1005;
+  padding:9px 20px;border-radius:var(--radius);cursor:pointer;font-weight:600;font-size:14px;
+}
+.btn:hover{background:#C9781F;border-color:#C9781F}
+.btn.ghost{background:transparent;color:#A9C2B4;border-color:rgba(255,255,255,.22);font-weight:500}
+.btn.ghost:hover{color:#F2F7F3;border-color:#F2F7F3;background:transparent}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+
+/* ---------- Ergebnis: Kopf ---------- */
+.summary{
+  background:var(--ink);color:#E9F0EB;padding:22px 24px;border-radius:var(--radius);margin-bottom:24px;
+}
+.summary h3{color:#F2F7F3;font-size:19px;margin-bottom:6px}
+.summary p{margin:0;color:#A9C2B4;font-size:14px;max-width:64ch}
+.stack{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.stack span{
+  border:1px solid rgba(255,255,255,.25);border-radius:var(--radius);
+  padding:5px 11px;font-size:13px;color:#F2F7F3;
+}
+
+/* ---------- Evidenzskala ---------- */
+.ev{display:inline-flex;align-items:center;gap:7px;flex-shrink:0}
+.ev-bars{display:flex;gap:2px}
+.ev-bars i{width:5px;height:14px;background:var(--line);display:block;border-radius:1px}
+.ev-A .ev-bars i:nth-child(-n+3){background:var(--moss)}
+.ev-B .ev-bars i:nth-child(-n+2){background:var(--amber)}
+.ev-C .ev-bars i:nth-child(-n+1){background:var(--slate)}
+.ev-label{font-size:12px;font-weight:600;letter-spacing:.02em}
+.ev-A .ev-label{color:var(--moss)}
+.ev-B .ev-label{color:var(--amber)}
+.ev-C .ev-label{color:var(--slate)}
+
+/* ---------- Ergebnis: Karten ---------- */
+.rank{list-style:none;margin:0;padding:0}
+.item{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:9px;overflow:hidden}
+.item.top{border-color:var(--ink);border-left:3px solid var(--amber)}
+.item-head{
+  width:100%;background:none;border:0;text-align:left;cursor:pointer;
+  padding:15px 18px;display:grid;grid-template-columns:30px 1fr auto;gap:14px;align-items:center;
+}
+.item-head:hover{background:#F6F9F7}
+.pos{font-size:13px;color:var(--slate);font-variant-numeric:tabular-nums}
+.item-name{font-family:"Fraunces",Georgia,serif;font-size:17.5px;font-weight:600;line-height:1.25}
+.item-form{font-size:13px;color:var(--slate);margin-top:2px}
+.item-meta{display:flex;align-items:center;gap:18px}
+.relev{text-align:right;min-width:96px}
+.relev-num{font-size:13px;color:var(--slate);font-variant-numeric:tabular-nums;margin-bottom:4px}
+.relev-bar{height:4px;background:var(--line-soft);border-radius:2px;overflow:hidden}
+.relev-bar span{display:block;height:100%;background:var(--ink)}
+.caret{color:var(--slate);font-size:12px;transition:transform .18s}
+.item.open .caret{transform:rotate(90deg)}
+
+.body{display:none;padding:2px 18px 20px 62px;border-top:1px solid var(--line-soft)}
+.item.open .body{display:block}
+.why{
+  margin:16px 0 18px;font-size:13.5px;color:var(--slate);
+  padding-left:12px;border-left:2px solid var(--line);
+}
+.why b{color:var(--ink);font-weight:600}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px 26px}
+.fact dt{font-size:12px;font-weight:600;color:var(--amber);margin-bottom:3px}
+.fact dd{margin:0;font-size:14px;line-height:1.5}
+.note{
+  margin-top:18px;padding:11px 13px;border-radius:var(--radius);font-size:13.5px;
+  background:#FBF4EA;border-left:3px solid var(--amber);
+}
+.note.danger{background:#FBEDEA;border-left-color:var(--clay)}
+.note b{display:block;margin-bottom:3px}
+
+/* ---------- Tagesplan ---------- */
+.plan{margin-top:34px}
+.plan h3,.aux h3{font-size:21px;margin-bottom:5px}
+.plan p.sub,.aux p.sub{margin:0 0 16px;color:var(--slate);font-size:14px;max-width:60ch}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--card);overflow:hidden}
+.slot{padding:16px 16px 18px;border-right:1px solid var(--line-soft)}
+.slot:last-child{border-right:0}
+.slot-when{font-family:"Fraunces",Georgia,serif;font-size:16px;font-weight:600;color:var(--ink)}
+.slot-why{font-size:12.5px;color:var(--slate);margin:2px 0 12px;min-height:32px}
+.slot ul{list-style:none;margin:0;padding:0}
+.slot li{font-size:13.5px;padding:6px 0;border-top:1px solid var(--line-soft)}
+.slot li b{font-weight:600}
+.slot li span{color:var(--slate);display:block;font-size:12.5px}
+.slot .empty{font-size:13px;color:var(--slate);font-style:italic;padding-top:6px}
+
+/* ---------- Zusatzblöcke ---------- */
+.aux{margin-top:34px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:17px 18px}
+.box.warn{border-left:3px solid var(--clay)}
+.box h4{margin:0 0 9px;font-size:15px;font-family:"Fraunces",Georgia,serif;font-weight:600}
+.box ul{margin:0;padding-left:17px;font-size:13.5px}
+.box li{margin-bottom:6px}
+.box li:last-child{margin-bottom:0}
+.blocked{font-size:13.5px;padding:9px 0;border-top:1px solid var(--line-soft)}
+.blocked:first-of-type{border-top:0;padding-top:0}
+.blocked b{font-weight:600}
+.blocked span{display:block;color:var(--clay);font-size:13px}
+
+.footnote{
+  margin-top:34px;padding-top:18px;border-top:1px solid var(--line);
+  font-size:13px;color:var(--slate);max-width:74ch;
+}
+.empty-state{
+  background:var(--card);border:1px dashed var(--line);border-radius:var(--radius);
+  padding:44px 26px;text-align:center;color:var(--slate);
+}
+.empty-state b{display:block;color:var(--text);font-family:"Fraunces",Georgia,serif;font-size:18px;margin-bottom:6px}
+@media(max-width:620px){
+  .item-head{grid-template-columns:24px 1fr;gap:10px;padding:13px 14px}
+  .item-meta{grid-column:1/-1;justify-content:space-between;margin-top:4px}
+  .body{padding-left:14px}
+  .bar-inner{flex-direction:column;align-items:stretch;gap:9px}
+  .btns{justify-content:stretch}.btn{flex:1}
+}
+</style>
+</head>
+<body>
+
+<header class="band">
+  <div class="band-inner">
+    <h1>Was du wirklich brauchst — und <em>was nur teuer ist</em></h1>
+    <p class="lede">Wähle deine Beschwerden, bekannte Laborwerte und deinen Kontext. Die Auswertung sortiert Nährstoffe nach Relevanz für dich und nach Stärke der Studienlage — mit Dosis, Einnahmezeitpunkt und Wechselwirkungen.</p>
+    <p class="legal">Kein Ersatz für ärztliche Beratung oder Diagnose. Nährstoffmängel gehören ins Blutbild, nicht ins Rateverfahren — und Symptome wie anhaltende Müdigkeit oder Kurzatmigkeit haben oft Ursachen, die kein Supplement löst. Nutze das Ergebnis als Vorbereitung für ein Arztgespräch.</p>
+  </div>
+</header>
+
+<nav class="steps">
+  <div class="steps-inner" role="tablist">
+    <button class="step" role="tab" data-p="p1" aria-selected="true"><span class="num">1</span>Beschwerden<span class="cnt" data-cnt="p1"></span></button>
+    <button class="step" role="tab" data-p="p2" aria-selected="false"><span class="num">2</span>Laborwerte<span class="cnt" data-cnt="p2"></span></button>
+    <button class="step" role="tab" data-p="p3" aria-selected="false"><span class="num">3</span>Kontext<span class="cnt" data-cnt="p3"></span></button>
+    <button class="step" role="tab" data-p="p4" aria-selected="false"><span class="num">4</span>Auswertung</button>
+  </div>
+</nav>
+
+<main>
+  <section class="panel on" id="p1">
+    <div class="panel-head">
+      <h2>Was macht dir zu schaffen?</h2>
+      <p>Alles anklicken, was in den letzten Wochen regelmäßig aufgetreten ist. Einzelne schlechte Tage zählen nicht.</p>
+    </div>
+    <div id="symGroups"></div>
+  </section>
+
+  <section class="panel" id="p2">
+    <div class="panel-head">
+      <h2>Bekannte Laborwerte</h2>
+      <p>Nur anklicken, was tatsächlich gemessen wurde. Ein Laborbefund schlägt jede Symptomdeutung — besonders bei Eisen, wo Supplementieren ohne Messung schaden kann. Nichts gemessen? Überspringen, die Auswertung nennt dir am Ende die sinnvollen Werte.</p>
+    </div>
+    <div id="labGroups"></div>
+  </section>
+
+  <section class="panel" id="p3">
+    <div class="panel-head">
+      <h2>Dein Kontext</h2>
+      <p>Ernährung, Lebensphase und Medikamente entscheiden mit darüber, was hilft — und was du meiden solltest. Die rot markierten Angaben sperren gezielt Empfehlungen.</p>
+    </div>
+    <div id="ctxGroups"></div>
+  </section>
+
+  <section class="panel" id="p4">
+    <div id="out"></div>
+  </section>
+</main>
+
+<div class="bar">
+  <div class="bar-inner">
+    <div class="bar-status" id="status">Noch nichts ausgewählt</div>
+    <div class="btns">
+      <button class="btn ghost" id="reset">Zurücksetzen</button>
+      <button class="btn" id="calc">Plan berechnen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   1 — EINGABEN
+   ============================================================ */
+const SYMPTOMS = [
+  {g:"Energie und Kopf", items:[
+    ["fatigue","Anhaltende Müdigkeit"],["brainfog","Brain Fog, Wortfindung"],
+    ["konzentration","Konzentrationsprobleme"],["migraene","Migräne oder häufige Kopfschmerzen"],
+    ["schwindel","Schwindel beim Aufstehen"],["kurzatmig","Kurzatmigkeit bei Belastung"]
+  ]},
+  {g:"Schlaf und Psyche", items:[
+    ["einschlafen","Schwer einzuschlafen"],["durchschlafen","Nächtliches Aufwachen"],
+    ["stress","Dauerstress, innere Unruhe"],["angst","Ängstlichkeit, Grübeln"],
+    ["stimmung","Gedrückte Stimmung, Antriebslosigkeit"],["reizbar","Reizbarkeit"]
+  ]},
+  {g:"Muskeln, Gelenke, Knochen", items:[
+    ["kraempfe","Muskelkrämpfe, Waden nachts"],["muskelschwaeche","Kraftverlust, Muskelschwäche"],
+    ["gelenke","Gelenkschmerzen, Steifigkeit"],["knochen","Knochendichte, Osteoporose-Risiko"],
+    ["regeneration","Lange Regeneration nach Training"],["restless","Unruhige Beine abends"]
+  ]},
+  {g:"Immunsystem, Haut, Haare", items:[
+    ["infekte","Häufige Erkältungen"],["wundheilung","Langsame Wundheilung"],
+    ["haarausfall","Haarausfall, dünnes Haar"],["naegel","Brüchige Nägel"],
+    ["hauttrocken","Trockene, schuppige Haut"],["akne","Unreine Haut, Akne"]
+  ]},
+  {g:"Herz, Kreislauf, Stoffwechsel", items:[
+    ["blass","Blasse Haut, Blässe"],["kaltehaende","Ständig kalte Hände und Füße"],
+    ["blutdruck","Erhöhter Blutdruck"],["blutzucker","Erhöhter Blutzucker, Insulinresistenz"],
+    ["cholesterin","Erhöhte Blutfette"],["libido","Nachlassende Libido"]
+  ]},
+  {g:"Verdauung", items:[
+    ["blaehungen","Blähungen, Völlegefühl"],["verstopfung","Verstopfung"],
+    ["reizdarm","Reizdarm-Beschwerden"]
+  ]}
+];
+
+const LABS = [
+  {g:"Vitamine", items:[
+    ["l_vitd","Vitamin D (25-OH) niedrig"],["l_b12","Vitamin B12 oder Holo-TC niedrig"],
+    ["l_folat","Folat niedrig"],["l_homocystein","Homocystein erhöht"]
+  ]},
+  {g:"Mineralstoffe und Spurenelemente", items:[
+    ["l_ferritin","Ferritin niedrig"],["l_hb","Hämoglobin niedrig (Anämie)"],
+    ["l_magnesium","Magnesium niedrig"],["l_zink","Zink niedrig"],
+    ["l_selen","Selen niedrig"],["l_jod","Jod niedrig (Urin)"],["l_kalium","Kalium niedrig"]
+  ]},
+  {g:"Fettsäuren und Entzündung", items:[
+    ["l_omega3","Omega-3-Index unter 8 %"],["l_crp","CRP erhöht (stille Entzündung)"]
+  ]}
+];
+
+const CONTEXT = [
+  {g:"Ernährung", items:[
+    ["c_vegan","Vegan"],["c_vegetarisch","Vegetarisch"],
+    ["c_wenigfisch","Selten Fisch"],["c_alkohol","Regelmäßig Alkohol"],["c_raucher","Raucher"]
+  ]},
+  {g:"Lebensphase und Alltag", items:[
+    ["c_sport","Intensiver Sport, 4× pro Woche oder mehr"],["c_wenigsonne","Wenig Tageslicht, Winterhalbjahr"],
+    ["c_ueber60","Über 60"],["c_menstruation","Starke Regelblutungen"],
+    ["c_wechseljahre","Wechseljahre"],["c_schicht","Schichtarbeit oder Jetlag"]
+  ]},
+  {g:"Medikamente", items:[
+    ["c_ppi","Magensäureblocker (Pantoprazol, Omeprazol)"],["c_metformin","Metformin"],
+    ["c_pille","Hormonelle Verhütung"],["c_statin","Statine"]
+  ]},
+  {g:"Vorsicht — sperrt Empfehlungen", risk:true, items:[
+    ["c_schwanger","Schwanger"],["c_kinderwunsch","Kinderwunsch"],["c_stillzeit","Stillzeit"],
+    ["c_blutverduenner","Blutverdünner (Marcumar, DOAK, ASS)"],["c_niere","Nierenerkrankung"],
+    ["c_leber","Lebererkrankung"],["c_schilddruese","Schilddrüsenerkrankung"],
+    ["c_ssri","Antidepressiva (SSRI, SNRI)"]
+  ]}
+];
+
+/* ============================================================
+   2 — SUPPLEMENT-DATENBANK
+   evidenz: A = mehrere hochwertige RCTs oder Leitlinienempfehlung
+            B = solide, aber begrenzte oder heterogene Studienlage
+            C = schwach, überwiegend Hinweise
+   ============================================================ */
+const SUPPS = [
+{
+  id:"vitd", name:"Vitamin D3", form:"Cholecalciferol, bei höheren Dosen mit Vitamin K2 (MK-7)",
+  evidenz:"A", slot:"fruehstueck",
+  wirkung:"Steuert die Calciumaufnahme im Darm, den Knochenstoffwechsel und die Reifung von Immunzellen. Ein echter Mangel äußert sich typischerweise als diffuse Muskelschwäche, Knochenschmerz und erhöhte Infektanfälligkeit.",
+  nachweis:"Bei nachgewiesenem Mangel ist die Wirkung auf Knochenstoffwechsel und Muskelkraft klar belegt. Die Endocrine-Society-Leitlinie 2024 kam allerdings zum Schluss, dass gesunde Erwachsene unter 75 von Dosen oberhalb der Referenzzufuhr kaum profitieren — empirische Supplementierung wird dort nur für Kinder und Jugendliche, Menschen ab 75, Schwangere und Personen mit Prädiabetes empfohlen. Für Stimmung und Krebsprävention ist die Evidenz schwach.",
+  dosis:"800–2.000 IE täglich zur Erhaltung. Bei laborbestätigtem Mangel höher dosieren, aber ärztlich begleitet. Täglich niedrig schlägt wöchentlich hoch.",
+  timing:"Morgens zu einer fetthaltigen Mahlzeit — fettlöslich, ohne Fett geht ein Teil verloren.",
+  dauer:"Spiegelanstieg in 6–8 Wochen, Kontrolle danach.",
+  interakt:"K2 ist bei Vitamin-K-Antagonisten wie Marcumar tabu. Thiaziddiuretika erhöhen das Hyperkalzämierisiko.",
+  achtung:"Nicht ins Blaue hochdosieren. Bei Sarkoidose, Nierensteinen oder erhöhtem Calcium nur nach ärztlicher Abklärung.",
+  trig:{l_vitd:12,c_wenigsonne:6,knochen:6,infekte:4,muskelschwaeche:4,fatigue:3,stimmung:2,c_ueber60:5,c_schwanger:5}
+},
+{
+  id:"magnesium", name:"Magnesium", form:"Bisglycinat (verträglich, schlaffreundlich) oder Citrat (bei Verstopfung)",
+  evidenz:"A", slot:"abend",
+  wirkung:"Cofaktor in über 300 Enzymreaktionen, reguliert die neuromuskuläre Erregbarkeit und dämpft NMDA-Rezeptoren. Deshalb der klassische Kandidat bei Krämpfen, Zuckungen und einem Nervensystem, das abends nicht runterfährt.",
+  nachweis:"Bei nachgewiesenem Mangel und bei nächtlichen Wadenkrämpfen gut belegt. Für Schlafqualität und Stress ist die Studienlage positiv, aber die Effektstärken sind moderat und viele Studien klein. Für Migräneprophylaxe gibt es brauchbare RCT-Daten.",
+  dosis:"200–400 mg elementares Magnesium täglich. Auf der Packung zählt nur die elementare Menge, nicht das Gesamtgewicht der Verbindung.",
+  timing:"Abends, ein bis zwei Stunden vor dem Schlafen. Bei höherer Dosis auf zwei Portionen aufteilen.",
+  dauer:"Krämpfe bessern sich oft in 2–4 Wochen.",
+  interakt:"Zwei Stunden Abstand zu Eisen, Zink, Schilddrüsenhormonen, Antibiotika und Bisphosphonaten.",
+  achtung:"Bei eingeschränkter Nierenfunktion nur ärztlich. Oxid und Citrat wirken bei vielen abführend — dann auf Bisglycinat wechseln.",
+  trig:{kraempfe:12,l_magnesium:12,restless:6,einschlafen:5,stress:4,migraene:5,c_sport:5,reizbar:3,verstopfung:4,durchschlafen:3,blutdruck:3}
+},
+{
+  id:"omega3", name:"Omega-3 (EPA/DHA)", form:"Triglycerid-Fischöl oder Algenöl (vegan), gereinigt",
+  evidenz:"A", slot:"mittag",
+  wirkung:"EPA und DHA werden in Zellmembranen eingebaut und dienen als Ausgangsstoff entzündungsauflösender Mediatoren. Sie senken Triglyzeride und beeinflussen Membranfluidität im Gehirn und in der Netzhaut.",
+  nachweis:"Triglyzeridsenkung ist eindeutig belegt. Für entzündliche Gelenkbeschwerden und depressive Symptome ist die Evidenz solide, aber heterogen — EPA-betonte Präparate schneiden bei Stimmung besser ab. Zum Vorhofflimmern: eine Meta-Analyse aus 34 Studien mit über 114.000 Teilnehmern fand ein erhöhtes Risiko nur bei Herz-Kreislauf-Risikopatienten mit über 1.500 mg pro Tag; darunter zeigte sich kein Signal.",
+  dosis:"1.000–2.000 mg EPA + DHA täglich (nicht Gesamtölmenge). Bei Stimmung EPA-Anteil bevorzugen, bei Schwangerschaft DHA.",
+  timing:"Zur größten Mahlzeit des Tages, das verbessert die Aufnahme deutlich und reduziert Aufstoßen.",
+  dauer:"Omega-3-Index steigt über 3–4 Monate.",
+  interakt:"Bei Blutverdünnern ärztlich abklären. Vor Operationen absetzen.",
+  achtung:"Auf Reinheit und Frische achten (TOTOX-Wert). Ranziges Fischöl ist kontraproduktiv.",
+  trig:{l_omega3:12,cholesterin:7,gelenke:6,stimmung:5,c_vegan:5,c_wenigfisch:6,hauttrocken:3,brainfog:3,l_crp:5,c_schwanger:5}
+},
+{
+  id:"b12", name:"Vitamin B12", form:"Methyl- oder Hydroxocobalamin",
+  evidenz:"A", slot:"nuechtern",
+  wirkung:"Notwendig für Blutbildung, Myelinscheiden der Nerven und den Abbau von Homocystein. Ein Mangel entwickelt sich über Jahre schleichend und beginnt oft mit Kribbeln in Händen und Füßen, Vergesslichkeit und Erschöpfung — die Blutbildveränderung kommt erst spät.",
+  nachweis:"Bei Mangel ist die Wirkung eindeutig und die Behandlung Standard. Bei ausreichender Versorgung bringt zusätzliches B12 keinen Energiegewinn — der weit verbreitete Glaube, B12 mache generell wacher, ist nicht belegt.",
+  dosis:"250 µg täglich zur Erhaltung bei veganer Ernährung. Bei nachgewiesenem Mangel 1.000 µg täglich über 4–12 Wochen, dann Kontrolle.",
+  timing:"Morgens nüchtern. Sublingual bringt gegenüber Schlucken keinen belegten Vorteil, schadet aber nicht.",
+  dauer:"Neurologische Symptome bilden sich über Monate zurück — je früher, desto vollständiger.",
+  interakt:"Magensäureblocker und Metformin senken die Aufnahme dauerhaft — bei Dauereinnahme regelmäßig kontrollieren.",
+  achtung:"Nie allein anhand von Serum-B12 beurteilen; Holo-TC und Methylmalonsäure sind aussagekräftiger. Bei Mangel ohne vegane Ernährung die Ursache abklären lassen.",
+  trig:{l_b12:12,c_vegan:11,c_vegetarisch:5,l_homocystein:7,c_metformin:7,c_ppi:6,fatigue:4,brainfog:5,c_ueber60:5,blass:3,stimmung:3}
+},
+{
+  id:"eisen", name:"Eisen", form:"Bisglycinat (magenschonend) oder Eisen(II)-sulfat",
+  evidenz:"A", slot:"nuechtern",
+  wirkung:"Baustein von Hämoglobin und zahlreichen Enzymen. Ein Eisenmangel macht müde, kurzatmig und blass, lange bevor eine Anämie im Blutbild sichtbar wird — Ferritin fällt zuerst.",
+  nachweis:"Bei laborbestätigtem Mangel gut belegt für Müdigkeit, Leistungsfähigkeit und Restless-Legs. Ohne Mangel: kein Nutzen, dafür Risiko.",
+  dosis:"20–60 mg elementares Eisen. Die Einnahme jeden zweiten Tag wird inzwischen bevorzugt, weil tägliche Gaben Hepcidin hochtreiben und die Aufnahme der Folgedosis blockieren.",
+  timing:"Morgens nüchtern mit einem Glas Orangensaft oder 100 mg Vitamin C.",
+  dauer:"3–6 Monate bis die Speicher gefüllt sind. Danach Ferritin kontrollieren und absetzen.",
+  interakt:"Kaffee, Schwarztee, Calcium, Zink und Magnesium blockieren die Aufnahme — zwei Stunden Abstand.",
+  achtung:"Niemals ohne Laborwert einnehmen. Bei Hämochromatose oder unerkannter Eisenüberladung ist Supplementieren gefährlich. Eisenmangel bei Männern und Frauen nach der Menopause gehört immer ärztlich abgeklärt.",
+  trig:{l_ferritin:14,l_hb:12,c_menstruation:8,blass:6,haarausfall:5,restless:6,kurzatmig:5,fatigue:4,kaltehaende:4,c_vegan:4,schwindel:4}
+},
+{
+  id:"zink", name:"Zink", form:"Bisglycinat oder Picolinat",
+  evidenz:"A", slot:"abend",
+  wirkung:"Cofaktor für über 300 Enzyme, zentral für Immunzellfunktion, Wundheilung, Talgregulation und Testosteronsynthese. Weiße Flecken auf den Nägeln und Geschmacksverlust sind klassische Mangelzeichen.",
+  nachweis:"Bei Mangel eindeutig. Zusätzlich gut belegt: Zinklutschtabletten, innerhalb von 24 Stunden nach Symptombeginn eingenommen, verkürzen Erkältungen um etwa einen Tag. Für Akne gibt es brauchbare Daten bei entzündlichen Formen.",
+  dosis:"10–25 mg täglich. Bei akuter Erkältung kurzzeitig höher als Lutschtablette.",
+  timing:"Abends, mit etwas Abstand zu größeren Mahlzeiten. Auf leeren Magen kann es Übelkeit auslösen.",
+  dauer:"Hautbild oft nach 8–12 Wochen, Immunwirkung sofort.",
+  interakt:"Zwei Stunden Abstand zu Eisen, Calcium und Antibiotika.",
+  achtung:"Dauerhaft über 25 mg führt zu Kupfermangel. Zink ist kein Supplement für unbegrenzte Dauereinnahme.",
+  trig:{l_zink:12,infekte:7,wundheilung:7,akne:6,haarausfall:4,c_vegan:5,naegel:4,libido:4}
+},
+{
+  id:"kreatin", name:"Kreatin Monohydrat", form:"Monohydrat, Creapure-Qualität — teurere Formen bringen nichts",
+  evidenz:"A", slot:"fruehstueck",
+  wirkung:"Erhöht die Phosphokreatinspeicher in Muskel und Gehirn und beschleunigt die ATP-Regeneration bei kurzen, intensiven Belastungen. Das mit Abstand am besten untersuchte Sportsupplement überhaupt.",
+  nachweis:"Für Kraft, Muskelmasse und Wiederholungsleistung durch hunderte RCTs abgesichert. Für kognitive Effekte ist die Evidenz noch begrenzt, aber am plausibelsten bei Schlafmangel, hoher mentaler Belastung und bei Veganern, die über die Ernährung kaum Kreatin aufnehmen.",
+  dosis:"3–5 g täglich, dauerhaft. Eine Ladephase ist nicht nötig, sie beschleunigt nur die Sättigung um etwa drei Wochen.",
+  timing:"Zeitpunkt irrelevant — entscheidend ist die tägliche Konstanz. Mit reichlich Wasser.",
+  dauer:"Speicher gefüllt nach 3–4 Wochen.",
+  interakt:"Keine relevanten.",
+  achtung:"Ein bis zwei Kilo Wassereinlagerung in der Muskulatur sind normal und kein Fett. Bei Nierenerkrankung ärztlich abklären.",
+  trig:{c_sport:9,muskelschwaeche:7,regeneration:7,c_vegan:6,c_ueber60:5,brainfog:4,fatigue:3}
+},
+{
+  id:"folat", name:"Folat", form:"5-MTHF (aktive Form) statt Folsäure",
+  evidenz:"A", slot:"fruehstueck",
+  wirkung:"Zentral für Zellteilung, DNA-Synthese und den Homocysteinabbau. In der Frühschwangerschaft entscheidend für den Verschluss des Neuralrohrs.",
+  nachweis:"Die Senkung des Neuralrohrdefekt-Risikos bei Einnahme vor und in der Frühschwangerschaft gehört zu den bestbelegten Präventionsmaßnahmen der Medizin.",
+  dosis:"400 µg täglich. Bei Kinderwunsch und in der Schwangerschaft 400–800 µg, idealerweise ab vier Wochen vor der Empfängnis.",
+  timing:"Morgens zur Mahlzeit.",
+  dauer:"Bei Kinderwunsch mindestens bis Ende der 12. Schwangerschaftswoche.",
+  interakt:"Methotrexat, Antiepileptika.",
+  achtung:"Niemals isoliert bei möglichem B12-Mangel — Folat repariert das Blutbild und verschleiert dabei den fortschreitenden Nervenschaden durch B12-Mangel.",
+  trig:{c_kinderwunsch:14,c_schwanger:14,l_folat:12,l_homocystein:7,c_pille:5,stimmung:3,c_alkohol:4}
+},
+{
+  id:"jod", name:"Jod", form:"Kaliumjodid oder Kelp mit deklariertem Gehalt",
+  evidenz:"A", slot:"fruehstueck",
+  wirkung:"Unverzichtbarer Baustein der Schilddrüsenhormone T3 und T4, die den gesamten Grundumsatz steuern. Deutschland ist Jodmangelgebiet, und ohne Seefisch und jodiertes Salz wird es schnell knapp.",
+  nachweis:"Bei Mangel klar belegt. In der Schwangerschaft ist ausreichende Jodversorgung für die kindliche Hirnentwicklung entscheidend.",
+  dosis:"100–150 µg täglich. In Schwangerschaft und Stillzeit 150–200 µg.",
+  timing:"Morgens zur Mahlzeit.",
+  dauer:"Dauerhaft, sofern die Ernährung jodarm bleibt.",
+  interakt:"Kann Schilddrüsenmedikamente beeinflussen.",
+  achtung:"Bei Hashimoto oder Schilddrüsenautonomie kann Jod die Erkrankung verschlechtern. Hier gilt: nur nach ärztlicher Abklärung, nicht auf eigene Faust.",
+  trig:{l_jod:12,c_vegan:7,c_schwanger:9,c_stillzeit:8,fatigue:2,kaltehaende:2}
+},
+{
+  id:"psyllium", name:"Flohsamenschalen", form:"Gemahlene Schalen, 99 % rein",
+  evidenz:"A", slot:"abend",
+  wirkung:"Lösliche Ballaststoffe, die im Darm ein Gel bilden. Das normalisiert die Stuhlkonsistenz in beide Richtungen, bindet Gallensäuren und verlangsamt die Glukoseaufnahme.",
+  nachweis:"Für Verstopfung und zur Senkung des LDL-Cholesterins gut belegt, mit Zulassung als Arzneimittel in mehreren Ländern. Bei Reizdarm eines der wenigen Mittel mit positiver Leitlinienbewertung.",
+  dosis:"5–10 g täglich, einschleichend beginnen mit 5 g.",
+  timing:"Abends, in mindestens 250 ml Wasser eingerührt und sofort trinken, danach ein weiteres Glas.",
+  dauer:"Wirkung auf den Stuhlgang innerhalb von Tagen, auf Cholesterin nach Wochen.",
+  interakt:"Mindestens eine Stunde Abstand zu allen Medikamenten — Flohsamen binden Wirkstoffe.",
+  achtung:"Ohne ausreichend Flüssigkeit besteht Verschlussgefahr. Nicht bei bekannten Darmverengungen.",
+  trig:{verstopfung:11,reizdarm:7,cholesterin:6,blutzucker:5,blaehungen:3}
+},
+{
+  id:"melatonin", name:"Melatonin", form:"Schnell freisetzend (Einschlafen) oder retardiert (Durchschlafen)",
+  evidenz:"A", slot:"abend",
+  wirkung:"Kein Schlafmittel, sondern ein Zeitgeber. Melatonin verschiebt die innere Uhr nach vorn und verkürzt so die Einschlafzeit. Bei Durchschlafproblemen ohne Rhythmusstörung bringt es wenig.",
+  nachweis:"Für Jetlag, verzögerte Schlafphase und Schichtarbeit gut belegt. Für klassische Insomnie ist der Effekt real, aber klein — etwa sieben Minuten kürzere Einschlafzeit im Mittel. Niedrige Dosen wirken hier oft besser als hohe.",
+  dosis:"0,5–2 mg. Mehr hilft nicht mehr, sondern verlängert eher die Morgenmüdigkeit. In Deutschland sind Nahrungsergänzungsmittel auf 1 mg begrenzt.",
+  timing:"30–60 Minuten vor der gewünschten Schlafenszeit, bei Rhythmusverschiebung auch früher.",
+  dauer:"Wirkt ab der ersten Nacht.",
+  interakt:"Verstärkt Beruhigungsmittel. Fluvoxamin erhöht die Melatoninspiegel stark.",
+  achtung:"Nicht in Schwangerschaft und Stillzeit. Kann die Fahrtüchtigkeit beeinträchtigen. Wirkt nur, wenn abends das Licht runtergeht — Bildschirm bis Mitternacht macht die Wirkung zunichte.",
+  trig:{einschlafen:11,c_schicht:9,durchschlafen:3}
+},
+{
+  id:"protein", name:"Proteinpulver", form:"Whey Isolat, oder Erbsen-Reis-Mischung vegan",
+  evidenz:"A", slot:"nachmittag",
+  wirkung:"Liefert Leucin als direkten Auslöser der Muskelproteinsynthese. Kein exotisches Supplement, sondern schlicht ein praktisches Lebensmittel für Menschen, die ihren Proteinbedarf sonst nicht decken.",
+  nachweis:"Der Zusammenhang zwischen ausreichender Proteinzufuhr und Muskelerhalt ist eindeutig belegt, besonders relevant ab 60 zur Vorbeugung von Sarkopenie.",
+  dosis:"20–40 g pro Portion, als Ergänzung zu 1,4–2,0 g Protein pro Kilogramm Körpergewicht täglich.",
+  timing:"Nach dem Training oder zur Auffüllung an proteinarmen Tagen. Das anabole Fenster ist deutlich großzügiger als früher angenommen.",
+  dauer:"Muskelaufbau über Monate, sichtbar ab etwa 8 Wochen bei entsprechendem Training.",
+  interakt:"Keine.",
+  achtung:"Bei Nierenerkrankung ärztlich abklären.",
+  trig:{c_sport:8,muskelschwaeche:7,regeneration:6,c_ueber60:6,c_vegan:4}
+},
+{
+  id:"b2", name:"Riboflavin (Vitamin B2), hochdosiert", form:"Riboflavin 400 mg",
+  evidenz:"B", slot:"fruehstueck",
+  wirkung:"Verbessert die mitochondriale Energiegewinnung im Gehirn. Der Ansatz beruht auf der Beobachtung, dass Migränegehirne zwischen den Attacken einen gestörten Energiestoffwechsel zeigen.",
+  nachweis:"Mehrere randomisierte Studien zeigen eine deutliche Reduktion der Attackenhäufigkeit bei etwa der Hälfte der Anwender. Riboflavin wird in Migräneleitlinien als nichtmedikamentöse Prophylaxeoption geführt — eines der wenigen Supplements mit diesem Status.",
+  dosis:"400 mg täglich. Niedrigere Dosen wirken für diesen Zweck nicht.",
+  timing:"Morgens zur Mahlzeit.",
+  dauer:"Wirkung frühestens nach 4 Wochen, volle Beurteilung erst nach 3 Monaten. Vorher nicht abbrechen.",
+  interakt:"Keine relevanten.",
+  achtung:"Intensiv gelber Urin ist normal und harmlos.",
+  trig:{migraene:11,fatigue:2}
+},
+{
+  id:"q10", name:"Coenzym Q10", form:"Ubiquinol bei über 50, sonst Ubiquinon",
+  evidenz:"B", slot:"fruehstueck",
+  wirkung:"Elektronenüberträger in der Atmungskette und fettlösliches Antioxidans. Die körpereigene Produktion sinkt mit dem Alter — und Statine hemmen genau den Stoffwechselweg, über den Q10 gebildet wird.",
+  nachweis:"Für Migräneprophylaxe gibt es positive RCTs mit moderater Effektstärke. Bei statinbedingten Muskelbeschwerden sind die Ergebnisse gemischt, ein Versuch über 8 Wochen ist aber vertretbar. Bei Herzinsuffizienz existieren vielversprechende Daten.",
+  dosis:"100–300 mg täglich.",
+  timing:"Morgens zu einer fetthaltigen Mahlzeit, fettlöslich.",
+  dauer:"Migräne: 3 Monate bis zur Beurteilung. Muskelbeschwerden: 8 Wochen.",
+  interakt:"Kann die Wirkung von Vitamin-K-Antagonisten leicht abschwächen.",
+  achtung:"Preisunterschiede sind enorm bei gleichem Wirkstoff — hier lohnt Vergleichen.",
+  trig:{c_statin:10,migraene:7,muskelschwaeche:4,c_ueber60:5,fatigue:4}
+},
+{
+  id:"theanin", name:"L-Theanin", form:"L-Theanin, idealerweise Suntheanine",
+  evidenz:"B", slot:"nachmittag",
+  wirkung:"Aminosäure aus Grüntee, passiert die Blut-Hirn-Schranke und erhöht die Alpha-Wellen-Aktivität. Das Ergebnis ist ein entspannter, aber wacher Zustand — beruhigend, ohne müde zu machen.",
+  nachweis:"Für akute Stressreaktion und subjektive Entspannung gibt es mehrere positive kleine RCTs. Besonders gut untersucht ist die Kombination mit Koffein für Aufmerksamkeit, wobei Theanin die Nervosität des Koffeins dämpft.",
+  dosis:"100–200 mg pro Einnahme, bis zu zweimal täglich.",
+  timing:"Bei akutem Stress oder vor dem Schlafen. In Kombination mit Koffein im Verhältnis 2:1 zum Koffein.",
+  dauer:"Wirkt akut innerhalb von 30–60 Minuten.",
+  interakt:"Kann blutdrucksenkende Medikamente leicht verstärken.",
+  achtung:"Sehr gute Verträglichkeit, keine Abhängigkeit, kein Hangover.",
+  trig:{stress:8,angst:7,einschlafen:5,konzentration:5,reizbar:5}
+},
+{
+  id:"curcumin", name:"Curcumin", form:"Phytosomal oder mit Piperin — pures Kurkumapulver wird kaum aufgenommen",
+  evidenz:"B", slot:"mittag",
+  wirkung:"Hemmt NF-κB und damit die Bildung entzündungsfördernder Botenstoffe. Die Herausforderung ist nicht die Wirkung, sondern die Bioverfügbarkeit: unbehandeltes Curcumin erreicht den Blutkreislauf praktisch nicht.",
+  nachweis:"Bei Kniearthrose zeigen mehrere Meta-Analysen eine Schmerzreduktion, die in einzelnen Studien mit NSAR vergleichbar ausfiel — allerdings bei kurzer Dauer und mit methodischen Schwächen. Für stille Entzündung sind die Marker-Daten positiv, der klinische Nutzen offen.",
+  dosis:"500–1.000 mg bioverfügbares Curcumin täglich.",
+  timing:"Zu einer fetthaltigen Mahlzeit.",
+  dauer:"Schmerzlinderung typischerweise nach 4–8 Wochen.",
+  interakt:"Kann die Wirkung von Blutverdünnern verstärken. Beeinflusst zahlreiche Arzneistoffe über Piperin.",
+  achtung:"Nicht bei Gallensteinen oder Gallenwegsverschluss. Einzelne Fälle von Leberschäden bei hochdosierten Präparaten sind beschrieben.",
+  trig:{gelenke:9,l_crp:6,regeneration:4,reizdarm:3}
+},
+{
+  id:"kollagen", name:"Kollagenpeptide", form:"Hydrolysierte Peptide Typ I und III (Haut) oder UC-II (Gelenke)",
+  evidenz:"B", slot:"nachmittag",
+  wirkung:"Die Peptide werden nicht direkt eingebaut, sondern wirken als Signal: bestimmte Bruchstücke regen Fibroblasten und Chondrozyten zur eigenen Kollagensynthese an.",
+  nachweis:"Für Hautelastizität und Feuchtigkeit gibt es mehrere positive RCTs mit kleinen bis moderaten Effekten. Bei Gelenkbeschwerden ist die Datenlage bei aktiven Menschen und leichter Arthrose vorsichtig positiv. Für Nägel und Haare deutlich dünner.",
+  dosis:"5–10 g Peptide täglich, oder 40 mg UC-II. Immer zusammen mit Vitamin C, das für die Kollagensynthese zwingend nötig ist.",
+  timing:"Zeitpunkt unkritisch, aber täglich konstant.",
+  dauer:"Haut ab 8 Wochen, Gelenke ab 12 Wochen.",
+  interakt:"Keine.",
+  achtung:"Kein veganes Produkt. Qualität und Peptidgröße unterscheiden sich stark zwischen Anbietern.",
+  trig:{gelenke:7,hauttrocken:6,naegel:6,regeneration:4,haarausfall:3,c_wechseljahre:4}
+},
+{
+  id:"probiotika", name:"Probiotika", form:"Stammspezifisch — der Stamm entscheidet, nicht die Keimzahl",
+  evidenz:"B", slot:"fruehstueck",
+  wirkung:"Ausgewählte Bakterienstämme beeinflussen Darmbarriere, Immunmodulation und die Produktion kurzkettiger Fettsäuren. Die Effekte sind nicht auf andere Stämme übertragbar.",
+  nachweis:"Für Reizdarm gibt es positive Daten zu bestimmten Stämmen, etwa Bifidobacterium infantis 35624 und Lactobacillus plantarum 299v. Für antibiotikaassoziierten Durchfall ist Saccharomyces boulardii gut belegt. Für unspezifische Beschwerden bleibt die Evidenz schwach.",
+  dosis:"10⁹ bis 10¹⁰ koloniebildende Einheiten täglich, über mindestens 8 Wochen.",
+  timing:"Morgens nüchtern oder direkt vor dem Frühstück.",
+  dauer:"8 Wochen testen. Ohne Besserung absetzen statt weiterzunehmen.",
+  interakt:"Zwei Stunden Abstand zu Antibiotika.",
+  achtung:"Bei stark geschwächtem Immunsystem nur ärztlich. Produkte ohne Stammangabe auf dem Etikett sind das Geld nicht wert.",
+  trig:{reizdarm:9,blaehungen:8,verstopfung:4,infekte:3,akne:3}
+},
+{
+  id:"safran", name:"Safran-Extrakt", form:"Standardisierter Extrakt (affron oder Satiereal)",
+  evidenz:"B", slot:"fruehstueck",
+  wirkung:"Crocin und Safranal beeinflussen die serotonerge und dopaminerge Signalübertragung. Einer der wenigen Pflanzenstoffe mit einem plausiblen und untersuchten Wirkmechanismus bei Stimmungstiefs.",
+  nachweis:"Mehrere randomisierte, placebokontrollierte Studien zeigen bei leichter bis mittelschwerer depressiver Symptomatik Effekte, die in Direktvergleichen niedrig dosierten SSRI nahekamen. Einschränkung: viele Studien stammen aus derselben Forschungsgruppe und sind klein.",
+  dosis:"28–30 mg standardisierter Extrakt täglich.",
+  timing:"Morgens, kann aufgeteilt werden.",
+  dauer:"Beurteilung nach 6–8 Wochen.",
+  interakt:"Vorsicht bei gleichzeitiger Einnahme von Antidepressiva — Kombination nur ärztlich.",
+  achtung:"Nicht in der Schwangerschaft. Kein Ersatz für eine Behandlung bei mittelschwerer oder schwerer Depression.",
+  trig:{stimmung:9,angst:4,c_wechseljahre:3}
+},
+{
+  id:"rhodiola", name:"Rhodiola rosea", form:"Extrakt standardisiert auf 3 % Rosavine und 1 % Salidrosid",
+  evidenz:"B", slot:"nuechtern",
+  wirkung:"Adaptogen, das die Stressachse dämpft und Erschöpfung bei anhaltender Belastung reduziert. Wirkt eher aktivierend als beruhigend — das unterscheidet es von den meisten anderen Stresspflanzen.",
+  nachweis:"Für stressbedingte Erschöpfung und Burnout-Symptomatik gibt es mehrere kleine bis mittelgroße RCTs mit positiven Ergebnissen. Die Qualität der Studien ist gemischt, die Richtung aber konsistent.",
+  dosis:"200–400 mg Extrakt täglich.",
+  timing:"Morgens nüchtern. Nicht nachmittags oder abends, kann den Schlaf stören.",
+  dauer:"Wirkung meist innerhalb von 1–2 Wochen. Kurweise über 8–12 Wochen.",
+  interakt:"Kann verschiedene Arzneistoffe über CYP-Enzyme beeinflussen.",
+  achtung:"Bei bipolarer Störung ungeeignet. Nicht in Schwangerschaft und Stillzeit.",
+  trig:{fatigue:6,stress:6,brainfog:4,stimmung:3}
+},
+{
+  id:"bkomplex", name:"Vitamin-B-Komplex", form:"Aktivierte Formen: P5P, 5-MTHF, Methylcobalamin",
+  evidenz:"B", slot:"fruehstueck",
+  wirkung:"Die B-Vitamine arbeiten als Team im Energiestoffwechsel und im Methylierungszyklus. Isolierte Hochdosen einzelner B-Vitamine können das Gleichgewicht stören, deshalb der Komplex.",
+  nachweis:"Für die Senkung von Homocystein eindeutig belegt. Für Energie und Stress bei bereits ausreichender Versorgung ist der Nutzen gering — der beworbene Energieeffekt gilt vor allem für Menschen mit tatsächlichem Mangel, etwa bei regelmäßigem Alkoholkonsum oder veganer Ernährung.",
+  dosis:"Ein Komplex mit moderaten Dosen. Hochdosisprodukte mit dem Zehnfachen der Referenzmenge bringen keinen Zusatznutzen.",
+  timing:"Morgens zur Mahlzeit — B-Vitamine können abends wachhalten.",
+  dauer:"Homocysteinsenkung messbar nach 8 Wochen.",
+  interakt:"B6 kann die Wirkung von Levodopa abschwächen.",
+  achtung:"Vitamin B6 dauerhaft über 25 mg täglich kann Nervenschäden verursachen — auf den Gehalt achten, viele Produkte überdosieren gerade B6 massiv.",
+  trig:{l_homocystein:9,c_alkohol:7,fatigue:4,stress:4,c_pille:5,brainfog:3,c_vegan:3}
+},
+{
+  id:"vitc", name:"Vitamin C", form:"Ascorbinsäure oder gepuffert bei empfindlichem Magen",
+  evidenz:"B", slot:"nuechtern",
+  wirkung:"Cofaktor der Kollagensynthese, Antioxidans und der wirksamste bekannte Verstärker der pflanzlichen Eisenaufnahme — er reduziert dreiwertiges zu zweiwertigem Eisen.",
+  nachweis:"Für die Eisenaufnahme klar belegt. Bei Erkältungen verhindert Vitamin C keine Infekte, verkürzt sie in Meta-Analysen aber leicht bei regelmäßiger Einnahme; besonders profitieren Menschen unter hoher körperlicher Belastung. Raucher haben einen nachweislich erhöhten Bedarf.",
+  dosis:"200–500 mg täglich. Oberhalb davon sinkt die Aufnahmerate steil ab, der Rest wird ausgeschieden.",
+  timing:"Zusammen mit einer Eisenquelle oder einem Eisenpräparat.",
+  dauer:"Dauerhaft möglich.",
+  interakt:"Erhöht die Eisenaufnahme — bei Hämochromatose ungünstig.",
+  achtung:"Dosen über 1.000 mg täglich erhöhen das Risiko für Nierensteine bei entsprechend Veranlagten.",
+  trig:{infekte:5,wundheilung:5,l_ferritin:5,c_raucher:7,hauttrocken:3,naegel:3}
+},
+{
+  id:"selen", name:"Selen", form:"Natriumselenit oder Selenmethionin",
+  evidenz:"B", slot:"fruehstueck",
+  wirkung:"Baustein der Glutathionperoxidasen und der Enzyme, die T4 in das aktive T3 umwandeln. Europäische Böden sind selenarm, entsprechend niedrig ist die Zufuhr über Pflanzen.",
+  nachweis:"Bei Mangel belegt. Bei Hashimoto-Thyreoiditis zeigen mehrere Studien eine Senkung der TPO-Antikörper — ob das klinisch etwas ändert, ist offen.",
+  dosis:"50–100 µg täglich. Nicht mehr.",
+  timing:"Morgens zur Mahlzeit.",
+  dauer:"Antikörperveränderung nach 3–6 Monaten.",
+  interakt:"Hochdosiertes Vitamin C kann die Aufnahme von Selenit reduzieren.",
+  achtung:"Selen hat eine enge therapeutische Breite. Ab etwa 300 µg täglich drohen Haarausfall, Nagelveränderungen und Nervenschäden — hier ist mehr eindeutig schlechter. Vor der Einnahme messen lassen.",
+  trig:{l_selen:12,c_schilddruese:6,infekte:2,haarausfall:2,naegel:2}
+},
+{
+  id:"elektrolyte", name:"Elektrolytmischung", form:"Natrium, Kalium, Magnesium — ohne Zucker",
+  evidenz:"B", slot:"nachmittag",
+  wirkung:"Ersetzt die über Schweiß verlorenen Mineralstoffe. Natrium ist dabei der mit Abstand wichtigste und wird von Sportlern am häufigsten unterschätzt — reines Wasser verdünnt bei langen Belastungen zusätzlich.",
+  nachweis:"Bei Belastungen über 90 Minuten, in Hitze oder bei starkem Schwitzen gut belegt für Leistungserhalt und Krampfprophylaxe. Bei kürzeren Einheiten ohne Zusatznutzen.",
+  dosis:"Je nach Schweißverlust, typischerweise 500–1.000 mg Natrium pro Stunde intensiver Belastung.",
+  timing:"Während und direkt nach der Belastung.",
+  dauer:"Akut.",
+  interakt:"Bei blutdrucksenkenden Medikamenten Natriumzufuhr beachten.",
+  achtung:"Bei Bluthochdruck oder Nierenerkrankung nicht auf eigene Faust hochdosieren.",
+  trig:{c_sport:7,kraempfe:5,schwindel:4,migraene:2}
+},
+{
+  id:"berberin", name:"Berberin", form:"Berberin-HCl, gern als Dihydroberberin für bessere Aufnahme",
+  evidenz:"B", slot:"mittag",
+  wirkung:"Aktiviert AMPK, denselben Signalweg wie Metformin, und verbessert dadurch die Insulinsensitivität und die Glukoseaufnahme in die Zelle.",
+  nachweis:"Meta-Analysen zeigen bei Typ-2-Diabetes und Insulinresistenz Senkungen von Nüchternglukose und HbA1c, die in mancher Studie an Metformin heranreichten. Die Studien stammen überwiegend aus China und sind methodisch von schwankender Qualität.",
+  dosis:"500 mg, zwei- bis dreimal täglich.",
+  timing:"Direkt vor den Hauptmahlzeiten.",
+  dauer:"Beurteilung nach 12 Wochen mit Laborkontrolle.",
+  interakt:"Erheblich: Berberin hemmt CYP3A4 und P-Glykoprotein und kann die Spiegel zahlreicher Medikamente verändern, darunter Blutverdünner, Statine und Immunsuppressiva.",
+  achtung:"Das interaktionsreichste Supplement auf dieser Liste. Nicht ohne ärztliche Rücksprache, wenn du Medikamente nimmst. Nicht in Schwangerschaft und Stillzeit.",
+  trig:{blutzucker:10,cholesterin:4}
+},
+{
+  id:"ashwagandha", name:"Ashwagandha", form:"KSM-66 oder Sensoril, standardisierter Wurzelextrakt",
+  evidenz:"B", slot:"abend",
+  wirkung:"Adaptogen, das die Cortisolantwort auf Dauerstress dämpft. Wirkt eher sedierend und passt deshalb besser abends als morgens.",
+  nachweis:"Mehrere RCTs zeigen eine Senkung von Cortisol und Stressskalen um rund 20–30 Prozent. Gegenläufig steht die Sicherheitslage: Das Bundesinstitut für Risikobewertung warnt seit 2024 vor Ashwagandha-Präparaten, nachdem international Fälle von Leberschäden gemeldet wurden — meist drei bis zehn Monate nach Einnahmebeginn, bei Dosen zwischen 450 und 1.350 mg täglich. Die Leberwerte normalisierten sich in den meisten Fällen ein bis zwei Wochen nach dem Absetzen.",
+  dosis:"300–600 mg Extrakt täglich, ausdrücklich kurweise und nicht dauerhaft.",
+  timing:"Abends nach dem Essen.",
+  dauer:"Wirkung nach 4–8 Wochen. Maximal drei Monate am Stück, dann Pause.",
+  interakt:"Kann Blutdrucksenker, Diabetesmedikamente, Immunsuppressiva und Schilddrüsenhormone beeinflussen.",
+  achtung:"Das BfR rät Kindern, Schwangeren, Stillenden und allen mit einer aktuellen oder zurückliegenden Lebererkrankung vollständig ab. Bei Gelbfärbung, Juckreiz, Übelkeit oder Oberbauchschmerzen sofort absetzen und ärztlich abklären. Alternativen mit besserem Sicherheitsprofil: L-Theanin oder Rhodiola.",
+  trig:{stress:8,angst:6,einschlafen:4,reizbar:4}
+},
+{
+  id:"glycin", name:"Glycin", form:"Glycin-Pulver, süßlich im Geschmack",
+  evidenz:"B", slot:"abend",
+  wirkung:"Senkt die Körperkerntemperatur über periphere Gefäßerweiterung — genau das Signal, mit dem der Körper das Einschlafen einleitet. Wirkt zusätzlich als hemmender Neurotransmitter.",
+  nachweis:"Kleine, aber saubere RCTs zeigen verkürzte Einschlafzeit, bessere subjektive Schlafqualität und geringere Tagesmüdigkeit am Folgetag. Die Studienbasis ist schmal, das Sicherheitsprofil aber sehr gut.",
+  dosis:"3 g vor dem Schlafen.",
+  timing:"30–60 Minuten vor dem Zubettgehen, in Wasser gelöst.",
+  dauer:"Wirkt ab der ersten Nacht.",
+  interakt:"Keine relevanten.",
+  achtung:"Sehr gut verträglich, günstig, keine Gewöhnung. Gute erste Wahl vor stärkeren Mitteln.",
+  trig:{einschlafen:7,durchschlafen:6}
+},
+{
+  id:"kalium", name:"Kalium", form:"Kaliumcitrat",
+  evidenz:"A", slot:"fruehstueck",
+  wirkung:"Zentral für Membranpotenzial, Muskelkontraktion und Blutdruckregulation. Die meisten Menschen nehmen zu viel Natrium und zu wenig Kalium auf — das Verhältnis ist entscheidender als die Einzelmenge.",
+  nachweis:"Der blutdrucksenkende Effekt einer erhöhten Kaliumzufuhr ist gut belegt, allerdings vor allem über die Ernährung. Nahrungsergänzungsmittel sind in Deutschland auf 500 mg pro Tagesdosis begrenzt.",
+  dosis:"Bevorzugt über die Ernährung: Kartoffeln, Hülsenfrüchte, Bananen, Gemüse. Präparate nur ergänzend.",
+  timing:"Zur Mahlzeit.",
+  dauer:"Blutdruckeffekt nach Wochen.",
+  interakt:"Gefährlich in Kombination mit ACE-Hemmern, Sartanen und kaliumsparenden Diuretika.",
+  achtung:"Bei eingeschränkter Nierenfunktion kann eine Kaliumsupplementierung lebensbedrohliche Herzrhythmusstörungen auslösen. Nur mit Laborwert und ärztlich.",
+  trig:{l_kalium:12,blutdruck:5,kraempfe:4}
+},
+{
+  id:"biotin", name:"Biotin", form:"D-Biotin",
+  evidenz:"C", slot:"fruehstueck",
+  wirkung:"Cofaktor im Fettsäure- und Aminosäurestoffwechsel, beteiligt an der Keratinbildung.",
+  nachweis:"Bei echtem Biotinmangel wirksam — der ist aber selten. Für Haarwachstum bei normal versorgten Menschen fehlt jeder überzeugende Beleg; die häufig zitierten Studien betrafen Menschen mit Mangelzuständen. Das populärste Haarsupplement mit der dünnsten Datenlage.",
+  dosis:"Wenn überhaupt, 2,5 mg täglich.",
+  timing:"Morgens zur Mahlzeit.",
+  dauer:"Haarzyklus dauert Monate, Beurteilung frühestens nach 6 Monaten.",
+  interakt:"Keine.",
+  achtung:"Wichtig: Hochdosiertes Biotin verfälscht zahlreiche Labortests erheblich, darunter Troponin (Herzinfarktdiagnostik), TSH und Schilddrüsenwerte. Mindestens 72 Stunden vor jeder Blutabnahme absetzen und das Labor informieren. Bei Haarausfall zuerst Ferritin, Zink, Schilddrüse und Vitamin D prüfen.",
+  trig:{haarausfall:4,naegel:5}
+},
+{
+  id:"koffein", name:"Koffein", form:"Tablette oder Kaffee, dosiert",
+  evidenz:"A", slot:"fruehstueck",
+  wirkung:"Blockiert Adenosinrezeptoren und unterdrückt damit das Müdigkeitssignal. Es erzeugt keine Energie, es verschiebt die Wahrnehmung von Müdigkeit nach hinten.",
+  nachweis:"Für Wachheit, Reaktionszeit und Ausdauerleistung eines der bestbelegten Mittel überhaupt.",
+  dosis:"100–200 mg. In Kombination mit 200 mg L-Theanin für Fokus ohne Nervosität.",
+  timing:"Morgens bis spätestens 8 Stunden vor dem Schlafen — die Halbwertszeit von etwa 5 Stunden bedeutet, dass ein Espresso um 16 Uhr um Mitternacht noch messbar wirkt.",
+  dauer:"Akut. Toleranz entwickelt sich innerhalb von 1–2 Wochen.",
+  interakt:"Verstärkt die Wirkung von Schilddrüsenhormonen und einigen Stimulanzien.",
+  achtung:"Bei Schlafproblemen, Angst oder Herzrasen ist Reduzieren die wirksamere Maßnahme als jedes zusätzliche Supplement.",
+  trig:{konzentration:6,fatigue:4,c_sport:4}
+}
+];
+
+/* Kontextsperren: Supplement-ID -> [ [KontextID, Begründung], ... ] */
+const BLOCKS = {
+  ashwagandha:[["c_leber","Das BfR rät bei aktueller oder zurückliegender Lebererkrankung vollständig ab."],
+               ["c_schwanger","In der Schwangerschaft ungeeignet, historisch als abortiv verwendet."],
+               ["c_stillzeit","In der Stillzeit ungeeignet, Sicherheitsdaten fehlen."],
+               ["c_schilddruese","Kann die Schilddrüsenfunktion beeinflussen."]],
+  kalium:[["c_niere","Bei eingeschränkter Nierenfunktion drohen gefährliche Herzrhythmusstörungen."]],
+  jod:[["c_schilddruese","Bei Hashimoto oder Autonomie kann Jod die Erkrankung verschlechtern — nur nach ärztlicher Abklärung."]],
+  melatonin:[["c_schwanger","Keine Sicherheitsdaten für Schwangerschaft."],["c_stillzeit","Keine Sicherheitsdaten für die Stillzeit."]],
+  berberin:[["c_schwanger","In der Schwangerschaft kontraindiziert."],["c_stillzeit","In der Stillzeit kontraindiziert."],
+            ["c_blutverduenner","Verändert über CYP3A4 die Spiegel von Blutverdünnern erheblich."]],
+  safran:[["c_schwanger","In der Schwangerschaft ungeeignet."],
+          ["c_ssri","Kombination mit Antidepressiva nur unter ärztlicher Aufsicht — Serotoninüberschuss möglich."]],
+  rhodiola:[["c_schwanger","Keine Sicherheitsdaten."],["c_stillzeit","Keine Sicherheitsdaten."]],
+  curcumin:[["c_blutverduenner","Kann die Blutungsneigung unter Antikoagulation verstärken."],
+            ["c_leber","Bei Lebererkrankung wegen berichteter Leberschäden meiden."]],
+  kreatin:[["c_niere","Bei Nierenerkrankung nur nach ärztlicher Abklärung."]],
+  protein:[["c_niere","Bei Nierenerkrankung muss die Proteinmenge ärztlich festgelegt werden."]]
+};
+
+/* Kontextabhängige Zusatzhinweise auf der Karte */
+const CTX_NOTE = {
+  omega3:{c_blutverduenner:"Du nimmst Blutverdünner: Omega-3 verlängert die Blutungszeit. Dosis und Notwendigkeit ärztlich klären, vor Operationen absetzen."},
+  vitd:{c_blutverduenner:"Wähle ein reines D3-Präparat ohne K2 — Vitamin K hebt die Wirkung von Marcumar auf."},
+  eisen:{c_ueber60:"Eisenmangel jenseits der Menopause und bei Männern gehört immer ärztlich abgeklärt, bevor supplementiert wird."},
+  b12:{c_ppi:"Magensäureblocker senken die B12-Aufnahme dauerhaft — bei Dauereinnahme jährlich Holo-TC kontrollieren.",
+       c_metformin:"Metformin senkt B12 messbar. Jährliche Kontrolle ist bei Dauertherapie sinnvoll."},
+  q10:{c_statin:"Statine hemmen die körpereigene Q10-Synthese. Bei Muskelbeschwerden unter Statin ist ein 8-Wochen-Versuch vertretbar — das Statin dabei nicht eigenmächtig absetzen."}
+};
+
+/* Laborempfehlungen: Auslöser -> Was messen lassen */
+const LAB_TIPS = [
+  {when:["fatigue","blass","kurzatmig","haarausfall","restless","kaltehaende","c_menstruation"],
+   text:"Kleines Blutbild, Ferritin und Transferrinsättigung — Eisenmangel ist die häufigste behandelbare Ursache für Erschöpfung und wird ohne Ferritin regelmäßig übersehen."},
+  {when:["fatigue","brainfog","c_vegan","c_vegetarisch","c_ppi","c_metformin","c_ueber60"],
+   text:"Holo-Transcobalamin und Methylmalonsäure statt nur Serum-B12 — der Serumwert ist unzuverlässig und kann trotz Mangel normal aussehen."},
+  {when:["fatigue","stimmung","kaltehaende","haarausfall","verstopfung","c_schilddruese"],
+   text:"TSH, fT3, fT4 und TPO-Antikörper — eine Schilddrüsenunterfunktion imitiert praktisch jedes Mangelsymptom auf dieser Liste."},
+  {when:["knochen","muskelschwaeche","c_wenigsonne","infekte"],
+   text:"25-OH-Vitamin-D, idealerweise im Februar oder März gemessen, wenn der Jahrestiefstand erreicht ist."},
+  {when:["kraempfe","restless","migraene","c_sport"],
+   text:"Magnesium im Vollblut ist aussagekräftiger als im Serum, weil der Serumwert bis zuletzt konstant gehalten wird."},
+  {when:["gelenke","gelenke","gelenke"],
+   text:"CRP und Rheumafaktor, wenn Gelenkbeschwerden mit morgendlicher Steifigkeit über 30 Minuten einhergehen."},
+  {when:["blutzucker","blutdruck","cholesterin"],
+   text:"HbA1c, Nüchterninsulin und ein vollständiges Lipidprofil einschließlich Lipoprotein(a) — letzteres wird einmal im Leben bestimmt und fast nie angeboten."},
+  {when:["stimmung","angst","stress"],
+   text:"Vitamin D, Ferritin, B12 und Schilddrüsenwerte, bevor Stimmungssymptome auf Nährstoffe geschoben werden."}
+];
+
+/* Symptome, die vor jeder Supplementierung ärztlich gehören */
+const REDFLAGS = [
+  {ids:["kurzatmig"],t:"Kurzatmigkeit bei Belastung kann auf Anämie, eine Herz- oder Lungenerkrankung hinweisen. Das gehört abgeklärt, bevor du an Supplements denkst."},
+  {ids:["blass","fatigue"],t:"Blässe zusammen mit anhaltender Müdigkeit ist ein typisches Anämiemuster. Kleines Blutbild und Ferritin bestimmen lassen."},
+  {ids:["schwindel"],t:"Wiederkehrender Schwindel hat viele mögliche Ursachen, von Blutdruck über Innenohr bis Anämie. Ärztliche Einordnung geht vor."},
+  {ids:["stimmung","angst"],t:"Wenn gedrückte Stimmung länger als zwei Wochen anhält oder deinen Alltag einschränkt, ist ärztliche oder psychotherapeutische Hilfe der richtige Weg. Supplements sind hier bestenfalls eine Ergänzung."},
+  {ids:["haarausfall"],t:"Deutlicher Haarausfall hat oft eine konkrete Ursache — Eisen, Schilddrüse, Hormone. Erst messen, dann supplementieren."},
+  {ids:["migraene"],t:"Neu aufgetretene oder veränderte Kopfschmerzen gehören ärztlich abgeklärt, bevor eine Prophylaxe beginnt."}
+];
+
+const SLOTS = [
+  {id:"nuechtern",when:"Morgens nüchtern",why:"Bessere Aufnahme ohne konkurrierende Nahrungsbestandteile"},
+  {id:"fruehstueck",when:"Zum Frühstück",why:"Fettlösliches braucht Fett, B-Vitamine könnten abends wachhalten"},
+  {id:"mittag",when:"Zur Hauptmahlzeit",why:"Größte Fettmenge des Tages, beste Verwertung"},
+  {id:"nachmittag",when:"Nachmittags oder ums Training",why:"Rund um Belastung und Regeneration"},
+  {id:"abend",when:"Abends",why:"Beruhigend, oder mit Abstand zu Eisen und Zink am Morgen"}
+];
+
+/* ============================================================
+   3 — OBERFLÄCHE AUFBAUEN
+   ============================================================ */
+const sel = new Set();
+const LABEL = {};
+
+function build(target, data){
+  document.getElementById(target.el).innerHTML = data.map(g=>`
+    <div class="group">
+      <div class="group-title">${g.g}</div>
+      <div class="chips">${g.items.map(([id,l])=>{
+        LABEL[id]=l;
+        return `<button class="chip${g.risk?" risk":""}" data-id="${id}" data-panel="${target.p}" aria-pressed="false">${l}</button>`;
+      }).join("")}</div>
+    </div>`).join("");
+}
+build({el:"symGroups",p:"p1"},SYMPTOMS);
+build({el:"labGroups",p:"p2"},LABS);
+build({el:"ctxGroups",p:"p3"},CONTEXT);
+
+document.addEventListener("click",e=>{
+  const c=e.target.closest(".chip"); if(!c) return;
+  const id=c.dataset.id;
+  if(sel.has(id)){sel.delete(id);c.classList.remove("on");c.setAttribute("aria-pressed","false");}
+  else{sel.add(id);c.classList.add("on");c.setAttribute("aria-pressed","true");}
+  refresh();
+});
+
+function refresh(){
+  ["p1","p2","p3"].forEach(p=>{
+    const n=[...document.querySelectorAll(`.chip[data-panel="${p}"].on`)].length;
+    document.querySelector(`[data-cnt="${p}"]`).textContent = n?`(${n})`:"";
+  });
+  const n=sel.size;
+  document.getElementById("status").innerHTML = n
+    ? `<b>${n}</b> ${n===1?"Angabe":"Angaben"} ausgewählt`
+    : "Noch nichts ausgewählt";
+  document.getElementById("calc").disabled = n===0;
+}
+refresh();
+
+document.querySelectorAll(".step").forEach(b=>b.addEventListener("click",()=>go(b.dataset.p)));
+function go(p){
+  document.querySelectorAll(".step").forEach(s=>s.setAttribute("aria-selected",String(s.dataset.p===p)));
+  document.querySelectorAll(".panel").forEach(s=>s.classList.toggle("on",s.id===p));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.getElementById("reset").addEventListener("click",()=>{
+  sel.clear();
+  document.querySelectorAll(".chip").forEach(c=>{c.classList.remove("on");c.setAttribute("aria-pressed","false");});
+  document.getElementById("out").innerHTML="";
+  refresh(); go("p1");
+});
+document.getElementById("calc").addEventListener("click",()=>{render();go("p4");});
+
+/* ============================================================
+   4 — AUSWERTUNG
+   ============================================================ */
+const MULT={A:1,B:.86,C:.62};
+const evHTML=g=>`<span class="ev ev-${g}"><span class="ev-bars"><i></i><i></i><i></i></span><span class="ev-label">Evidenz ${g}</span></span>`;
+const esc=s=>String(s).replace(/[&<>]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[m]));
+
+function evaluate(){
+  const hits=[],blocked=[];
+  for(const s of SUPPS){
+    const bl=(BLOCKS[s.id]||[]).filter(([c])=>sel.has(c));
+    if(bl.length){blocked.push({s,reasons:bl});continue;}
+    let raw=0; const why=[];
+    for(const [k,w] of Object.entries(s.trig)){
+      if(sel.has(k)){raw+=w;why.push(LABEL[k]||k);}
+    }
+    if(raw>0) hits.push({s,raw,score:raw*MULT[s.evidenz],why});
+  }
+  hits.sort((a,b)=>b.score-a.score||a.s.name.localeCompare(b.s.name));
+  return {hits,blocked};
+}
+
+function render(){
+  const {hits,blocked}=evaluate();
+  const out=document.getElementById("out");
+
+  if(!hits.length && !blocked.length){
+    out.innerHTML=`<div class="empty-state"><b>Keine Treffer</b>Deine Auswahl ergibt keine Empfehlung. Wähle in Schritt 1 bis 3 mehr Angaben aus.</div>`;
+    return;
+  }
+
+  const max=hits.length?hits[0].score:1;
+  const rel=h=>Math.max(12,Math.round(h.score/max*100));
+  const core=hits.filter(h=>rel(h)>=55);
+  const show=hits.filter(h=>rel(h)>=18);
+
+  /* Ranking */
+  const list=show.map((h,i)=>{
+    const s=h.s, r=rel(h);
+    const notes=Object.entries(CTX_NOTE[s.id]||{}).filter(([c])=>sel.has(c)).map(([,t])=>t);
+    return `<li class="item${i<3?" top":""}">
+      <button class="item-head" aria-expanded="false">
+        <span class="pos">${String(i+1).padStart(2,"0")}</span>
+        <span>
+          <span class="item-name">${esc(s.name)}</span>
+          <span class="item-form">${esc(s.form)}</span>
+        </span>
+        <span class="item-meta">
+          ${evHTML(s.evidenz)}
+          <span class="relev">
+            <span class="relev-num">Relevanz ${r}</span>
+            <span class="relev-bar"><span style="width:${r}%"></span></span>
+          </span>
+          <span class="caret">▶</span>
+        </span>
+      </button>
+      <div class="body">
+        <p class="why"><b>Für dich relevant wegen:</b> ${h.why.map(esc).join(" · ")}</p>
+        <dl class="facts">
+          <div class="fact"><dt>Wirkung</dt><dd>${esc(s.wirkung)}</dd></div>
+          <div class="fact"><dt>Studienlage</dt><dd>${esc(s.nachweis)}</dd></div>
+          <div class="fact"><dt>Dosierung</dt><dd>${esc(s.dosis)}</dd></div>
+          <div class="fact"><dt>Einnahme</dt><dd>${esc(s.timing)}</dd></div>
+          <div class="fact"><dt>Wann wirkt es</dt><dd>${esc(s.dauer)}</dd></div>
+          <div class="fact"><dt>Wechselwirkungen</dt><dd>${esc(s.interakt)}</dd></div>
+        </dl>
+        <div class="note"><b>Zu beachten</b>${esc(s.achtung)}</div>
+        ${notes.map(t=>`<div class="note danger"><b>Wegen deiner Angaben</b>${esc(t)}</div>`).join("")}
+      </div>
+    </li>`;
+  }).join("");
+
+  /* Tagesplan */
+  const plan=SLOTS.map(sl=>{
+    const items=show.filter(h=>h.s.slot===sl.id&&rel(h)>=30);
+    return `<div class="slot">
+      <div class="slot-when">${sl.when}</div>
+      <div class="slot-why">${sl.why}</div>
+      ${items.length?`<ul>${items.map(h=>`<li><b>${esc(h.s.name)}</b><span>${esc(h.s.dosis.split(".")[0])}</span></li>`).join("")}</ul>`
+                    :`<div class="empty">Nichts eingeplant</div>`}
+    </div>`;
+  }).join("");
+
+  /* Laborempfehlungen */
+  const labs=LAB_TIPS.filter(t=>t.when.some(w=>sel.has(w))).map(t=>`<li>${esc(t.text)}</li>`);
+
+  /* Red Flags */
+  const flags=REDFLAGS.filter(f=>f.ids.every(i=>sel.has(i))).map(f=>`<li>${esc(f.t)}</li>`);
+
+  /* Gesperrte */
+  const blk=blocked.map(b=>`<div class="blocked"><b>${esc(b.s.name)}</b>
+    ${b.reasons.map(([c,t])=>`<span>${esc(LABEL[c])}: ${esc(t)}</span>`).join("")}</div>`).join("");
+
+  out.innerHTML=`
+    <div class="summary">
+      <h3>${hits.length} Nährstoffe passen zu deinem Profil</h3>
+      <p>Sortiert nach Relevanz für deine Angaben, gewichtet mit der Stärke der Studienlage. Starte mit dem Kern-Stack und gib jedem Mittel die Zeit, die unter „Wann wirkt es“ steht, bevor du das nächste dazunimmst.</p>
+      ${core.length?`<div class="stack">${core.map(h=>`<span>${esc(h.s.name)}</span>`).join("")}</div>`:""}
+    </div>
+
+    <ol class="rank">${list}</ol>
+
+    <section class="plan">
+      <h3>Dein Tagesplan</h3>
+      <p class="sub">Die Einteilung folgt der Aufnahme, nicht der Bequemlichkeit: Eisen und Zink blockieren sich gegenseitig, fettlösliche Vitamine brauchen eine Mahlzeit, B-Vitamine gehören nicht in den Abend.</p>
+      <div class="slots">${plan}</div>
+    </section>
+
+    <section class="aux">
+      <h3>Vor dem Kaufen</h3>
+      <p class="sub">Zwei Dinge, die mehr bringen als jede Bestellung.</p>
+      <div class="cols">
+        ${flags.length?`<div class="box warn"><h4>Erst ärztlich abklären</h4><ul>${flags.join("")}</ul></div>`:""}
+        ${labs.length?`<div class="box"><h4>Diese Werte messen lassen</h4><ul>${labs.join("")}</ul></div>`:""}
+        ${blk?`<div class="box warn"><h4>Für dich gesperrt</h4>${blk}</div>`:""}
+      </div>
+    </section>
+
+    <p class="footnote">Diese Auswertung ersetzt keine ärztliche Beratung und keine Diagnose. Sie beruht auf allgemeinen Studienergebnissen, nicht auf deiner individuellen Krankengeschichte. Nimm nichts dauerhaft ein, ohne den zugrunde liegenden Wert messen zu lassen — besonders bei Eisen, Jod, Selen und Kalium, wo eine Überversorgung schaden kann. Wenn du regelmäßig Medikamente einnimmst, besprich jedes Präparat mit Arzt oder Apotheke: Wechselwirkungen sind häufiger, als die Verpackungen vermuten lassen.</p>
+  `;
+
+  out.querySelectorAll(".item-head").forEach(b=>b.addEventListener("click",()=>{
+    const it=b.closest(".item"), open=it.classList.toggle("open");
+    b.setAttribute("aria-expanded",String(open));
+  }));
+  const first=out.querySelector(".item");
+  if(first){first.classList.add("open");first.querySelector(".item-head").setAttribute("aria-expanded","true");}
+}
+</script>
+</body>
+</html>
