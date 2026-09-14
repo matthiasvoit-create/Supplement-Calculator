@@ -63,3 +63,12 @@ Die Evidenzgrade stützen sich unter anderem auf die Vitamin-D-Leitlinie der End
 ## Haftungsausschluss
 
 Kein Medizinprodukt, keine Diagnose, kein Ersatz für ärztliche Beratung. Die Bewertungen beruhen auf allgemeinen Studienergebnissen, nicht auf einer individuellen Krankengeschichte. Besonders bei Eisen, Jod, Selen und Kalium kann eine Einnahme ohne vorherige Messung schaden.
+
+---
+
+## Auch in diesem Repository
+
+**[Kokoro Quest](kokoro-quest/)** — eine gamifizierte Self-Care-App gegen Angst und Panik.
+Tägliche Übungen aus Verhaltenstherapie, Körperarbeit und Achtsamkeit, sichtbar gemacht als
+Avatar-Entwicklung. Ebenfalls eine einzige HTML-Datei, offline lauffähig, alle Daten bleiben
+im Browser. Details in [`kokoro-quest/README.md`](kokoro-quest/README.md).

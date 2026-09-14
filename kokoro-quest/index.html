@@ -1,0 +1,3404 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Kokoro Quest – Mut wächst in kleinen Schritten</title>
+<meta name="description" content="Kokoro Quest: gamifizierte Selbsthilfe-Übungen gegen Angst und Panik. Alle Daten bleiben im Browser.">
+<!--
+  ============================================================================
+  KOKORO QUEST  ·  Eine einzelne HTML-Datei. Kein Build, keine Abhängigkeiten,
+  keine Netzwerk-Requests, kein Tracking. Doppelklick genügt.
+  ----------------------------------------------------------------------------
+  Aufbau der Datei:
+    1) <style>        Design-System, Tokens, Komponenten, Dark Mode, Motion
+    2) <body>         App-Hülle: Kopf, Screens, Krisenleiste, Panik-Button
+    3) <script>
+       §A  INHALTE    Texte, Notfallkontakte, Quests, Wissenskarten,
+                      Coping-Sätze, Achievements, Level  ← hier gefahrlos
+                      editierbar, ohne Logikwissen
+       §B  STATE      Datenmodell, localStorage, migrate()
+       §C  LOGIK      Spielschleife, Punkte, Serie, Level-Ups
+       §D  AVATAR     Sieben Inline-SVG-Stufen
+       §E  RENDER     Screens
+       §F  TOOLS      Atem, Timer, Journalformulare, Diagramme
+       §G  START      Router & Initialisierung
+  ============================================================================
+-->
+<style>
+/* =========================================================================
+   1. DESIGN-TOKENS  ·  Tokyo-Pop-Pastell
+   ========================================================================= */
+:root{
+  /* Markenfarben hell */
+  --sakura:#FFB7C5;
+  --mint:#A8E6CF;
+  --himmel:#A0D8F1;
+  --lavendel:#C9B6E4;
+  --butter:#FFE79A;
+  --koralle:#FF8FA3;
+  --tinte:#3B3054;           /* nie #000 */
+  --ink:#3B3054;             /* Outline-Farbe für die Figur */
+  --ink-dunkel:#3B3054;      /* Kontur AUF Pastellflächen – in beiden Modi dunkel */
+
+  /* Semantische Rollen hell */
+  --bg:#FFF8F3;
+  --bg-deko:#FFEDE4;
+  --surface:#FFFFFF;
+  --surface-2:#FFF1EA;
+  --line:#EBD9D0;
+  --text:#3B3054;
+  --text-muted:#5A4C77;
+  --accent:#FF8FA3;
+  --accent-ink:#3B3054;
+  --focus:#2F6FB5;
+  --shadow:0 6px 0 rgba(59,48,84,.10), 0 10px 24px rgba(59,48,84,.10);
+  --shadow-sm:0 3px 0 rgba(59,48,84,.08), 0 6px 14px rgba(59,48,84,.08);
+
+  /* Attributfarben */
+  --at-koerper:#FF8FA3;
+  --at-geist:#7FC6EA;
+  --at-mut:#B79BE0;
+  --at-verbundenheit:#F0C64B;
+
+  --radius:26px;
+  --radius-sm:18px;
+  --outline:3px;
+  --maxw:620px;
+  --font:"Hiragino Maru Gothic ProN","Quicksand","Trebuchet MS",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --sakura:#E6A2B2;
+    --mint:#8FCBB5;
+    --himmel:#8CC0DC;
+    --lavendel:#B3A1D0;
+    --butter:#E8D294;
+    --koralle:#E88FA0;
+    --ink:#F3EEFF;
+    --bg:#241C38;
+    --bg-deko:#2C2244;
+    --surface:#2F2648;
+    --surface-2:#3A2F58;
+    --line:#4B3E70;
+    --text:#F3EEFF;
+    --text-muted:#C9BEE6;
+    --accent:#E6A2B2;
+    --accent-ink:#241C38;
+    --focus:#9AD1FF;
+    --shadow:0 6px 0 rgba(0,0,0,.25), 0 10px 24px rgba(0,0,0,.35);
+    --shadow-sm:0 3px 0 rgba(0,0,0,.22), 0 6px 14px rgba(0,0,0,.28);
+    --at-koerper:#F09FAE;
+    --at-geist:#8CC0DC;
+    --at-mut:#B9A6DE;
+    --at-verbundenheit:#E8CE7E;
+    --neon:#7CF5D2;          /* Neon-Akzent nur für Level-Ups */
+  }
+}
+
+/* =========================================================================
+   2. GRUNDLAYOUT
+   ========================================================================= */
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  font-size:16px;
+  line-height:1.55;
+  min-height:100vh;
+  overflow-x:hidden;              /* nie horizontal scrollen */
+}
+body::before{                      /* dekorative Wölkchen im Hintergrund */
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(60px 40px at 12% 18%, var(--bg-deko) 60%, transparent 61%),
+    radial-gradient(90px 55px at 85% 10%, var(--bg-deko) 60%, transparent 61%),
+    radial-gradient(70px 45px at 75% 78%, var(--bg-deko) 60%, transparent 61%),
+    radial-gradient(50px 34px at 20% 88%, var(--bg-deko) 60%, transparent 61%);
+  opacity:.9;
+}
+img,svg{max-width:100%}
+h1,h2,h3{font-weight:800;line-height:1.25;margin:0 0 .4em}
+h1{font-size:1.5rem}
+h2{font-size:1.25rem}
+h3{font-size:1.05rem}
+p{margin:0 0 .8em}
+a{color:var(--text);text-underline-offset:3px}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:8px}
+
+.wrap{width:100%;max-width:var(--maxw);margin:0 auto;padding-inline:16px}
+.app{padding-block:0 170px}        /* Platz für Navigation + Krisenleiste */
+.stack>*+*{margin-top:12px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.center{text-align:center}
+.muted{color:var(--text-muted)}
+.small{font-size:.9rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row.between{justify-content:space-between}
+.grow{flex:1 1 auto;min-width:0}
+
+/* =========================================================================
+   3. KOPFZEILE
+   ========================================================================= */
+.appbar{
+  position:sticky;top:0;z-index:30;
+  background:color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter:blur(8px);
+  border-bottom:2px solid var(--line);
+}
+.appbar .wrap{display:flex;align-items:center;gap:10px;padding-block:10px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:1.05rem}
+.logo .dot{width:26px;height:26px;border-radius:50%;background:var(--sakura);
+  border:var(--outline) solid var(--tinte);display:grid;place-items:center;flex:none}
+@media (prefers-color-scheme: dark){.logo .dot{border-color:var(--text)}}
+
+/* =========================================================================
+   4. KARTEN, BUTTONS, FORMULARE  ·  Sticker-Optik
+   ========================================================================= */
+.card{
+  background:var(--surface);
+  border:var(--outline) solid var(--tinte);
+  border-radius:var(--radius);
+  padding:16px;
+  box-shadow:var(--shadow-sm);
+}
+@media (prefers-color-scheme: dark){.card{border-color:var(--line)}}
+.card.soft{border-style:solid;background:var(--surface-2)}
+.card h2,.card h3{margin-top:0}
+
+.btn{
+  font:inherit;font-weight:800;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  min-height:48px;padding:10px 18px;
+  border-radius:999px;
+  border:var(--outline) solid var(--tinte);
+  background:var(--surface);
+  color:var(--text);
+  cursor:pointer;
+  box-shadow:0 4px 0 var(--tinte);
+  transition:transform .12s ease, box-shadow .12s ease;
+  text-decoration:none;
+}
+@media (prefers-color-scheme: dark){
+  .btn{border-color:var(--line);box-shadow:0 4px 0 var(--line)}
+}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--tinte)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.primary{background:var(--sakura);color:var(--accent-ink)}
+.btn.mint{background:var(--mint);color:#20303A}
+.btn.himmel{background:var(--himmel);color:#1E3242}
+.btn.butter{background:var(--butter);color:#3B3054}
+.btn.ghost{box-shadow:none;border-style:dashed;background:transparent}
+.btn.block{width:100%}
+.btn.sm{min-height:38px;padding:6px 14px;font-size:.9rem;box-shadow:0 3px 0 var(--tinte)}
+@media (prefers-color-scheme: dark){.btn.sm{box-shadow:0 3px 0 var(--line)}}
+
+label{display:block;font-weight:700;margin-bottom:4px}
+input[type=text],input[type=tel],input[type=time],input[type=number],textarea,select{
+  font:inherit;width:100%;padding:12px 14px;
+  border:2px solid var(--line);border-radius:var(--radius-sm);
+  background:var(--surface);color:var(--text);
+}
+textarea{min-height:90px;resize:vertical}
+input[type=range]{width:100%;accent-color:var(--accent);height:36px}
+.field+.field{margin-top:12px}
+
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:999px;
+  border:2px solid var(--tinte);background:var(--surface-2);
+  font-size:.82rem;font-weight:700;white-space:nowrap;
+}
+@media (prefers-color-scheme: dark){.pill{border-color:var(--line)}}
+.pill.koerper{background:var(--at-koerper);color:#3B2028}
+.pill.geist{background:var(--at-geist);color:#132835}
+.pill.mut{background:var(--at-mut);color:#251838}
+.pill.verbundenheit{background:var(--at-verbundenheit);color:#3A2E07}
+
+/* =========================================================================
+   5. NAVIGATION (unten, Daumenreichweite)
+   ========================================================================= */
+.tabbar{
+  position:fixed;left:0;right:0;bottom:50px;z-index:28;
+  background:color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter:blur(8px);
+  border-top:2px solid var(--line);
+}
+.tabbar .wrap{display:flex;gap:2px;padding-block:6px}
+.tab{
+  flex:1 1 0;min-width:0;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  font:inherit;font-size:.72rem;font-weight:700;
+  background:none;border:0;border-radius:14px;color:var(--text-muted);
+  padding:6px 2px;cursor:pointer;
+}
+.tab .ic{width:24px;height:24px;display:block}
+.tab[aria-current="page"]{color:var(--text);background:var(--surface-2)}
+
+/* =========================================================================
+   6. KRISENLEISTE  ·  auf jedem Screen erreichbar
+   ========================================================================= */
+.crisisbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:29;
+  background:var(--tinte);color:#FFF8F3;
+  border-top:2px solid var(--tinte);
+  font-size:.86rem;
+}
+@media (prefers-color-scheme: dark){.crisisbar{background:#160F26}}
+.crisisbar .wrap{display:flex;align-items:center;gap:10px;padding-block:8px;justify-content:space-between;flex-wrap:nowrap}
+.crisisbar .btn{white-space:nowrap}
+.crisisbar a,.crisisbar button{color:#FFF8F3}
+.crisisbar .btn{min-height:32px;padding:2px 12px;font-size:.82rem;
+  background:transparent;border-color:#FFF8F3;box-shadow:none}
+
+/* =========================================================================
+   7. PANIK-BUTTON  ·  immer sichtbar, oberhalb der Navigation
+   ========================================================================= */
+.panic{
+  position:fixed;right:14px;bottom:136px;z-index:35;
+  width:74px;height:74px;border-radius:50%;
+  border:var(--outline) solid var(--tinte);
+  background:var(--himmel);color:#14293A;
+  font:inherit;font-weight:800;font-size:.74rem;line-height:1.1;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  box-shadow:0 5px 0 var(--tinte), 0 10px 20px rgba(59,48,84,.28);
+  cursor:pointer;
+}
+.panic:active{transform:translateY(3px);box-shadow:0 2px 0 var(--tinte)}
+@media (prefers-color-scheme: dark){
+  .panic{border-color:var(--line);box-shadow:0 5px 0 var(--line), 0 10px 20px rgba(0,0,0,.4)}
+}
+.panic svg{width:26px;height:26px}
+
+/* =========================================================================
+   8. AVATAR-BÜHNE, XP, SERIE
+   ========================================================================= */
+.stage{
+  position:relative;display:grid;place-items:center;
+  padding:10px 0 4px;
+}
+.stage .avatar{width:min(240px,62vw);height:auto}
+.idle{animation:idle 3.2s ease-in-out infinite}
+@keyframes idle{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-7px) rotate(-1deg)}}
+.tremble{animation:tremble .35s linear infinite}
+@keyframes tremble{0%,100%{transform:translate(0,0)}25%{transform:translate(-1.2px,.6px)}75%{transform:translate(1.2px,-.6px)}}
+.float-slow{animation:floaty 6s ease-in-out infinite}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.spin-slow{animation:spin 14s linear infinite;transform-origin:100px 110px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.levelname{font-weight:800;font-size:1.15rem;text-align:center}
+.xpbar{
+  height:22px;border-radius:999px;border:var(--outline) solid var(--tinte);
+  background:var(--surface-2);overflow:hidden;position:relative;
+}
+@media (prefers-color-scheme: dark){.xpbar{border-color:var(--line)}}
+.xpbar>i{
+  display:block;height:100%;
+  background:linear-gradient(90deg,var(--sakura),var(--butter));
+  transition:width .6s cubic-bezier(.2,.9,.3,1);
+}
+
+.streak{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.shield{width:26px;height:26px}
+.shield.used{opacity:.28}
+
+/* =========================================================================
+   9. QUEST-KARTEN
+   ========================================================================= */
+.quest{
+  display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;
+  background:var(--surface);border:var(--outline) solid var(--tinte);
+  border-radius:var(--radius);padding:14px;box-shadow:var(--shadow-sm);
+  font:inherit;color:var(--text);cursor:pointer;
+}
+@media (prefers-color-scheme: dark){.quest{border-color:var(--line)}}
+.quest:active{transform:translateY(2px)}
+.quest .ic{width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;
+  border:2px solid var(--tinte);background:var(--surface-2)}
+@media (prefers-color-scheme: dark){.quest .ic{border-color:var(--line)}}
+.quest .ic svg{width:26px;height:26px}
+.quest h3{margin:0 0 2px;font-size:1rem}
+.quest .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.quest.done{background:var(--surface-2)}
+.quest.done h3::after{content:" ✓";color:#127a5a;font-weight:900}
+@media (prefers-color-scheme: dark){.quest.done h3::after{color:#7CF5D2}}
+.pop{animation:pop .45s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(1)}35%{transform:scale(1.07,.93)}70%{transform:scale(.97,1.04)}100%{transform:scale(1)}}
+
+.steps{counter-reset:s;list-style:none;padding:0;margin:0}
+.steps li{counter-increment:s;position:relative;padding:10px 0 10px 44px;border-bottom:2px dashed var(--line)}
+.steps li:last-child{border-bottom:0}
+.steps li::before{
+  content:counter(s);position:absolute;left:0;top:8px;
+  width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+  background:var(--butter);color:#3B3054;border:2px solid var(--tinte);font-weight:800;font-size:.9rem;
+}
+@media (prefers-color-scheme: dark){.steps li::before{border-color:var(--line)}}
+
+.why{background:var(--surface-2);border:2px dashed var(--line);border-radius:var(--radius-sm);padding:12px}
+.warnbox{background:var(--butter);color:#3B3054;border:2px solid var(--tinte);
+  border-radius:var(--radius-sm);padding:10px 12px;font-size:.92rem}
+@media (prefers-color-scheme: dark){.warnbox{background:#5A4A18;color:#FFF3CE;border-color:#7A6828}}
+
+/* =========================================================================
+   10. ATEM-ANIMATION
+   ========================================================================= */
+.breath-stage{display:grid;place-items:center;padding:14px 0;min-height:260px}
+.breath{
+  width:210px;height:210px;border-radius:50%;
+  border:var(--outline) solid var(--tinte);
+  background:radial-gradient(circle at 35% 30%, #fff9, transparent 60%), var(--himmel);
+  display:grid;place-items:center;
+  transform:scale(.62);
+  transition:transform linear;
+  color:#16313F;font-weight:800;text-align:center;padding:16px;
+}
+@media (prefers-color-scheme: dark){.breath{border-color:var(--line);color:#10222E}}
+.breath .phase{font-size:1.1rem}
+.breath .count{font-size:2rem;display:block}
+
+/* =========================================================================
+   11. RUHE-INSEL (Notfallmodus) · bewusst anderer Raum
+   ========================================================================= */
+.island{
+  position:fixed;inset:0;z-index:60;
+  background:#20304A;color:#EAF1F8;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:18px 0 40px;
+}
+@media (prefers-color-scheme: dark){.island{background:#162034}}
+.island .card{background:#2A3B58;border-color:#3E5476;color:#EAF1F8;box-shadow:none}
+.island .btn{background:#33476A;border-color:#5A7299;color:#EAF1F8;box-shadow:0 4px 0 #22314A}
+.island .breath{background:#4E6E8C;border-color:#7C9AB6;color:#F2F8FF}
+.island h1,.island h2{font-weight:700}
+.island .muted{color:#BFCEDE}
+.island a{color:#EAF1F8}
+
+/* =========================================================================
+   12. LEVEL-UP, KONFETTI, TOAST
+   ========================================================================= */
+.overlay{
+  position:fixed;inset:0;z-index:70;display:grid;place-items:center;
+  background:rgba(59,48,84,.55);padding:16px;
+}
+.overlay .card{max-width:420px;width:100%;text-align:center}
+.confetti{position:fixed;inset:0;z-index:69;pointer-events:none;overflow:hidden}
+.confetti i{
+  position:absolute;top:-20px;width:10px;height:16px;border-radius:3px;
+  animation:fall linear forwards;
+}
+@keyframes fall{to{transform:translateY(108vh) rotate(720deg);opacity:.9}}
+
+.toast{
+  position:fixed;left:50%;bottom:210px;transform:translateX(-50%);
+  z-index:50;background:var(--tinte);color:#FFF8F3;
+  padding:10px 18px;border-radius:999px;font-weight:800;font-size:.92rem;
+  box-shadow:var(--shadow);max-width:92vw;text-align:center;
+  animation:toastin .3s ease;
+}
+@keyframes toastin{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+
+.banner{
+  background:var(--butter);color:#3B3054;border:2px solid var(--tinte);
+  border-radius:var(--radius-sm);padding:10px 14px;font-size:.9rem;margin-top:10px;
+}
+@media (prefers-color-scheme: dark){.banner{background:#5A4A18;color:#FFF3CE;border-color:#7A6828}}
+
+/* =========================================================================
+   13. DIAGRAMME & GALERIEN
+   ========================================================================= */
+.heat{display:grid;grid-template-columns:repeat(13,1fr);gap:3px}
+.heat i{display:block;aspect-ratio:1;border-radius:5px;background:var(--surface-2);border:1px solid var(--line)}
+.heat i[data-l="1"]{background:var(--mint)}
+.heat i[data-l="2"]{background:var(--himmel)}
+.heat i[data-l="3"]{background:var(--sakura)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.badge{display:flex;gap:10px;align-items:center;text-align:left;font-size:.84rem;font-weight:700;
+  min-width:0;overflow-wrap:break-word;hyphens:auto}
+.badge>svg{width:52px;height:52px;flex:none}
+.badge .txt{min-width:0}
+.badge.locked>svg{opacity:.34;filter:grayscale(1)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.chips .btn{flex:none}
+.entry{border-left:6px solid var(--lavendel);padding-left:12px}
+.ladder li{margin-bottom:8px}
+
+/* =========================================================================
+   14. BEWEGUNG ABSCHALTBAR
+   ========================================================================= */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;scroll-behavior:auto !important;
+  }
+}
+body.no-motion *,body.no-motion *::before,body.no-motion *::after{
+  animation:none !important;transition:none !important;
+}
+body.no-motion .breath{transform:scale(1) !important}
+body.no-motion .confetti{display:none}
+
+/* =========================================================================
+   15. KLEINE BILDSCHIRME (ab 360 px) & GROSSE
+   ========================================================================= */
+@media (max-width:400px){
+  .panic{width:66px;height:66px;font-size:.68rem;bottom:132px}
+  h1{font-size:1.3rem}
+}
+@media (min-width:680px){
+  .app{padding-block:0 160px}
+}
+</style>
+</head>
+<body>
+
+<!-- Kopfzeile ------------------------------------------------------------ -->
+<header class="appbar">
+  <div class="wrap">
+    <div class="logo">
+      <span class="dot" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#3B3054" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 20s-7-4.6-7-9.3A3.7 3.7 0 0 1 12 8a3.7 3.7 0 0 1 7 2.7C19 15.4 12 20 12 20z"/>
+        </svg>
+      </span>
+      <span>Kokoro&nbsp;Quest</span>
+    </div>
+    <div class="grow"></div>
+    <button class="btn sm ghost" id="btn-settings" aria-label="Einstellungen öffnen">⚙︎<span class="sr-only">Einstellungen</span></button>
+  </div>
+</header>
+
+<!-- Hauptbereich: alle Screens werden hier hineingerendert ---------------- -->
+<main id="main" class="app" tabindex="-1">
+  <div class="wrap" id="view"></div>
+</main>
+
+<!-- Statusmeldungen für Screenreader (Punkte, Level, Serie) --------------- -->
+<p id="live" class="sr-only" role="status" aria-live="polite"></p>
+
+<!-- Untere Navigation ---------------------------------------------------- -->
+<nav class="tabbar" id="tabbar" aria-label="Hauptnavigation"><div class="wrap" id="tabs"></div></nav>
+
+<!-- Krisenleiste: auf jedem Screen sichtbar ------------------------------- -->
+<div class="crisisbar">
+  <div class="wrap">
+    <span style="white-space:nowrap">Krise: <a href="tel:116123"><strong>116&nbsp;123</strong></a></span>
+    <button class="btn sm" id="btn-crisis">Hilfsnummern</button>
+  </div>
+</div>
+
+<!-- Panik-Button: führt sofort zur Atemanimation --------------------------- -->
+<button class="panic" id="btn-panic" aria-label="Ruhe-Insel öffnen – sofortige Atemhilfe">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.4"/>
+  </svg>
+  Ruhe-Insel
+</button>
+
+<!-- Ruhe-Insel & Overlays werden zur Laufzeit eingehängt ------------------- -->
+<div id="island-root"></div>
+<div id="overlay-root"></div>
+
+<script>
+"use strict";
+/* ===========================================================================
+   §A  INHALTE  ·  Alles, was Text ist, steht hier oben.
+   Diese Objekte lassen sich gefahrlos ändern, ohne die Logik zu berühren.
+   =========================================================================== */
+
+/* --- A.1  Krisenkontakte -----------------------------------------------
+   WICHTIG: Diese Nummern bitte vor jeder Weitergabe der App auf Aktualität
+   prüfen. Stand der Zusammenstellung: siehe KRISEN_STAND.                  */
+const KRISEN_STAND = "September 2026";
+const KRISENKONTAKTE = [
+  { land:"Überall",   name:"Notruf (Polizei, Rettung, Feuerwehr)", nummer:"112",          tel:"112",         hinweis:"Bei akuter Lebensgefahr." },
+  { land:"Deutschland", name:"Telefonseelsorge",                   nummer:"0800 111 0 111", tel:"08001110111", hinweis:"Kostenlos, rund um die Uhr, anonym." },
+  { land:"Deutschland", name:"Telefonseelsorge (zweite Leitung)",  nummer:"0800 111 0 222", tel:"08001110222", hinweis:"Kostenlos, rund um die Uhr, anonym." },
+  { land:"Deutschland", name:"Telefonseelsorge (EU-weite Nummer)", nummer:"116 123",        tel:"116123",      hinweis:"Kostenlos, rund um die Uhr." },
+  { land:"Österreich",  name:"Telefonseelsorge Österreich",        nummer:"142",            tel:"142",         hinweis:"Kostenlos, rund um die Uhr." },
+  { land:"Schweiz",     name:"Die Dargebotene Hand",               nummer:"143",            tel:"143",         hinweis:"Rund um die Uhr." },
+  { land:"Deutschland", name:"Ärztlicher Bereitschaftsdienst",     nummer:"116 117",        tel:"116117",      hinweis:"Wenn die Praxis zu ist, es aber kein Notfall ist." }
+];
+
+/* --- A.2  Zentrale Textbausteine ---------------------------------------
+   Regel für alle Texte: warm, auf Augenhöhe, nie belehrend, nie
+   infantilisierend. Ein ausgelassener Tag ist nie ein Scheitern.          */
+const TEXTE = {
+  disclaimerKurz:
+    "Kokoro Quest ist ein Übungs- und Selbsthilfe-Werkzeug – keine medizinische Behandlung und keine Diagnose. " +
+    "Die App ersetzt weder Psychotherapie noch ärztliche Abklärung.",
+  disclaimerKoerper:
+    "Körperliche Beschwerden wie Herzrasen, Atemnot, Schwindel oder Brustschmerz gehören einmal ärztlich abgeklärt, " +
+    "bevor du sie als „nur Angst“ einordnest. Das ist kein Misstrauen dir gegenüber – es ist der Schritt, der dir " +
+    "hinterher erlaubt, deinem Körper zu glauben.",
+  datenschutz:
+    "Alles, was du hier einträgst, bleibt in diesem Browser auf diesem Gerät. Keine Konten, keine Server, " +
+    "kein Tracking, keine Werbung. Niemand außer dir sieht diese Daten – deshalb sichere sie ab und zu als Datei.",
+  keineExposition:
+    "Übungen, die Panik-Symptome absichtlich auslösen (willentliches Hyperventilieren, Drehen bis zum Schwindel, " +
+    "Atmen durch einen Strohhalm), gibt es hier bewusst nicht. Diese sogenannte interozeptive Exposition wirkt – " +
+    "aber sie gehört in therapeutische Begleitung, nicht in eine App, die du allein bedienst. Wenn du auf so etwas " +
+    "stößt, sprich es mit einer Fachperson durch.",
+  rueckkehrTitel: "Schön, dass du wieder da bist.",
+  rueckkehrText:
+    "Zwischen heute und deinem letzten Eintrag liegt eine Pause. Das ist keine verlorene Zeit und kein Rückschritt – " +
+    "Pausen gehören zu jedem Weg. Dein Fortschritt liegt vollständig da, wo du ihn gelassen hast.",
+  schildEingeloest: "Ruhetag eingelöst. Pausen gehören dazu.",
+  akutKeinePunkte:
+    "Der Notfallmodus vergibt bewusst keine Punkte. Es soll nie einen Anreiz geben, Angst zu suchen.",
+  sanftTag:
+    "Sanfter Tag: drei sehr kleine Schritte statt des vollen Pensums. Zählt genauso, deine Serie bleibt erhalten."
+};
+
+/* --- A.3  Die vier Attribute -------------------------------------------- */
+const ATTRIBUTE = {
+  koerper:        { name:"Körper",        untertitel:"Kraft",   symbol:"Flamme",   farbe:"var(--at-koerper)",
+    wirkprinzip:"Autonome Regulation, Ausdauer, Schlaf – senkt die Grundanspannung." },
+  geist:          { name:"Geist",         untertitel:"Klarheit",symbol:"Kristall", farbe:"var(--at-geist)",
+    wirkprinzip:"Kognitive Umstrukturierung und Psychoedukation – entschärft Katastrophengedanken." },
+  mut:            { name:"Mut",           untertitel:"Herz",    symbol:"Schild",   farbe:"var(--at-mut)",
+    wirkprinzip:"Verhalten: Vermeidung abbauen, Sicherheitsverhalten loslassen." },
+  verbundenheit:  { name:"Verbundenheit", untertitel:"Licht",   symbol:"Stern",    farbe:"var(--at-verbundenheit)",
+    wirkprinzip:"Bindung, Werte, Freude – der Schutzfaktor, der am häufigsten vergessen wird." }
+};
+const ATTR_KEYS = ["koerper","geist","mut","verbundenheit"];
+
+/* --- A.4  Avatar-Stufen (kumulative Punkte) ----------------------------- */
+const LEVELS = [
+  { stufe:1, name:"Mochi",       ab:0,    satz:"Hier fängt es an. Mochi ist klein, zittrig – und von Anfang an liebenswert." },
+  { stufe:2, name:"Wackelkind",  ab:150,  satz:"Mochi steht. Noch wacklig, aber die Augen sind offen." },
+  { stufe:3, name:"Lehrling",    ab:400,  satz:"Ein Umhang und eine Laterne: Du hast angefangen, dir selbst Licht zu machen." },
+  { stufe:4, name:"Späher",      ab:800,  satz:"Stirnband, Rucksack, aufrechter Gang. Du gehst inzwischen los, bevor du dich sicher fühlst." },
+  { stufe:5, name:"Wächter",     ab:1400, satz:"Das Schild mit dem Herz. Du weißt, was dich trägt, wenn es unruhig wird." },
+  { stufe:6, name:"Champion",    ab:2200, satz:"Die vier Zeichen schweben mit. Körper, Geist, Mut und Verbundenheit arbeiten zusammen." },
+  { stufe:7, name:"Superheld",   ab:3200, satz:"Cape und Sprung. Nicht angstfrei – handlungsfähig. Das ist der Unterschied." }
+];
+
+/* --- A.5  Quest-Katalog -------------------------------------------------
+   Felder:
+     id              eindeutig, wird im Speicherstand referenziert – nicht ändern
+     titel           spielerisch
+     kategorie       atem | bewegung | kognitiv | achtsamkeit | mut | verbundenheit | mini
+     attribute       Punkte auf ein bis zwei Attribute (10–60 gesamt)
+     dauerMin        Richtwert in Minuten
+     anleitung       3–6 konkrete Schritte in Du-Form
+     warumEsWirkt    2–3 Sätze Psychoedukation in Alltagssprache
+     intensitaet     "sanft" (auch an schlechten Tagen machbar) | "normal"
+     sicherheitshinweis  optional
+     tool            optionales interaktives Werkzeug im Quest-Screen
+   ---------------------------------------------------------------------
+   BEWUSST NICHT ENTHALTEN: interozeptive Expositionsübungen (absichtliches
+   Hyperventilieren, Drehstuhl, Strohhalm-Atmung). Sie sind wirksam, gehören
+   aber in therapeutische Begleitung und nicht in eine selbstgeführte App.
+   ------------------------------------------------------------------- */
+const QUESTS = [
+
+/* ===== KÖRPER · Atem & Entspannung ==================================== */
+{ id:"ruhiger-atem", titel:"Ruhiger Atem", kategorie:"atem", attribute:{koerper:20}, dauerMin:5,
+  intensitaet:"sanft", tool:"atem", atem:{ein:4, halten:0, aus:6, minuten:5},
+  anleitung:[
+    "Setz dich hin, Füße auf dem Boden, Schultern locker fallen lassen.",
+    "Atme 4 Sekunden durch die Nase ein – ohne zu drücken.",
+    "Atme 6 Sekunden aus, am besten durch den leicht geöffneten Mund.",
+    "Folge der Blase auf dem Bildschirm, 5 Minuten lang.",
+    "Wenn du abschweifst: freundlich zurückkommen. Das gehört dazu."],
+  warumEsWirkt:"Bei rund sechs Atemzügen pro Minute schwingen Atem und Herzschlag im selben Takt. Die verlängerte Ausatmung aktiviert den Parasympathikus – den Teil des Nervensystems, der für Beruhigung zuständig ist. Dein Körper bekommt die Information: Es ist gerade keine Flucht nötig.",
+  sicherheitshinweis:"Nicht beim Autofahren oder im Wasser üben." },
+
+{ id:"lange-welle", titel:"Die lange Welle", kategorie:"atem", attribute:{koerper:18}, dauerMin:4,
+  intensitaet:"sanft", tool:"atem", atem:{ein:4, halten:7, aus:8, runden:4},
+  anleitung:[
+    "Setz dich aufrecht hin, Zungenspitze hinter die oberen Schneidezähne.",
+    "4 Sekunden einatmen.",
+    "7 Sekunden ruhig halten – ohne Pressen im Hals.",
+    "8 Sekunden lang ausatmen, hörbar, wie eine auslaufende Welle.",
+    "Vier Runden, dann normal weiteratmen."],
+  warumEsWirkt:"Die sehr lange Ausatmung bremst den Herzschlag messbar ab. Das Zählen bindet nebenbei die Aufmerksamkeit – es ist schwerer, gleichzeitig zu zählen und zu katastrophisieren.",
+  sicherheitshinweis:"Immer im Sitzen. Wenn dir schwindelig wird, brich ab und atme normal weiter – das ist kein Fehler. Kein Atem-Anhalten über 10 Sekunden." },
+
+{ id:"muskelreise", titel:"Muskelreise", kategorie:"atem", attribute:{koerper:35}, dauerMin:10,
+  intensitaet:"normal", tool:"pmr",
+  anleitung:[
+    "Leg dich hin oder setz dich bequem hin.",
+    "Spanne die erste Muskelgruppe 5 Sekunden an – etwa 70 %, nicht mit aller Kraft.",
+    "Lass dann 20 Sekunden komplett los und spüre den Unterschied.",
+    "Arbeite dich durch alle sieben Gruppen: Hände, Arme, Gesicht, Nacken, Bauch, Beine, Füße.",
+    "Zum Schluss zwei Minuten einfach liegen bleiben."],
+  warumEsWirkt:"Die progressive Muskelentspannung nach Jacobson nutzt einen einfachen Trick: Nach bewusster Anspannung fällt ein Muskel tiefer als vorher. Über Wochen lernst du, Anspannung früh zu bemerken – oft bevor der Kopf sie überhaupt bemerkt hat.",
+  sicherheitshinweis:"Schmerzende oder verletzte Körperregionen auslassen." },
+
+{ id:"bauchatmung-check", titel:"Bauchatmung-Check", kategorie:"atem", attribute:{koerper:12}, dauerMin:2,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Eine Hand auf die Brust, eine auf den Bauch.",
+    "Atme normal weiter und beobachte nur: Welche Hand bewegt sich?",
+    "Lenke den Atem sanft nach unten, sodass sich die Bauchhand hebt.",
+    "Zwei Minuten lang, ohne den Atem zu vertiefen oder zu verlangsamen."],
+  warumEsWirkt:"Unter Anspannung atmen die meisten Menschen flach in den oberen Brustkorb. Das ist anstrengend und hält die Alarmbereitschaft oben. Zwerchfellatmung ist die sparsamere Variante – und sie lässt sich üben wie jede andere Bewegung." },
+
+{ id:"seufzer", titel:"Doppelter Seufzer", kategorie:"atem", attribute:{koerper:10}, dauerMin:2,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Atme durch die Nase ein.",
+    "Atme oben noch ein kurzes Stückchen nach – wie ein zweiter kleiner Zug.",
+    "Dann lang und vollständig durch den Mund ausatmen.",
+    "Fünf bis zehn Mal wiederholen, danach normal weiteratmen."],
+  warumEsWirkt:"Dieses Atemmuster macht dein Körper von selbst, wenn er sich beruhigt – beim Einschlafen oder nach dem Weinen. Es entfaltet die Lungenbläschen und senkt die Anspannung innerhalb weniger Atemzüge." },
+
+{ id:"haende-waerme", titel:"Warme Hände", kategorie:"atem", attribute:{koerper:14}, dauerMin:5,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Setz dich hin und leg die Hände auf die Oberschenkel.",
+    "Sag dir innerlich langsam: „Meine Hände sind warm und schwer.“",
+    "Wiederhole den Satz ruhig, etwa alle zehn Sekunden, fünf Minuten lang.",
+    "Zum Schluss Hände ballen, strecken, Augen öffnen."],
+  warumEsWirkt:"Eine Grundübung des Autogenen Trainings. Unter Anspannung ziehen sich die Blutgefäße in den Händen zusammen – sie werden kalt. Die Wärmeformel dreht das um, und der Körper liest das als Entwarnung." },
+
+{ id:"gesicht-loesen", titel:"Gesicht abstellen", kategorie:"atem", attribute:{koerper:10}, dauerMin:3,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Nimm wahr, wo dein Gesicht gerade arbeitet: Kiefer, Stirn, Augenpartie.",
+    "Lass den Unterkiefer locker, sodass die Zähne sich nicht berühren.",
+    "Glätte die Stirn, entspanne die Zunge im Mundboden.",
+    "Halte das drei Minuten – es wird mehrfach zurückrutschen, das ist normal."],
+  warumEsWirkt:"Der Kiefer ist eine der ersten Stellen, an denen Anspannung sichtbar wird, und eine der letzten, die von allein loslässt. Ein gelöstes Gesicht ist für das Gehirn ein Sicherheitssignal." },
+
+/* ===== KÖRPER · Bewegung & Rhythmus =================================== */
+{ id:"spaziergang", titel:"Spaziergang", kategorie:"bewegung", attribute:{koerper:25, verbundenheit:5}, dauerMin:20,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Zieh dich an und geh vor die Tür – ohne Ziel, ohne Erledigung.",
+    "Geh 20 Minuten, gern im Grünen.",
+    "Handy in der Tasche lassen, wenn es geht.",
+    "Achte zwischendurch auf deine Füße auf dem Boden."],
+  warumEsWirkt:"Regelmäßige moderate Bewegung senkt Angstsymptome messbar – sie baut Stresshormone ab und verbessert den Schlaf. Grünflächen verstärken den Effekt zusätzlich. Zwanzig Minuten sind dabei wirksamer als ein perfektes Trainingsprogramm, das nie stattfindet." },
+
+{ id:"herzschlag", titel:"Herzschlag-Quest", kategorie:"bewegung", attribute:{koerper:40, mut:10}, dauerMin:25,
+  intensitaet:"normal", tool:"timer",
+  anleitung:[
+    "Wähle etwas Ausdauerndes: joggen, Rad fahren, schwimmen, zügig gehen.",
+    "20 bis 30 Minuten bei moderater Intensität – du kannst noch sprechen, aber nicht singen.",
+    "Nimm wahr, wie dein Herz schneller schlägt und dein Atem tiefer wird.",
+    "Merke dir bewusst: Das ist derselbe Körperzustand wie bei Angst – und er kommt hier von dir.",
+    "Danach ein paar Minuten auslaufen und nachspüren."],
+  warumEsWirkt:"Ausdauertraining senkt die Grundanspannung über Wochen deutlich. Dazu kommt ein Lerneffekt: Ein schneller Puls fühlt sich beim Sport genauso an wie bei Panik – nur ordnest du ihn hier als harmlos und selbstgemacht ein. Genau diese Neubewertung nimmt dem Herzrasen langfristig den Schrecken.",
+  sicherheitshinweis:"Wenn du Herz-Kreislauf-Beschwerden hast oder lange nicht trainiert hast: einmal ärztlich abklären lassen, bevor du intensiver wirst." },
+
+{ id:"kraft-mini", titel:"Kraft-Mini", kategorie:"bewegung", attribute:{koerper:22}, dauerMin:10,
+  intensitaet:"normal", tool:"timer",
+  anleitung:[
+    "Such dir drei Übungen mit dem eigenen Körpergewicht aus: z. B. Kniebeugen, Liegestütz an der Wand, Unterarmstütz.",
+    "Drei Durchgänge, je etwa 40 Sekunden Arbeit und 20 Sekunden Pause.",
+    "Sauber vor schnell – Qualität zählt mehr als Wiederholungszahl.",
+    "Am Ende kurz dehnen."],
+  warumEsWirkt:"Krafttraining verbessert Stimmung und Schlaf ähnlich zuverlässig wie Ausdauer. Nebenbei entsteht ein Gefühl von körperlicher Handlungsfähigkeit – das Gegenteil des Gefühls, dem eigenen Körper ausgeliefert zu sein." },
+
+{ id:"schlafanker", titel:"Schlafanker", kategorie:"bewegung", attribute:{koerper:20}, dauerMin:5,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Lege eine feste Aufstehzeit fest – dieselbe an allen sieben Tagen.",
+    "Stell den Wecker entsprechend und steh auf, auch wenn die Nacht kurz war.",
+    "Geh in den ersten 30 Minuten kurz ins Tageslicht.",
+    "Hake diese Quest an jedem Tag ab, an dem es geklappt hat."],
+  warumEsWirkt:"Eine konstante Aufstehzeit stabilisiert die innere Uhr stärker als eine konstante Zubettgehzeit. Schlechter Schlaf und Angst verstärken sich gegenseitig – hier setzt du an der Stellschraube an, die du wirklich kontrollieren kannst." },
+
+{ id:"koffein-kompass", titel:"Koffein-Kompass", kategorie:"bewegung", attribute:{koerper:15, geist:10}, dauerMin:5,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Entscheide heute morgens: nach 14 Uhr kein Koffein mehr (Kaffee, Cola, Energydrinks, schwarzer und grüner Tee).",
+    "Trink stattdessen Wasser oder etwas Koffeinfreies.",
+    "Notiere am Abend in zwei Sätzen, wie Körper und Kopf sich anfühlten.",
+    "Wiederhole das an ein paar Tagen und vergleiche."],
+  warumEsWirkt:"Koffein erhöht Herzfrequenz und Unruhe und ähnelt damit den Körpersignalen einer Panikattacke. Bei empfindlichen Menschen kann es Attacken begünstigen. Die Halbwertszeit liegt bei etwa fünf Stunden – der Nachmittagskaffee wirkt also noch in der Nacht." },
+
+{ id:"abendlicht", titel:"Abendlicht", kategorie:"bewegung", attribute:{koerper:18}, dauerMin:60,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Lege eine Uhrzeit fest, ab der Bildschirme aus bleiben – 60 Minuten vor dem Schlafen.",
+    "Leg das Handy außerhalb des Schlafzimmers ab.",
+    "Mach das Licht wärmer und dunkler.",
+    "Nimm dir etwas Analoges vor: lesen, duschen, Musik, aufräumen."],
+  warumEsWirkt:"Helles Bildschirmlicht am Abend verschiebt die innere Uhr nach hinten. Der größere Effekt ist meist der Inhalt: Nachrichten und Nachrichtenapps bringen kurz vor dem Schlafen genau die Themen, die dann im Bett weiterlaufen." },
+
+{ id:"dehnen-morgens", titel:"Morgendehnung", kategorie:"bewegung", attribute:{koerper:12}, dauerMin:5,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Steh auf und streck dich einmal ganz lang.",
+    "Roll die Schultern zehnmal nach hinten.",
+    "Neige den Kopf langsam zu jeder Seite, je 20 Sekunden.",
+    "Beug dich locker nach vorn und lass Arme und Kopf hängen, 30 Sekunden."],
+  warumEsWirkt:"Über Nacht verspannter Nacken und hochgezogene Schultern sind Haltungen, die dein Gehirn als Anspannung liest. Der Körper gibt dem Kopf ständig Rückmeldung – umgekehrt genauso." },
+
+{ id:"tanz-drei-lieder", titel:"Drei Lieder Bewegung", kategorie:"bewegung", attribute:{koerper:18, verbundenheit:7}, dauerMin:12,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Such dir drei Lieder aus, bei denen du dich bewegen magst.",
+    "Tanz, hüpf oder geh im Zimmer herum – wie es kommt, niemand schaut zu.",
+    "Beim dritten Lied darf es ruhiger werden.",
+    "Danach kurz stehen bleiben und nachspüren."],
+  warumEsWirkt:"Bewegung zu Musik verbindet körperliche Aktivierung mit angenehmem Erleben. Das ist Verhaltensaktivierung in ihrer einfachsten Form: Man wartet nicht auf die Stimmung, sondern erzeugt sie über die Handlung." },
+
+{ id:"kaltes-wasser", titel:"Kalte Erdung", kategorie:"bewegung", attribute:{koerper:12}, dauerMin:2,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Geh ans Waschbecken und lass kaltes Wasser laufen.",
+    "Halte die Handgelenke 30 bis 60 Sekunden unter den Strahl.",
+    "Alternativ: ein kaltes, nasses Tuch in den Nacken oder auf die Wangen.",
+    "Atme dabei ruhig weiter und spüre die Temperatur."],
+  warumEsWirkt:"Kälte an Handgelenken und Gesicht ist ein starker, sofort spürbarer Sinnesreiz. Er unterbricht Gedankenkreise und verschiebt die Aufmerksamkeit für einen Moment vollständig in den Körper.",
+  sicherheitshinweis:"Kein Eintauchen des Gesichts, kein Eiswasser. Wenn du Herzprobleme hast, bleib bei lauwarmem Wasser." },
+
+/* ===== GEIST · Kognitive Arbeit (KVT) ================================== */
+{ id:"gedanken-detektiv", titel:"Gedanken-Detektiv", kategorie:"kognitiv", attribute:{geist:35}, dauerMin:12,
+  intensitaet:"normal", tool:"gedankenprotokoll",
+  anleitung:[
+    "Such dir eine Situation der letzten Tage, in der die Angst hochging.",
+    "Schreib auf, was du im Körper gespürt hast – und welcher Gedanke dazu kam.",
+    "Sammle Beweise, die für diesen Gedanken sprechen. Ehrlich, ohne Beschönigung.",
+    "Sammle Beweise, die dagegen sprechen – auch frühere Male, in denen es anders ausging.",
+    "Formuliere daraus einen hilfreicheren Gedanken. Nicht schöner, sondern zutreffender.",
+    "Schätze deine Angst vorher und nachher von 0 bis 10 ein."],
+  warumEsWirkt:"Das Gedankenprotokoll ist das Kernwerkzeug der kognitiven Verhaltenstherapie nach Beck. Automatische Gedanken laufen so schnell ab, dass sie wie Tatsachen wirken. Sobald sie schriftlich vor dir liegen, kannst du sie prüfen statt ihnen zu glauben." },
+
+{ id:"katastrophen-entzauberer", titel:"Katastrophen-Entzauberer", kategorie:"kognitiv", attribute:{geist:28}, dauerMin:8,
+  intensitaet:"normal", tool:"katastrophe",
+  anleitung:[
+    "Benenne die Befürchtung so konkret wie möglich – nicht „irgendwas Schlimmes“, sondern was genau.",
+    "Schätze: Wie wahrscheinlich ist das wirklich? Was spricht dafür, was dagegen?",
+    "Spiel durch: Angenommen, es träte ein – wie sähe der Tag danach aus?",
+    "Frage dich zuletzt: Wie käme ich damit zurecht? Wer oder was würde mir helfen?"],
+  warumEsWirkt:"Angst blendet zwei Dinge aus: wie unwahrscheinlich das Befürchtete ist und wie gut man mit dem Ernstfall umgehen könnte. Die vierte Frage ist die wichtigste – sie stellt das Vertrauen in die eigene Bewältigung wieder her, statt nur Wahrscheinlichkeiten zu diskutieren." },
+
+{ id:"teufelskreis", titel:"Teufelskreis zeichnen", kategorie:"kognitiv", attribute:{geist:30}, dauerMin:10,
+  intensitaet:"normal", tool:"teufelskreis",
+  anleitung:[
+    "Denk an eine typische Angstsituation von dir.",
+    "Trage in jeden Knoten dein eigenes Beispiel ein: Auslöser, Wahrnehmung, Gedanke, Körperreaktion.",
+    "Lies den Kreis danach einmal laut im Ganzen vor.",
+    "Überlege zuletzt: An welcher Stelle könntest du am ehesten aussteigen?"],
+  warumEsWirkt:"Das Teufelskreismodell erklärt, warum eine Panikattacke sich selbst verstärkt: Eine harmlose Körperempfindung wird als Gefahr gedeutet, das schüttet Adrenalin aus, die Symptome nehmen zu – was den Gefahrengedanken bestätigt. Wer den Kreis einmal selbst gezeichnet hat, erkennt ihn im Ernstfall wieder." },
+
+{ id:"wissenskarte", titel:"Wissenskarte des Tages", kategorie:"kognitiv", attribute:{geist:12}, dauerMin:3,
+  intensitaet:"sanft", tool:"wissenskarte",
+  anleitung:[
+    "Zieh eine Karte.",
+    "Lies sie in Ruhe, einmal ganz.",
+    "Überlege einen Moment, wo dir das in deinem Alltag begegnet.",
+    "Fertig – mehr ist heute nicht nötig."],
+  warumEsWirkt:"Psychoedukation ist in der Angstbehandlung kein Beiwerk, sondern ein Wirkfaktor. Wer versteht, was im eigenen Körper passiert, deutet die Signale anders – und genau die Deutung entscheidet, ob aus Unruhe eine Attacke wird." },
+
+{ id:"angst-tagebuch", titel:"Angst-Tagebuch", kategorie:"kognitiv", attribute:{geist:20}, dauerMin:6,
+  intensitaet:"sanft", tool:"angsttagebuch",
+  anleitung:[
+    "Notiere den Auslöser – oder „unklar“, wenn keiner erkennbar war.",
+    "Schätze die höchste Intensität von 0 bis 10 ein.",
+    "Halte fest, wie lange es gedauert hat.",
+    "Schreib auf, was geholfen hat – und was nicht."],
+  warumEsWirkt:"Aufgeschriebene Angst wird zu Daten. Über Wochen zeigen sich Muster, die im Rückblick unsichtbar bleiben: Tageszeiten, Schlafmangel, bestimmte Situationen. Und die Kurve macht sichtbar, dass Angst immer wieder fällt – auch wenn sie sich im Moment endlos anfühlt." },
+
+{ id:"mut-saetze", titel:"Mut-Sätze verinnerlichen", kategorie:"kognitiv", attribute:{geist:18, mut:10}, dauerMin:6,
+  intensitaet:"sanft", tool:"copingkarten",
+  anleitung:[
+    "Wähle zwei bis drei Sätze aus den Vorschlägen – oder schreib eigene.",
+    "Sprich jeden Satz dreimal laut aus. Laut, nicht nur gedacht.",
+    "Speichere sie; sie erscheinen dann auch in der Ruhe-Insel.",
+    "Lies sie an ruhigen Tagen noch einmal, damit sie im Ernstfall abrufbar sind."],
+  warumEsWirkt:"Im Angsthoch ist kaum noch komplexes Denken möglich – vorbereitete, kurze Sätze sind dann das, was noch funktioniert. Deshalb sind die Vorlagen bewusst nüchtern statt euphorisch: Sätze, die man mitten in der Angst noch glauben kann, wirken; „Ich habe keine Angst“ wirkt nicht." },
+
+{ id:"sorgen-termin", titel:"Sorgen-Termin", kategorie:"kognitiv", attribute:{geist:22}, dauerMin:15,
+  intensitaet:"normal", tool:"timer",
+  anleitung:[
+    "Lege eine feste Viertelstunde für heute fest – nicht kurz vor dem Schlafen.",
+    "Wenn außerhalb dieser Zeit eine Sorge kommt: Stichwort notieren und auf den Termin vertagen.",
+    "Nimm dir in der Viertelstunde deine Liste vor und sorge dich bewusst.",
+    "Frag zu jedem Punkt: Ist das jetzt lösbar? Wenn ja, ein nächster Schritt. Wenn nein, zurück auf die Liste.",
+    "Wenn die Zeit um ist, hörst du auf – auch wenn Punkte offen bleiben."],
+  warumEsWirkt:"Sorgen zu verschieben funktioniert besser als sie zu unterdrücken – Unterdrückung lässt Gedanken zurückkommen. Der Termin gibt ihnen einen Ort und nimmt ihnen den Rest des Tages. Für viele schrumpfen die Punkte bis zum Termin von allein." },
+
+{ id:"freundes-perspektive", titel:"Was würdest du einem Freund sagen?", kategorie:"kognitiv", attribute:{geist:18, verbundenheit:6}, dauerMin:6,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Schreib den Satz auf, mit dem du dich gerade selbst bewertest.",
+    "Stell dir vor, ein Mensch, den du magst, sagt dir genau diesen Satz über sich.",
+    "Formuliere, was du ihm antworten würdest – in ganzen Sätzen.",
+    "Lies deine Antwort noch einmal und richte sie an dich selbst."],
+  warumEsWirkt:"Fast alle Menschen sind zu anderen fairer als zu sich selbst. Der Perspektivwechsel macht den doppelten Maßstab sichtbar und liefert nebenbei eine realistischere Einschätzung – nicht Schönfärberei, sondern die Sicht, die du bei anderen ohnehin für richtig hältst." },
+
+{ id:"sicherheitsverhalten-liste", titel:"Was tue ich, damit nichts passiert?", kategorie:"kognitiv", attribute:{geist:20, mut:10}, dauerMin:10,
+  intensitaet:"normal", tool:"timer",
+  anleitung:[
+    "Schreib auf, was du regelmäßig tust, um dich in Angstsituationen abzusichern.",
+    "Denk an Gegenstände (Wasser, Tabletten, Kopfhörer), Orte (Platz am Gang), Menschen (Begleitung), Handlungen (ständig den Puls prüfen).",
+    "Markiere, was dir echte Sicherheit gibt und was nur ein Gefühl davon erzeugt.",
+    "Wähle einen einzigen Punkt aus, den du demnächst weglassen möchtest."],
+  warumEsWirkt:"Sicherheitsverhalten wirkt kurzfristig entlastend und ist langfristig der Grund, warum die Angst bleibt: Geht es gut, schreibst du den Erfolg dem Trick zu und nicht der Harmlosigkeit der Situation. Erst das Weglassen erlaubt die neue Erfahrung." },
+
+/* ===== GEIST · Achtsamkeit & Akzeptanz (ACT / MBSR) ==================== */
+{ id:"koerperreise", titel:"Körperreise", kategorie:"achtsamkeit", attribute:{geist:25, koerper:10}, dauerMin:10,
+  intensitaet:"normal", tool:"bodyscan",
+  anleitung:[
+    "Leg dich hin, Arme neben dem Körper, Augen zu oder halb geschlossen.",
+    "Wandere mit der Aufmerksamkeit langsam durch den Körper – von den Füßen bis zum Scheitel.",
+    "Nimm wahr, was da ist: Wärme, Druck, Kribbeln, nichts. Alles ist eine gültige Antwort.",
+    "Wenn du abschweifst, kehre freundlich zur letzten Stelle zurück.",
+    "Am Ende den ganzen Körper auf einmal spüren."],
+  warumEsWirkt:"Der Body-Scan aus dem MBSR-Programm nach Kabat-Zinn trainiert, Körperempfindungen wahrzunehmen, ohne sie sofort zu bewerten. Genau diese Bewertung („da stimmt was nicht“) ist bei Panik der Zündfunke. Beobachten statt deuten lässt sich üben – und wird mit der Zeit zur Gewohnheit.",
+  sicherheitshinweis:"Wenn das Hineinspüren in den Körper dich gerade sehr beunruhigt, wähle stattdessen eine Übung mit äußerem Fokus, etwa 5-4-3-2-1." },
+
+{ id:"anker-meditation", titel:"Anker-Meditation", kategorie:"achtsamkeit", attribute:{geist:22}, dauerMin:10,
+  intensitaet:"normal", tool:"timer",
+  anleitung:[
+    "Setz dich aufrecht und bequem hin.",
+    "Finde die Stelle, an der du den Atem am deutlichsten spürst – Nase, Brust oder Bauch.",
+    "Lass den Atem, wie er ist. Du beobachtest ihn nur.",
+    "Wenn du abschweifst: bemerken, benennen („Denken“), zurückkehren.",
+    "Zehn Minuten, mit einem sanften Ton am Ende."],
+  warumEsWirkt:"Nicht das Nicht-Abschweifen ist die Übung, sondern das Zurückkommen – jedes Mal ist eine Wiederholung. Über Wochen wächst die Fähigkeit, Aufmerksamkeit bewusst zu lenken statt von Gedanken mitgerissen zu werden." },
+
+{ id:"grounding-54321", titel:"5-4-3-2-1", kategorie:"achtsamkeit", attribute:{geist:15}, dauerMin:4,
+  intensitaet:"sanft", tool:"grounding",
+  anleitung:[
+    "Benenne fünf Dinge, die du sehen kannst.",
+    "Vier Dinge, die du hören kannst.",
+    "Drei Dinge, die du fühlen kannst.",
+    "Zwei Dinge, die du riechen kannst.",
+    "Eine Sache, die du schmecken kannst – oder eine, die dir heute gefallen hat."],
+  warumEsWirkt:"Grounding holt die Aufmerksamkeit aus dem Kopf zurück in die Umgebung. Die Sinne arbeiten nur in der Gegenwart, Angst dagegen fast immer in der Zukunft. Das Benennen macht es dabei wirksamer als bloßes Schauen." },
+
+{ id:"blaetter-fluss", titel:"Gedanken auf Blättern", kategorie:"achtsamkeit", attribute:{geist:20}, dauerMin:7,
+  intensitaet:"sanft", tool:"blaetter",
+  anleitung:[
+    "Stell dir einen langsam fließenden Bach vor, auf dem Blätter treiben.",
+    "Leg jeden auftauchenden Gedanken auf ein Blatt.",
+    "Schau zu, wie das Blatt vorbeizieht. Du musst es nicht wegschieben und nicht festhalten.",
+    "Wenn du merkst, dass du mit dem Bach mitgeschwommen bist: zurück ans Ufer, weiter geht's."],
+  warumEsWirkt:"Eine Defusionsübung aus der Akzeptanz- und Commitment-Therapie nach Hayes. Ziel ist nicht, weniger Gedanken zu haben, sondern weniger mit ihnen verschmolzen zu sein. Ein Gedanke, den man vorbeiziehen sieht, verliert seine Macht, ohne dass man ihn widerlegen muss." },
+
+{ id:"ich-habe-den-gedanken", titel:"„Ich habe den Gedanken, dass …“", kategorie:"achtsamkeit", attribute:{geist:16}, dauerMin:4,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Nimm den Angstgedanken, der dich heute am meisten beschäftigt.",
+    "Sprich ihn einmal so aus, wie er im Kopf klingt.",
+    "Dann dreimal mit der Vorsilbe: „Ich habe den Gedanken, dass …“",
+    "Und einmal: „Ich bemerke, dass ich den Gedanken habe, dass …“",
+    "Spür nach, ob sich der Abstand verändert hat."],
+  warumEsWirkt:"Die Vorsilbe schiebt einen kleinen Spalt zwischen dich und den Satz. Aus „Ich falle gleich um“ wird etwas, das dein Kopf gerade produziert – eine Aussage, die man betrachten kann, statt eine Tatsache, in der man steckt." },
+
+{ id:"werte-kompass", titel:"Werte-Kompass", kategorie:"achtsamkeit", attribute:{geist:15, verbundenheit:15}, dauerMin:8,
+  intensitaet:"sanft", tool:"werte",
+  anleitung:[
+    "Wähle einen Wert, der dir wirklich wichtig ist – nicht den, der sich gehört.",
+    "Überlege eine kleine Handlung, die heute zu diesem Wert passt.",
+    "Tu sie – auch wenn Unbehagen dabei ist.",
+    "Halte in einem Satz fest, wie es war."],
+  warumEsWirkt:"In der ACT ist nicht Angstfreiheit das Ziel, sondern ein Leben, das in die eigene Richtung geht. Werte geben die Richtung vor, wenn das Gefühl gerade keine gute Auskunft gibt. Handeln nach Werten baut nebenbei genau die Erfahrungen auf, die Vermeidung verhindert." },
+
+{ id:"musik-achtsam", titel:"Achtsames Musikhören", kategorie:"achtsamkeit", attribute:{geist:14, verbundenheit:8}, dauerMin:5,
+  intensitaet:"sanft", tool:"playlist",
+  anleitung:[
+    "Wähle ein Lied aus deiner Ruhe- oder Kraft-Playlist.",
+    "Hör es vollständig – ohne Handy, ohne Nebenbeschäftigung.",
+    "Versuch, einzelne Instrumente herauszuhören.",
+    "Pflege danach deine Playlists weiter, damit sie im Ernstfall bereit sind."],
+  warumEsWirkt:"Ein Lied ganz zu hören ist Achtsamkeitstraining mit eingebautem Timer. Musik verändert dazu messbar Herzfrequenz und Anspannung – und vorbereitete Playlists sind genau dann verfügbar, wenn die Suche nach etwas Passendem zu anstrengend wäre." },
+
+{ id:"achtsam-essen", titel:"Eine Mahlzeit langsam", kategorie:"achtsamkeit", attribute:{geist:14, koerper:6}, dauerMin:10,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Setz dich zum Essen hin, ohne Bildschirm.",
+    "Schau dir den ersten Bissen kurz an, bevor du ihn isst.",
+    "Kaue langsam und leg das Besteck zwischendurch ab.",
+    "Nimm mindestens drei Bissen ganz bewusst wahr – der Rest darf normal sein."],
+  warumEsWirkt:"Achtsamkeit braucht keinen Meditationsplatz; sie lässt sich in Handlungen einbauen, die ohnehin täglich stattfinden. Das macht sie alltagstauglich – und langsames Essen beruhigt nebenbei einen angespannten Magen." },
+
+{ id:"selbstmitgefuehl", titel:"Kurze Pause für dich", kategorie:"achtsamkeit", attribute:{geist:15, verbundenheit:8}, dauerMin:5,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Leg eine Hand auf die Brust oder den Bauch.",
+    "Sag dir: „Das ist gerade schwer.“ – ohne es kleiner zu machen.",
+    "Dann: „Schwierige Momente gehören zum Menschsein. Ich bin damit nicht allein.“",
+    "Zuletzt: „Was brauche ich jetzt?“ – und gib dir davon, was möglich ist."],
+  warumEsWirkt:"Selbstkritik hält den Alarm oben, Selbstmitgefühl senkt ihn. Die drei Schritte entsprechen der Selbstmitgefühlspause nach Neff: wahrnehmen, einordnen, freundlich reagieren. Das ist kein Sich-gehen-Lassen – es ist die Haltung, aus der heraus Üben überhaupt durchhaltbar ist." },
+
+{ id:"bereitwilligkeit", titel:"Platz machen", kategorie:"achtsamkeit", attribute:{geist:18, mut:10}, dauerMin:7,
+  intensitaet:"normal", tool:"timer",
+  anleitung:[
+    "Finde die Stelle im Körper, an der das unangenehme Gefühl am deutlichsten sitzt.",
+    "Beschreibe es wie ein Objekt: Größe, Form, Temperatur, Bewegung.",
+    "Atme in die Umgebung dieser Stelle und mach ringsum ein bisschen Platz.",
+    "Probier den Satz: „Du darfst hier sein. Ich mache trotzdem weiter.“",
+    "Beobachte, ob sich die Form verändert – ohne es zu verlangen."],
+  warumEsWirkt:"Der Kampf gegen ein Gefühl macht es größer, weil er den Alarm bestätigt. Bereitwilligkeit ist die Gegenbewegung: das Gefühl da sein lassen und die Aufmerksamkeit trotzdem woanders hin richten können. Weniger Anspannung ist dabei ein Nebeneffekt, nicht das Ziel." },
+
+/* ===== MUT · Verhalten & Exposition in vivo, in kleinen Dosen ==========
+   Nur Exposition im Alltag (in vivo). Keine absichtliche Provokation von
+   Körpersymptomen – siehe Kommentar oben am Katalog.                      */
+{ id:"landkarte-vermeidung", titel:"Landkarte der Vermeidung", kategorie:"mut", attribute:{mut:40, geist:15}, dauerMin:15,
+  intensitaet:"normal", tool:"vermeidung", einmalig:true,
+  anleitung:[
+    "Sammle Situationen, die du meidest oder nur mit Absicherung machst.",
+    "Sei konkret: nicht „Menschen“, sondern „allein mit dem Bus zur Arbeit“.",
+    "Gib jeder Situation einen Wert von 0 bis 100 – wie viel Angst löst allein die Vorstellung aus?",
+    "Speichere; die App sortiert daraus deine Leiter.",
+    "Du kannst jederzeit Sprossen ergänzen oder Werte anpassen."],
+  warumEsWirkt:"Vermeidung ist der Motor, der Angststörungen am Laufen hält: Jedes Ausweichen bestätigt, dass die Situation gefährlich war. Eine geordnete Leiter macht aus einem diffusen „Ich kann das nicht“ eine Reihe einzelner, unterschiedlich schwerer Schritte – und gibt dir die Reihenfolge selbst in die Hand." },
+
+{ id:"eine-sprosse", titel:"Eine Sprosse höher", kategorie:"mut", attribute:{mut:55, koerper:5}, dauerMin:30,
+  intensitaet:"normal", tool:"sprosse",
+  anleitung:[
+    "Nimm die niedrigste Sprosse deiner Leiter, die du noch nicht gemacht hast.",
+    "Plane vorher: Wo, wann, wie lange – und ohne welches Sicherheitsverhalten.",
+    "Notiere deine Angst vorher (0–10).",
+    "Bleib in der Situation, bis die Angst spürbar nachlässt oder mindestens die geplante Zeit vorbei ist. Nicht im Angst-Hoch gehen.",
+    "Notiere den Höhepunkt und den Wert am Ende.",
+    "Wiederhole dieselbe Sprosse mehrfach, bevor du höher gehst."],
+  warumEsWirkt:"Angst steigt in einer Situation an, erreicht einen Gipfel und fällt dann von allein – wenn man lange genug bleibt. Genau diese Erfahrung ist der Wirkstoff. Verlässt man die Situation im Hoch, lernt das Gehirn stattdessen: Nur die Flucht hat mich gerettet.",
+  sicherheitshinweis:"Wähle Schritte, die realistisch machbar sind, und nichts, was tatsächlich gefährlich ist. Wenn eine Stufe dich überfordert, ist die Stufe zu groß – nicht du zu schwach." },
+
+{ id:"sicherheitsnetz-lockern", titel:"Sicherheitsnetz lockern", kategorie:"mut", attribute:{mut:45, geist:10}, dauerMin:20,
+  intensitaet:"normal", tool:"exporeview",
+  anleitung:[
+    "Wähle eine Absicherung, die nur ein Gefühl von Sicherheit erzeugt: die Wasserflasche, die Tablette in der Tasche, der Platz am Gang, die Begleitperson, das ständige Pulsmessen.",
+    "Lass sie für einen geplanten Zeitraum weg – eine Sache pro Woche reicht.",
+    "Geh in eine Situation, die du sonst damit absicherst.",
+    "Schreib danach auf: Was hast du befürchtet? Was ist tatsächlich passiert?"],
+  warumEsWirkt:"Sicherheitsverhalten verhindert die entscheidende Erfahrung, dass es auch ohne gutgeht. Solange der Talisman dabei ist, bleibt die Erklärung „gerade nochmal gut gegangen“ – und die Angst behält recht." },
+
+{ id:"rueckblick-mutprobe", titel:"Rückblick nach der Mutprobe", kategorie:"mut", attribute:{mut:25, geist:20}, dauerMin:8,
+  intensitaet:"sanft", tool:"exporeview",
+  anleitung:[
+    "Was genau hatte ich befürchtet? Möglichst wörtlich.",
+    "Was ist tatsächlich passiert?",
+    "Wie hoch war die Angst im höchsten Moment – und wie lange hielt sie dort?",
+    "Was sagt mir das über meine ursprüngliche Befürchtung?",
+    "Was nehme ich für den nächsten Schritt mit?"],
+  warumEsWirkt:"Der Rückblick ist der eigentliche Wirkfaktor, nicht das Aushalten allein. Erst beim Vergleich von Befürchtung und Realität entsteht die neue Erfahrung, die das alte Muster überschreibt. Ohne diesen Schritt bleibt von einer Exposition oft nur die Erinnerung an die Anstrengung." },
+
+{ id:"mikro-mut", titel:"Mikro-Mut", kategorie:"mut", attribute:{mut:30}, dauerMin:10,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Such dir eine Kleinigkeit, die dich ein bisschen kostet – in einem Laden etwas fragen, jemanden grüßen, eine Mail abschicken.",
+    "Setz dir eine Zeit dafür: heute, in der nächsten Stunde.",
+    "Mach es, bevor du dich bereit fühlst.",
+    "Danach in einem Satz festhalten, wie es war."],
+  warumEsWirkt:"Mut ist keine Stimmung, sondern eine Handlung, die dem Gefühl vorausgeht. Kleine Schritte zählen dabei voll – sie trainieren dieselbe Bewegung wie große, nur in einer Dosis, die man auch an schlechten Tagen schafft." },
+
+{ id:"allein-gehen", titel:"Ein Stück allein", kategorie:"mut", attribute:{mut:40}, dauerMin:25,
+  intensitaet:"normal", tool:"sprosse",
+  anleitung:[
+    "Wähle einen Weg, den du sonst nur in Begleitung gehst – und mach ein kurzes Stück davon allein.",
+    "Plan vorher, wie weit genau. Lieber zu kurz als gar nicht.",
+    "Geh das geplante Stück zu Ende, auch wenn Unruhe aufkommt.",
+    "Notiere Angst vorher, auf dem Höhepunkt und danach."],
+  warumEsWirkt:"Begleitung ist eine der häufigsten Formen von Sicherheitsverhalten. Sie zu reduzieren – in planbaren Portionen – zeigt dir, dass die Situation und nicht die Begleitperson das Entscheidende war.",
+  sicherheitshinweis:"Nur Wege wählen, die an sich sicher sind. Nicht im Straßenverkehr üben, der volle Aufmerksamkeit verlangt." },
+
+{ id:"unsicherheit-aushalten", titel:"Nicht nachschauen", kategorie:"mut", attribute:{mut:35, geist:10}, dauerMin:15,
+  intensitaet:"normal", tool:"timer",
+  anleitung:[
+    "Wähle eine Rückversicherung, die du oft machst: Symptome googeln, Puls messen, nachfragen „Ist das normal?“, Körperstellen abtasten.",
+    "Nimm dir vor, sie heute für einen festen Zeitraum nicht zu tun – zwei Stunden reichen zum Anfang.",
+    "Wenn der Drang kommt: bemerken, Zeit ansehen, weiteratmen, weitermachen.",
+    "Halte am Ende fest, wie oft der Drang kam – und wie es ohne ausging."],
+  warumEsWirkt:"Rückversicherung beruhigt für Minuten und verstärkt die Angst langfristig, weil sie die Botschaft transportiert: Ohne Prüfen wäre es gefährlich. Der Drang ist eine Welle wie die Angst selbst – er steigt, und er fällt auch wieder." },
+
+/* ===== VERBUNDENHEIT =================================================== */
+{ id:"menschen-zeit", titel:"Menschen-Zeit", kategorie:"verbundenheit", attribute:{verbundenheit:30}, dauerMin:30,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Verabrede dich mit jemandem, den du magst – oder nutze eine Gelegenheit, die ohnehin da ist.",
+    "Leg das Handy für 30 Minuten weg.",
+    "Sei wirklich dabei: zuhören, nachfragen, nicht nebenbei planen.",
+    "Es muss kein tiefes Gespräch sein. Gemeinsam Zeit verbringen reicht."],
+  warumEsWirkt:"Soziale Bindung ist einer der stärksten Schutzfaktoren für psychische Gesundheit – vergleichbar mit Bewegung und Schlaf. Angst zieht Menschen nach innen und aus Kontakten heraus; diese Quest arbeitet genau dagegen." },
+
+{ id:"signal-senden", titel:"Signal senden", kategorie:"verbundenheit", attribute:{verbundenheit:18}, dauerMin:5,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Denk an jemanden, an den du länger nicht gedacht hast.",
+    "Schreib zwei Sätze oder ruf kurz an.",
+    "Kein Anlass nötig – „Ich musste gerade an dich denken“ genügt.",
+    "Abschicken, ohne die Formulierung dreimal zu ändern."],
+  warumEsWirkt:"Kontakte verkümmern nicht an Streit, sondern an Stille. Ein kurzes Signal kostet Minuten und hält ein Netz lebendig, das im Ernstfall trägt. Nebenbei ist es für viele eine kleine Mutprobe." },
+
+{ id:"etwas-geben", titel:"Etwas geben", kategorie:"verbundenheit", attribute:{verbundenheit:20}, dauerMin:10,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Such dir eine kleine Sache, die jemand anderem den Tag erleichtert.",
+    "Klein reicht: aufhalten, abspülen, etwas mitbringen, ein ehrliches Kompliment.",
+    "Tu es, ohne Gegenleistung zu erwarten.",
+    "Nimm danach einen Moment wahr, wie es sich angefühlt hat."],
+  warumEsWirkt:"Prosoziales Handeln hebt die Stimmung zuverlässiger als etwas für sich selbst zu tun – und es verschiebt die Aufmerksamkeit nach außen. Wer sich viel mit dem eigenen Körper beschäftigt, bekommt hier eine Pause davon." },
+
+{ id:"drei-lichter", titel:"Drei Lichter", kategorie:"verbundenheit", attribute:{verbundenheit:15, geist:5}, dauerMin:5,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Nimm dir abends fünf Minuten.",
+    "Schreib drei Dinge auf, die heute gut waren – auch sehr kleine.",
+    "Schreib zu jedem dazu, was du selbst dazu beigetragen hast.",
+    "Lies sie einmal durch, bevor du sie weglegst."],
+  warumEsWirkt:"Das Gehirn merkt sich Bedrohliches besser als Angenehmes – das ist sinnvoll, aber einseitig. Drei gute Dinge am Abend aufzuschreiben gleicht das aus; in Studien verbessert diese Übung Stimmung und Schlaf über Wochen hinweg." },
+
+{ id:"draussen-zeit", titel:"Draußen-Zeit", kategorie:"verbundenheit", attribute:{verbundenheit:15, koerper:10}, dauerMin:20,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Geh 20 Minuten nach draußen – Park, Wald, Wasser, notfalls eine Baumreihe.",
+    "Kein Ziel, keine Erledigung.",
+    "Schau bewusst in die Ferne statt auf den Boden.",
+    "Nimm drei Dinge wahr, die lebendig sind."],
+  warumEsWirkt:"Zeit in der Natur senkt Anspannung und Grübelneigung messbar. Der Blick in die Weite entspannt zusätzlich die Augenmuskulatur – ein Zustand, den der Körper mit Ruhe verbindet und nicht mit Alarm." },
+
+{ id:"verbuendeter", titel:"Verbündeten einweihen", kategorie:"verbundenheit", attribute:{verbundenheit:25, mut:15}, dauerMin:20,
+  intensitaet:"normal", tool:"timer",
+  anleitung:[
+    "Wähle einen Menschen, dem du vertraust.",
+    "Erzähl in ein paar Sätzen, woran du gerade arbeitest.",
+    "Sag konkret, was dir helfen würde – und was nicht hilft.",
+    "Es geht nicht um Rat. Es reicht, dass jemand Bescheid weiß."],
+  warumEsWirkt:"Angst lebt von Heimlichkeit; Scham hält Vermeidung aufrecht. Einen Menschen einzuweihen nimmt Druck und schafft jemanden, der später mit dir zusammen einordnen kann, wie es lief." },
+
+{ id:"freude-planen", titel:"Freude einplanen", kategorie:"verbundenheit", attribute:{verbundenheit:18, koerper:5}, dauerMin:15,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Denk an etwas, das dir früher Freude gemacht hat und seltener geworden ist.",
+    "Trag es für einen konkreten Tag und eine Uhrzeit ein.",
+    "Mach es zur festgelegten Zeit – auch wenn die Lust in dem Moment fehlt.",
+    "Bewerte danach von 0 bis 10, wie es tatsächlich war."],
+  warumEsWirkt:"Verhaltensaktivierung dreht die übliche Reihenfolge um: Erst die Handlung, dann die Stimmung. Wer wartet, bis die Lust kommt, wartet oft sehr lange – der Vergleich von erwarteter und tatsächlicher Bewertung macht das sichtbar." },
+
+{ id:"gemeinsam-bewegen", titel:"Zu zweit bewegen", kategorie:"verbundenheit", attribute:{verbundenheit:18, koerper:12}, dauerMin:30,
+  intensitaet:"normal", tool:"timer",
+  anleitung:[
+    "Frag jemanden, ob er mit dir spazieren geht, schwimmen oder Rad fahren will.",
+    "30 Minuten gemeinsame Bewegung reichen.",
+    "Nebeneinander gehen macht Reden oft leichter als gegenübersitzen.",
+    "Verabredet danach gleich einen nächsten Termin."],
+  warumEsWirkt:"Zwei Schutzfaktoren auf einmal: Bewegung und Kontakt. Verabredungen erhöhen dazu die Wahrscheinlichkeit, dass es wirklich stattfindet – gemeinsame Termine sagt man seltener ab als eigene." },
+
+{ id:"dank-senden", titel:"Danke sagen", kategorie:"verbundenheit", attribute:{verbundenheit:16}, dauerMin:8,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Denk an jemanden, der dir gutgetan hat, ohne es zu wissen.",
+    "Schreib drei Sätze: was er getan hat, was es bei dir bewirkt hat, dass du dich erinnerst.",
+    "Schick es ab – oder sag es beim nächsten Treffen.",
+    "Wenn du es nicht abschickst, zählt es trotzdem."],
+  warumEsWirkt:"Ausgesprochene Dankbarkeit wirkt bei beiden Seiten und stärker als gedachte. Sie richtet die Aufmerksamkeit auf Beziehungen, die tragen – das ist bei Angst besonders wertvoll, weil sie den Blick sonst auf das Bedrohliche verengt." },
+
+/* ===== MINI-QUESTS für den „Sanften Tag“ =============================== */
+{ id:"mini-drei-atemzuege", titel:"Drei bewusste Atemzüge", kategorie:"mini", attribute:{koerper:10}, dauerMin:2,
+  intensitaet:"sanft", tool:"atem", atem:{ein:4, halten:0, aus:6, runden:3},
+  anleitung:[
+    "Setz dich hin, wo du gerade bist.",
+    "Drei Atemzüge: ein bisschen kürzer ein, länger aus.",
+    "Danach ist die Übung fertig.",
+    "Wirklich – mehr war heute nicht vorgesehen."],
+  warumEsWirkt:"Drei Atemzüge sind keine Notlösung, sondern eine vollwertige Übung. Was zählt, ist die Wiederholung über Wochen, nicht die Länge am einzelnen Tag." },
+
+{ id:"mini-glas-wasser", titel:"Ein Glas Wasser", kategorie:"mini", attribute:{koerper:10}, dauerMin:2,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Hol dir ein Glas Wasser.",
+    "Trink es langsam, in kleinen Schlucken.",
+    "Spür die Temperatur im Mund und im Hals.",
+    "Stell das Glas ab. Fertig."],
+  warumEsWirkt:"Eine winzige Handlung mit voller Aufmerksamkeit ist Achtsamkeitstraining. An Tagen, an denen nichts geht, hält sie die Gewohnheit am Leben – und die Gewohnheit ist das, worauf es langfristig ankommt." },
+
+{ id:"mini-mut-satz", titel:"Einen Mut-Satz lesen", kategorie:"mini", attribute:{geist:10}, dauerMin:2,
+  intensitaet:"sanft", tool:"copingkarten",
+  anleitung:[
+    "Öffne deine Mut-Sätze.",
+    "Lies einen davon – laut, wenn möglich.",
+    "Lass ihn einen Moment stehen.",
+    "Mehr ist heute nicht nötig."],
+  warumEsWirkt:"Sätze, die man an ruhigen Tagen wiederholt, sind im Ernstfall schneller verfügbar. Das ist reine Abrufübung – wie eine Telefonnummer, die man auswendig kann." }
+];
+
+/* --- A.6  Psychoedukations-Karten --------------------------------------- */
+const WISSENSKARTEN = [
+  { id:"wk-abklingen", titel:"Warum eine Panikattacke von selbst abklingt",
+    text:"Eine Panikattacke wird von einem Adrenalinstoß getragen. Adrenalin wird im Körper laufend abgebaut – es kann gar nicht dauerhaft oben bleiben. Deshalb erreicht fast jede Attacke nach wenigen Minuten ihren Höhepunkt und fällt danach ab, ganz gleich, ob du etwas tust oder nicht. Der Körper hat für diesen Zustand eine eingebaute Bremse." },
+  { id:"wk-hyperventilation", titel:"Warum schnelles Atmen schwindelig macht",
+    text:"Bei schneller Atmung atmest du zu viel Kohlendioxid ab. Das verengt kurzzeitig die Blutgefäße im Gehirn – daher Schwindel, Kribbeln in Händen und Lippen, Benommenheit und das Gefühl von Unwirklichkeit. Unangenehm, aber harmlos und schnell umkehrbar: Es reicht, langsamer und vor allem länger auszuatmen." },
+  { id:"wk-vermeidung", titel:"Warum Vermeidung kurzfristig hilft und langfristig schadet",
+    text:"Wenn du eine gefürchtete Situation verlässt, sinkt die Angst sofort. Dein Gehirn merkt sich: Das Weggehen hat mich gerettet. Damit bleibt die Situation als gefährlich abgespeichert und wird beim nächsten Mal noch schwerer. Vermeidung ist eine Erleichterung, die man sich mit Zinsen borgt." },
+  { id:"wk-sicherheitsverhalten", titel:"Was Sicherheitsverhalten ist",
+    text:"Sicherheitsverhalten sind die kleinen Tricks, mit denen du eine Situation erträglich machst: Wasserflasche, Tablette in der Tasche, Platz am Gang, jemanden dabeihaben, ständig den Puls prüfen. Das Problem: Geht es gut aus, schreibst du den Erfolg dem Trick zu – nie der Harmlosigkeit der Situation. Deshalb lernt die Angst nichts dazu." },
+  { id:"wk-kurve", titel:"Warum Angst nie „unendlich“ steigt",
+    text:"Angst verläuft in einer Kurve: Sie steigt, erreicht einen Gipfel und fällt wieder – auch dann, wenn du nichts unternimmst. Der Körper kann den Alarmzustand nicht endlos halten. Wer in der Situation bleibt, erlebt das Abfallen; wer im Hoch geht, erlebt nur den Anstieg und glaubt, es wäre immer weiter gestiegen." },
+  { id:"wk-fehlalarm", titel:"Der Alarm ist echt – die Gefahr nicht",
+    text:"Bei Angst passiert im Körper exakt dasselbe wie bei echter Gefahr: Herz schneller, Atmung schneller, Muskeln bereit, Verdauung heruntergefahren. Das ist ein funktionierendes Notfallprogramm, ausgelöst zum falschen Zeitpunkt. Deine Symptome sind also nicht eingebildet – nur die Gefahr, die sie meldet, ist es." },
+  { id:"wk-herzrasen", titel:"Warum das Herz rast – und warum das tragbar ist",
+    text:"Adrenalin lässt das Herz schneller und kräftiger schlagen, damit Muskeln schnell Sauerstoff bekommen. Ein gesundes Herz ist dafür gebaut; beim Sport tut es dasselbe, ohne dass es jemanden beunruhigt. Der Unterschied liegt in der Deutung, nicht im Puls. Wichtig bleibt: Herzbeschwerden gehören einmal ärztlich abgeklärt – danach darfst du dem Ergebnis glauben." },
+  { id:"wk-unwirklich", titel:"Wenn alles unwirklich wirkt",
+    text:"Das Gefühl, neben sich zu stehen oder die Umgebung wie durch Watte wahrzunehmen, heißt Derealisation oder Depersonalisation. Es entsteht durch die veränderte Atmung und die extreme Anspannung und ist eines der häufigsten Angstsymptome. Es ist unheimlich – und es ist kein Zeichen dafür, dass du den Verstand verlierst." },
+  { id:"wk-ohnmacht", titel:"Warum man bei Panik fast nie ohnmächtig wird",
+    text:"Ohnmacht entsteht durch einen Blutdruckabfall. Bei Panik passiert das Gegenteil: Puls und Blutdruck steigen. Genau deshalb ist eine Ohnmacht während einer Panikattacke sehr unwahrscheinlich, obwohl die Angst davor sehr häufig ist. Eine Ausnahme ist die Blut- und Spritzenphobie, bei der der Kreislauf tatsächlich absackt." },
+  { id:"wk-kontrollverlust", titel:"„Ich verliere die Kontrolle“",
+    text:"Diese Befürchtung ist typisch, und sie tritt praktisch nie ein. Menschen in Panik schreien nicht los, werden nicht verrückt und verlieren nicht die Kontrolle über ihr Handeln – sie stehen nur unter massivem Alarm und tun trotzdem weiter, was nötig ist. Das Gefühl von Kontrollverlust ist ein Symptom, keine Vorhersage." },
+  { id:"wk-erwartungsangst", titel:"Die Angst vor der Angst",
+    text:"Nach den ersten Attacken richtet sich die Angst oft nicht mehr auf Situationen, sondern auf die Angst selbst. Man beobachtet den eigenen Körper, deutet jedes Ziehen als Vorboten und erzeugt genau dadurch Anspannung. Diese Erwartungsangst hält Panikstörungen häufiger aufrecht als die Attacken selbst." },
+  { id:"wk-aufmerksamkeit", titel:"Was du suchst, findest du",
+    text:"Wer den Körper ständig überwacht, bemerkt mehr Empfindungen – nicht weil mehr passiert, sondern weil die Aufmerksamkeit dort liegt. Probier es an einer harmlosen Stelle: Konzentrier dich zwei Minuten auf deinen linken Fuß, und er wird sich melden. Symptomkontrolle erzeugt genau die Symptome, vor denen sie schützen soll." },
+  { id:"wk-atem-vertrauen", titel:"Ersticken ist nicht möglich",
+    text:"Das Gefühl, nicht genug Luft zu bekommen, entsteht meist durch zu volle, zu schnelle Atmung und angespannte Brustmuskulatur – nicht durch Sauerstoffmangel. Die Atmung ist ein lebenswichtiger Reflex; sie funktioniert weiter, auch wenn du dich nicht darum kümmerst. Hilfreich ist hier das Ausatmen, nicht das Einatmen." },
+  { id:"wk-schlaf", titel:"Schlaf und Angst hängen zusammen",
+    text:"Zu wenig Schlaf erhöht die Reaktionsbereitschaft der Angstzentren im Gehirn messbar – nach einer schlechten Nacht ist die Schwelle für Panik niedriger. Umgekehrt raubt Angst den Schlaf. Das ist kein Teufelskreis ohne Ausgang, aber es erklärt, warum Schlafquests hier als vollwertige Übungen zählen." },
+  { id:"wk-koffein-alkohol", titel:"Koffein und Alkohol",
+    text:"Koffein erzeugt Körpersignale, die einer Panikattacke ähneln, und kann sie bei empfindlichen Menschen auslösen. Alkohol wirkt zunächst beruhigend; beim Abbau schlägt er in Unruhe um, weshalb Angst oft am Morgen danach oder mitten in der Nacht besonders stark ist. Beides sind Stellschrauben, die überraschend viel ausmachen." },
+  { id:"wk-atmung-parasympathikus", titel:"Warum das Ausatmen das Wichtige ist",
+    text:"Beim Einatmen beschleunigt sich der Herzschlag leicht, beim Ausatmen verlangsamt er sich. Wenn du also länger ausatmest als einatmest, verschiebst du die Balance in Richtung Beruhigung. Das ist kein Trick, sondern reine Physiologie – und der Grund, warum fast alle wirksamen Atemübungen die Ausatmung betonen." },
+  { id:"wk-uebung-dosis", titel:"Warum regelmäßig wichtiger ist als lang",
+    text:"Beruhigungsfertigkeiten funktionieren wie Muskeln: Fünf Minuten an sechs Tagen bringen mehr als eine halbe Stunde am Sonntag. Entscheidend ist, dass du sie im ruhigen Zustand übst – nur dann sind sie im Alarmzustand überhaupt abrufbar. Eine Übung, die man erst in der Panik zum ersten Mal probiert, funktioniert selten." },
+  { id:"wk-rueckfall", titel:"Rückschritte gehören dazu",
+    text:"Fortschritt bei Angst verläuft in Zacken, nicht auf einer Geraden. Nach guten Wochen kommt oft ein schlechter Tag – das ist kein Beweis dafür, dass nichts hilft, sondern der normale Verlauf. Was du gelernt hast, ist nicht weg; es steht beim nächsten Schritt wieder zur Verfügung." },
+  { id:"wk-hilfe-holen", titel:"Wann Fachbegleitung sinnvoll ist",
+    text:"Selbsthilfe ist wirksam und hat Grenzen. Wenn Angst deinen Alltag stark einschränkt, seit Monaten anhält, du dich zurückziehst, Alkohol oder Beruhigungsmittel einsetzt, oder wenn dich Gedanken beschäftigen, dir das Leben zu nehmen: Dann ist Fachbegleitung der nächste richtige Schritt – kein Scheitern, sondern die passende Werkzeugkiste für diese Größenordnung." }
+];
+
+/* --- A.7  Coping-Satz-Vorlagen ------------------------------------------
+   Bewusst nüchtern und glaubhaft. Keine Verneinungen wie „Ich habe keine
+   Angst“ – solche Sätze lenken die Aufmerksamkeit erst recht auf die Angst. */
+const COPING_VORLAGEN = [
+  "Das ist unangenehm, nicht gefährlich.",
+  "Die Welle steigt und sie fällt wieder.",
+  "Mein Körper macht gerade Alarm, obwohl keine Gefahr da ist.",
+  "Ich muss das Gefühl nicht wegmachen, um weiterzugehen.",
+  "Ich bleibe noch ein paar Minuten. Dann schaue ich weiter.",
+  "Das habe ich schon überstanden – mehr als einmal.",
+  "Länger ausatmen als einatmen. Mehr ist gerade nicht zu tun.",
+  "Gedanken sind Vorschläge, keine Tatsachen.",
+  "Ich darf langsam machen. Das ist kein Rückschritt."
+];
+
+/* --- A.8  Werte-Vorschläge ---------------------------------------------- */
+const WERTE = ["Verbundenheit","Gesundheit","Selbstbestimmung","Neugier","Verlässlichkeit",
+  "Kreativität","Mut","Fürsorge","Humor","Ruhe","Lernen","Natur","Ehrlichkeit","Freiheit"];
+
+/* --- A.9  Achievements --------------------------------------------------
+   pruef(state, ctx) liefert true, sobald das Abzeichen verdient ist.        */
+const ACHIEVEMENTS = [
+  { id:"erster-atemzug", name:"Erster Atemzug", text:"Die erste Übung ist getan.",
+    pruef:s=>s.completions.length>=1 },
+  { id:"drei-tage", name:"Drei Sonnen", text:"Drei Tage in Folge geübt.",
+    pruef:s=>s.streak.longest>=3 },
+  { id:"sieben-sonnen", name:"Sieben Sonnen", text:"Eine Woche am Stück.",
+    pruef:s=>s.streak.longest>=7 },
+  { id:"vierzehn-monde", name:"Vierzehn Monde", text:"Zwei Wochen am Stück.",
+    pruef:s=>s.streak.longest>=14 },
+  { id:"detektiv-lehrling", name:"Detektiv-Lehrling", text:"Fünf Gedankenprotokolle geschrieben.",
+    pruef:s=>s.journal.filter(j=>j.type==="gedankenprotokoll").length>=5 },
+  { id:"detektiv-meister", name:"Detektiv-Meisterin", text:"Zwanzig Gedankenprotokolle.",
+    pruef:s=>s.journal.filter(j=>j.type==="gedankenprotokoll").length>=20 },
+  { id:"kartograf", name:"Kartograf", text:"Die Landkarte der Vermeidung erstellt.",
+    pruef:s=>s.avoidanceMap.length>=1 },
+  { id:"erste-sprosse", name:"Erste Sprosse", text:"Die erste Sprosse erklommen.",
+    pruef:s=>s.completions.some(c=>c.questId==="eine-sprosse") },
+  { id:"netz-gelockert", name:"Netz gelockert", text:"Eine Absicherung weggelassen.",
+    pruef:s=>s.completions.some(c=>c.questId==="sicherheitsnetz-lockern") },
+  { id:"kreisbrecher", name:"Kreisbrecher", text:"Zehn Mut-Quests abgeschlossen.",
+    pruef:s=>zaehleKategorie(s,"mut")>=10 },
+  { id:"ausgeglichen", name:"Ausgeglichen", text:"Alle vier Attribute über 300.",
+    pruef:s=>ATTR_KEYS.every(k=>s.xp[k]>300) },
+  { id:"nachtwache", name:"Nachtwache", text:"Sieben Mal den Schlafanker gesetzt.",
+    pruef:s=>zaehleQuest(s,"schlafanker")>=7 },
+  { id:"wiederaufnahme", name:"Wiederaufnahme", text:"Nach einer längeren Pause zurückgekommen.",
+    pruef:(s,ctx)=>!!(ctx&&ctx.rueckkehr) },
+  { id:"atemmeister", name:"Atemhandwerk", text:"Zwanzig Atemübungen gemacht.",
+    pruef:s=>zaehleKategorie(s,"atem")>=20 },
+  { id:"sammler", name:"Entdeckerin", text:"25 verschiedene Quests ausprobiert.",
+    pruef:s=>new Set(s.completions.map(c=>c.questId)).size>=25 },
+  { id:"wissensdurst", name:"Wissensdurst", text:"Zehn Wissenskarten gelesen.",
+    pruef:s=>zaehleQuest(s,"wissenskarte")>=10 },
+  { id:"mutworte", name:"Mutworte", text:"Fünf eigene Mut-Sätze gespeichert.",
+    pruef:s=>s.copingCards.length>=5 },
+  { id:"lichtsammler", name:"Lichtsammlerin", text:"Zehn Mal drei gute Dinge notiert.",
+    pruef:s=>zaehleQuest(s,"drei-lichter")>=10 },
+  { id:"werteanker", name:"Werteanker", text:"Einen persönlichen Wert gesetzt.",
+    pruef:s=>!!s.profile.wert },
+  { id:"verbunden", name:"Verbunden", text:"Zehn Verbundenheits-Quests.",
+    pruef:s=>zaehleKategorie(s,"verbundenheit")>=10 },
+  { id:"ruhepol", name:"Ruhepol", text:"Zehn Achtsamkeitsübungen.",
+    pruef:s=>zaehleKategorie(s,"achtsamkeit")>=10 },
+  { id:"wanderer", name:"Wanderin", text:"Zehn Bewegungs-Quests.",
+    pruef:s=>zaehleKategorie(s,"bewegung")>=10 },
+  { id:"hundert", name:"Hundert Schritte", text:"Hundert Übungen insgesamt.",
+    pruef:s=>s.completions.length>=100 },
+  { id:"sanftmut", name:"Sanftmut", text:"Fünf sanfte Tage genutzt – klug dosiert.",
+    pruef:s=>(s.stats&&s.stats.sanfteTage||0)>=5 },
+  { id:"chronist", name:"Chronistin", text:"Zehn Einträge im Angst-Tagebuch.",
+    pruef:s=>s.journal.filter(j=>j.type==="angsttagebuch").length>=10 }
+];
+
+/* ===========================================================================
+   §B  STATE  ·  Datenmodell, localStorage, Migration
+   =========================================================================== */
+const STORAGE_KEY = "kokoroquest.v1";
+const VERSION = 1;
+
+/* --- kleine Helfer ------------------------------------------------------ */
+const $  = (sel, root=document) => root.querySelector(sel);
+const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+const heute = () => new Date().toISOString().slice(0,10);
+const tage = (a,b) => Math.round((new Date(b+"T00:00:00") - new Date(a+"T00:00:00")) / 86400000);
+const clamp = (n,min,max) => Math.max(min, Math.min(max, n));
+const questById = id => QUESTS.find(q => q.id === id);
+const zaehleQuest = (s,id) => s.completions.filter(c=>c.questId===id).length;
+const zaehleKategorie = (s,kat) => s.completions.filter(c=>{
+  const q = questById(c.questId); return q && q.kategorie === kat;
+}).length;
+/* Sicheres Einsetzen von Nutzertext in HTML */
+const esc = t => String(t==null?"":t)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+const datumDe = iso => { try{
+  return new Date(iso+ (iso.length===10?"T12:00:00":"")).toLocaleDateString("de-DE",
+    {day:"2-digit",month:"2-digit",year:"numeric"});
+}catch(e){ return iso; } };
+
+/* --- Standardzustand ---------------------------------------------------- */
+function leererState(){
+  return {
+    version: VERSION,
+    createdAt: new Date().toISOString(),
+    profile: { name:"", avatarName:"Mochi", startDate: heute(), intensity:"normal", wert:"" },
+    xp: { koerper:0, geist:0, mut:0, verbundenheit:0 },
+    totalXp: 0,
+    level: 1,
+    streak: { current:0, longest:0, lastActiveDate:null, shields:2 },
+    completions: [],
+    achievements: [],
+    journal: [],
+    copingCards: [],
+    avoidanceMap: [],
+    emergencyContacts: [],
+    playlists: { ruhe:[], kraft:[] },
+    daily: { date:null, questIds:[], sanft:false, done:[] },
+    stats: { sanfteTage:0, islandOpened:0, letzterWochenSchild:0 },
+    onboarded: false,
+    settings: { reducedMotion:false, sound:false, dailyReminderTime:"" }
+  };
+}
+
+/* --- Migration ----------------------------------------------------------
+   Ergänzt fehlende Felder, damit ältere Speicherstände nicht kaputtgehen.
+   Regel: niemals Felder löschen, immer nur auffüllen.                      */
+function migrate(state){
+  const std = leererState();
+  if (!state || typeof state !== "object") return std;
+
+  const out = Object.assign({}, std, state);
+  out.version = VERSION;
+  out.profile = Object.assign({}, std.profile, state.profile || {});
+  out.xp      = Object.assign({}, std.xp, state.xp || {});
+  out.streak  = Object.assign({}, std.streak, state.streak || {});
+  out.settings= Object.assign({}, std.settings, state.settings || {});
+  out.daily   = Object.assign({}, std.daily, state.daily || {});
+  out.stats   = Object.assign({}, std.stats, state.stats || {});
+  out.playlists = Object.assign({}, std.playlists, state.playlists || {});
+
+  // Arrays absichern
+  ["completions","achievements","journal","copingCards","avoidanceMap","emergencyContacts"]
+    .forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+  ["ruhe","kraft"].forEach(k => { if(!Array.isArray(out.playlists[k])) out.playlists[k]=[]; });
+  if (!Array.isArray(out.daily.questIds)) out.daily.questIds = [];
+  if (!Array.isArray(out.daily.done)) out.daily.done = [];
+
+  // Zahlen absichern
+  ATTR_KEYS.forEach(k => { out.xp[k] = Number(out.xp[k]) || 0; });
+  out.totalXp = Number(out.totalXp) || ATTR_KEYS.reduce((a,k)=>a+out.xp[k],0);
+  out.level   = Number(out.level) || 1;
+  out.streak.current = Number(out.streak.current)||0;
+  out.streak.longest = Number(out.streak.longest)||0;
+  out.streak.shields = clamp(Number(out.streak.shields)||0, 0, 3);
+
+  // Einträge ohne id nachträglich mit einer versehen
+  out.copingCards  = out.copingCards.map(c => c.id ? c : Object.assign({id:neueId()}, c));
+  out.avoidanceMap = out.avoidanceMap.map(a => a.id ? a : Object.assign({id:neueId()}, a));
+  out.journal      = out.journal.map(j => j.id ? j : Object.assign({id:neueId()}, j));
+
+  out.level = levelFuer(out.totalXp).stufe;
+  return out;
+}
+
+function neueId(){
+  return "id-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2,7);
+}
+
+/* --- Laden & Speichern (immer gekapselt) -------------------------------- */
+let STORAGE_OK = true;
+let S = leererState();
+
+function ladeState(){
+  try{
+    const roh = localStorage.getItem(STORAGE_KEY);
+    STORAGE_OK = true;
+    if (!roh) return leererState();
+    return migrate(JSON.parse(roh));
+  }catch(e){
+    STORAGE_OK = false;                       // z. B. Storage blockiert
+    console.warn("Speicher nicht lesbar:", e);
+    return leererState();
+  }
+}
+
+function speichern(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(S));
+    STORAGE_OK = true;
+  }catch(e){
+    STORAGE_OK = false;
+    console.warn("Speichern nicht möglich:", e);
+  }
+}
+
+/* ===========================================================================
+   §C  SPIELLOGIK  ·  Level, Tagesplan, Punkte, Serie
+   =========================================================================== */
+
+/* --- Level -------------------------------------------------------------- */
+function levelFuer(total){
+  let l = LEVELS[0];
+  for (const lv of LEVELS) if (total >= lv.ab) l = lv;
+  return l;
+}
+function naechstesLevel(total){
+  return LEVELS.find(lv => lv.ab > total) || null;
+}
+function levelFortschritt(total){
+  const akt = levelFuer(total), next = naechstesLevel(total);
+  if (!next) return { prozent:100, text:"Höchste Stufe erreicht", rest:0 };
+  const spanne = next.ab - akt.ab;
+  const drin = total - akt.ab;
+  return {
+    prozent: clamp(Math.round(drin/spanne*100),0,100),
+    rest: next.ab - total,
+    text: (next.ab - total) + " Punkte bis " + next.name
+  };
+}
+
+/* --- Serie: Multiplikator wächst bis 1.5× und ist bei 14 Tagen gedeckelt,
+   damit ein Abbruch sich nie wie ein Totalverlust anfühlt.                 */
+function serienMultiplikator(){
+  return 1 + Math.min(S.streak.current, 14) / 14 * 0.5;
+}
+
+/* --- Tageswechsel prüfen ------------------------------------------------
+   Wird beim Start aufgerufen. Ruhetag-Schilde fangen ausgelassene Tage ab.
+   Es gibt hier keinen Punktabzug und keine negative Formulierung.          */
+function tagesUebergang(){
+  const info = { schild:0, rueckkehr:false, pause:false };
+  const letzter = S.streak.lastActiveDate;
+  if (!letzter) return info;
+  const abstand = tage(letzter, heute());
+  if (abstand <= 1) return info;              // gestern oder heute aktiv
+  const verpasst = abstand - 1;
+
+  if (S.streak.shields >= verpasst){
+    S.streak.shields -= verpasst;
+    // Serie bleibt bestehen: letzter aktiver Tag rückt auf gestern
+    const g = new Date(); g.setDate(g.getDate()-1);
+    S.streak.lastActiveDate = g.toISOString().slice(0,10);
+    info.schild = verpasst;
+  } else {
+    S.streak.current = 0;
+    S.streak.lastActiveDate = null;
+    if (verpasst >= 7) { info.rueckkehr = true; S.stats.zeigeRueckkehr = true; }
+    else info.pause = true;
+  }
+  speichern();
+  return info;
+}
+
+/* --- Serie fortschreiben (bei jeder abgeschlossenen Quest) --------------- */
+function serieFortschreiben(){
+  const t = heute();
+  if (S.streak.lastActiveDate === t) return;
+  const g = new Date(); g.setDate(g.getDate()-1);
+  const gestern = g.toISOString().slice(0,10);
+  S.streak.current = (S.streak.lastActiveDate === gestern) ? S.streak.current + 1 : 1;
+  S.streak.lastActiveDate = t;
+  S.streak.longest = Math.max(S.streak.longest, S.streak.current);
+  // Jede volle Woche gibt ein Ruhetag-Schild dazu (höchstens drei)
+  if (S.streak.current > 0 && S.streak.current % 7 === 0 &&
+      S.stats.letzterWochenSchild !== S.streak.current){
+    S.stats.letzterWochenSchild = S.streak.current;
+    if (S.streak.shields < 3){
+      S.streak.shields++;
+      toast("Ein Ruhetag-Schild dazubekommen 🛡️");
+    }
+  }
+}
+
+/* --- Tagesplan ----------------------------------------------------------
+   Drei Quests: eine kleine, eine mittlere und eine Mut-Quest.
+   Auswahl ist pro Tag stabil (deterministischer Zufall aus dem Datum).     */
+function seedZahl(text){
+  let h = 2166136261;
+  for (let i=0;i<text.length;i++){ h ^= text.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return Math.abs(h);
+}
+const POOL = {
+  klein:  () => QUESTS.filter(q => q.kategorie!=="mut" && q.kategorie!=="mini" && q.dauerMin<=10),
+  mittel: () => QUESTS.filter(q => q.kategorie!=="mut" && q.kategorie!=="mini" && q.dauerMin>10),
+  mut:    () => QUESTS.filter(q => q.kategorie==="mut"),
+  mini:   () => QUESTS.filter(q => q.kategorie==="mini")
+};
+function tagesplanSicherstellen(){
+  const t = heute();
+  if (S.daily.date === t && S.daily.questIds.length) return;
+  S.daily = { date:t, questIds: planBauen(t, false), sanft:false, done:[] };
+  speichern();
+}
+function planBauen(datum, sanft){
+  if (sanft) return POOL.mini().map(q=>q.id).slice(0,3);
+  const seed = seedZahl(datum + "|" + S.createdAt);
+  /* Grundeinstellung „sanft“: kürzere Übungen bevorzugen, solange welche da sind */
+  const dosiert = pool => {
+    if (S.profile.intensity !== "sanft") return pool;
+    const leicht = pool.filter(q => q.intensitaet === "sanft");
+    return leicht.length ? leicht : pool;
+  };
+  const pick = (pool, versatz) => { const pp = dosiert(pool); return pp[(seed + versatz*7) % pp.length].id; };
+  const ids = [ pick(POOL.klein(),0), pick(POOL.mittel(),1), pick(POOL.mut(),2) ];
+  // Landkarte nur vorschlagen, solange es noch keine gibt
+  if (ids[2]==="landkarte-vermeidung" && S.avoidanceMap.length){
+    const alt = POOL.mut().filter(q=>q.id!=="landkarte-vermeidung");
+    ids[2] = alt[seed % alt.length].id;
+  }
+  if (ids[2]==="eine-sprosse" && !S.avoidanceMap.length) ids[2] = "landkarte-vermeidung";
+  return ids;
+}
+/* Eine einzelne Quest gegen eine andere aus derselben Kategorie tauschen */
+function questTauschen(index){
+  const aktuell = questById(S.daily.questIds[index]);
+  if (!aktuell) return;
+  const gleiche = QUESTS.filter(q =>
+    q.kategorie === aktuell.kategorie && !S.daily.questIds.includes(q.id));
+  const pool = gleiche.length ? gleiche
+    : QUESTS.filter(q => q.kategorie === aktuell.kategorie);
+  const neu = pool[Math.floor(Math.random()*pool.length)];
+  S.daily.questIds[index] = neu.id;
+  speichern();
+  render();
+  toast("Getauscht: " + neu.titel);
+}
+/* Sanfter Tag – jederzeit umlegbar, die Serie bleibt erhalten */
+function sanftUmschalten(){
+  const an = !S.daily.sanft;
+  S.daily.sanft = an;
+  S.daily.questIds = planBauen(heute(), an);
+  if (an){ S.stats.sanfteTage = (S.stats.sanfteTage||0) + 1; }
+  speichern();
+  pruefeAchievements();
+  render();
+  toast(an ? "Sanfter Tag ist an." : "Normales Tagespensum.");
+}
+
+/* --- Quest abschließen & Punkte vergeben --------------------------------
+   ACHTUNG: Der Notfallmodus ruft diese Funktion bewusst NICHT auf.
+   Für eine Panikattacke gibt es keine Punkte – nur das freiwillige
+   Reflektieren danach zahlt auf Geist ein.                                 */
+function questAbschliessen(quest, extra){
+  extra = extra || {};
+  const mult = serienMultiplikator();
+  const gewinn = {};
+  let summe = 0;
+  for (const k of ATTR_KEYS){
+    if (quest.attribute[k]){
+      const p = Math.round(quest.attribute[k] * mult);
+      gewinn[k] = p; S.xp[k] += p; summe += p;
+    }
+  }
+  S.totalXp += summe;
+
+  S.completions.push({
+    questId: quest.id,
+    date: heute(),
+    durationMin: extra.durationMin != null ? extra.durationMin : quest.dauerMin,
+    moodBefore: extra.moodBefore != null ? extra.moodBefore : null,
+    moodAfter:  extra.moodAfter  != null ? extra.moodAfter  : null,
+    note: extra.note || ""
+  });
+  if (!S.daily.done.includes(quest.id)) S.daily.done.push(quest.id);
+
+  const altesLevel = S.level;
+  serieFortschreiben();
+  S.level = levelFuer(S.totalXp).stufe;
+  speichern();
+
+  const teile = Object.keys(gewinn).map(k => "+" + gewinn[k] + " " + ATTRIBUTE[k].name);
+  melde(teile.join(", ") + ". Gesamtpunkte " + S.totalXp + ".");
+  toast("✨ " + teile.join("  ·  "));
+
+  const neue = pruefeAchievements();
+  if (S.level > altesLevel) zeigeLevelUp(LEVELS[S.level-1]);
+  else if (neue.length) zeigeAchievement(neue[0]);
+  return gewinn;
+}
+
+/* --- Achievements prüfen ------------------------------------------------ */
+function pruefeAchievements(ctx){
+  const neu = [];
+  for (const a of ACHIEVEMENTS){
+    if (S.achievements.some(x => x.id === a.id)) continue;
+    let ok = false;
+    try { ok = !!a.pruef(S, ctx); } catch(e){ ok = false; }
+    if (ok){
+      S.achievements.push({ id:a.id, unlockedAt:new Date().toISOString() });
+      neu.push(a);
+    }
+  }
+  if (neu.length) speichern();
+  return neu;
+}
+
+/* --- Journal & Karten --------------------------------------------------- */
+function journalEintrag(type, fields){
+  S.journal.push({ id:neueId(), date:heute(), type:type, fields:fields });
+  speichern();
+  pruefeAchievements();
+}
+
+/* ===========================================================================
+   §D  AVATAR & GRAFIK  ·  alles als Inline-SVG, keine externen Dateien
+   ---------------------------------------------------------------------------
+   Eigenständige Figur: „Mochi“ ist ein Originaldesign. Bewusst keine
+   Anlehnung an existierende Anime-, Spiel- oder Markenfiguren – nur der
+   allgemeine Chibi-/Kawaii-Stil, der frei verwendbar ist.
+   Chibi-Proportionen: Kopf etwa halbe Figurhöhe, große Augen mit zwei bis
+   drei Glanzlichtern, winzige Gliedmaßen, runde Wangen.
+   =========================================================================== */
+const SW = 5;  /* gleichmäßige Outline-Stärke */
+
+/* Augen mit Glanzlichtern – wiederverwendbarer Baustein */
+function augen(x1,x2,y,r,zu){
+  if (zu) return `
+    <path d="M${x1-9} ${y} q9 9 18 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    <path d="M${x2-9} ${y} q9 9 18 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>`;
+  return `
+    <ellipse cx="${x1}" cy="${y}" rx="${r*0.86}" ry="${r}" fill="var(--ink)"/>
+    <ellipse cx="${x2}" cy="${y}" rx="${r*0.86}" ry="${r}" fill="var(--ink)"/>
+    <circle cx="${x1-2.5}" cy="${y-3.5}" r="${r*0.34}" fill="#fff"/>
+    <circle cx="${x2-2.5}" cy="${y-3.5}" r="${r*0.34}" fill="#fff"/>
+    <circle cx="${x1+3}" cy="${y+3}" r="${r*0.18}" fill="#fff" opacity=".85"/>
+    <circle cx="${x2+3}" cy="${y+3}" r="${r*0.18}" fill="#fff" opacity=".85"/>`;
+}
+const wangen = (x1,x2,y) => `
+  <ellipse cx="${x1}" cy="${y}" rx="9" ry="6" fill="var(--koralle)" opacity=".5"/>
+  <ellipse cx="${x2}" cy="${y}" rx="9" ry="6" fill="var(--koralle)" opacity=".5"/>`;
+
+/* --- Stufe 1: Mochi – kleiner zitternder Reisklößchen-Blob --------------- */
+function avatar1(){ return `
+<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Mochi: ein kleines, zitterndes Reisklößchen mit halb geschlossenen Augen">
+  <ellipse cx="100" cy="196" rx="44" ry="9" fill="var(--lavendel)" opacity=".35"/>
+  <g class="tremble">
+    <path d="M56 160 q0-58 44-58 t44 58 q0 24-44 24 t-44-24z" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
+    ${augen(84,116,140,0,true)}
+    <path d="M94 158 q6 5 12 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${wangen(72,128,152)}
+    <path d="M150 118 q7 10 0 15 q-7-5 0-15z" fill="var(--himmel)" stroke="var(--ink)" stroke-width="3"/>
+    <path d="M46 128 q6 9 0 13 q-6-4 0-13z" fill="var(--himmel)" stroke="var(--ink)" stroke-width="3"/>
+    <path d="M66 178 q-8 4 -10 10" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    <path d="M134 178 q8 4 10 10" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+  </g>
+</svg>`; }
+
+/* --- Stufe 2: Wackelkind – steht, unsicher, Augen offen ----------------- */
+function avatar2(){ return `
+<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Wackelkind: Mochi steht auf kleinen Beinen, die Augen sind offen">
+  <ellipse cx="100" cy="204" rx="40" ry="8" fill="var(--lavendel)" opacity=".35"/>
+  <g class="idle">
+    <rect x="86" y="176" width="12" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="102" y="176" width="12" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="72" y="140" width="56" height="44" rx="21" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <ellipse cx="64" cy="156" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <ellipse cx="136" cy="156" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <circle cx="100" cy="96" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    ${augen(82,118,98,10,false)}
+    <path d="M94 118 q6 6 12 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${wangen(68,132,112)}
+    <path d="M100 44 q6-10 14-8 q-6 8-14 8z" fill="var(--mint)" stroke="var(--ink)" stroke-width="3"/>
+  </g>
+</svg>`; }
+
+/* --- Stufe 3: Lehrling – Umhang und erste Laterne ----------------------- */
+function avatar3(){ return `
+<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Lehrling: Mochi trägt einen kleinen Umhang und hält eine Laterne">
+  <ellipse cx="100" cy="204" rx="42" ry="8" fill="var(--lavendel)" opacity=".35"/>
+  <g class="idle">
+    <path d="M70 136 q30 14 60 0 l14 56 q-44 14 -88 0z" fill="var(--lavendel)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
+    <rect x="86" y="178" width="12" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="102" y="178" width="12" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="76" y="138" width="48" height="42" rx="20" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <ellipse cx="140" cy="154" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <g class="float-slow">
+      <line x1="144" y1="160" x2="152" y2="166" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
+      <path d="M144 166 a10 10 0 0 1 18 0" fill="none" stroke="var(--ink)" stroke-width="3"/>
+      <rect x="142" y="170" width="22" height="26" rx="7" fill="var(--butter)" stroke="var(--ink)" stroke-width="3.6"/>
+      <circle cx="153" cy="183" r="6" fill="#fff" opacity=".75"/>
+      <circle cx="153" cy="183" r="24" fill="var(--butter)" opacity=".28"/>
+    </g>
+    <ellipse cx="62" cy="154" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <circle cx="100" cy="94" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <path d="M60 104 q40-38 80 0" fill="none" stroke="var(--ink)" stroke-width="0"/>
+    ${augen(82,118,96,10,false)}
+    <path d="M92 118 q8 7 16 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${wangen(68,132,110)}
+    <path d="M58 76 q6-42 42-42 t42 42 q-14-16 -42-16 t-42 16z" fill="var(--lavendel)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+  </g>
+</svg>`; }
+
+/* --- Stufe 4: Späher – Stirnband, Rucksack, aufrecht -------------------- */
+function avatar4(){ return `
+<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Späher: Mochi mit Stirnband und Rucksack, aufrecht und neugierig">
+  <ellipse cx="100" cy="206" rx="42" ry="8" fill="var(--lavendel)" opacity=".35"/>
+  <g class="idle">
+    <rect x="52" y="132" width="34" height="46" rx="14" fill="var(--himmel)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <rect x="60" y="146" width="18" height="14" rx="5" fill="var(--butter)" stroke="var(--ink)" stroke-width="3"/>
+    <rect x="84" y="180" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="103" y="180" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="74" y="136" width="52" height="46" rx="21" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <path d="M80 140 l10 40 M120 140 l-10 40" stroke="var(--ink)" stroke-width="3" opacity=".5"/>
+    <ellipse cx="64" cy="150" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <ellipse cx="138" cy="144" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4" transform="rotate(-25 138 144)"/>
+    <circle cx="100" cy="92" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <path d="M54 78 q46-16 92 0 l0 12 q-46-16 -92 0z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M146 80 q14 4 18 16 q-16-4 -18-16z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="3.4" stroke-linejoin="round"/>
+    ${augen(82,118,100,10,false)}
+    <path d="M92 122 q8 8 16 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${wangen(68,132,114)}
+  </g>
+</svg>`; }
+
+/* --- Stufe 5: Wächter – Schild mit Herz, ruhiger Blick ------------------ */
+function avatar5(){ return `
+<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Wächter: Mochi hält ein Schild mit einem Herz, der Blick ist ruhig">
+  <ellipse cx="100" cy="206" rx="44" ry="9" fill="var(--lavendel)" opacity=".35"/>
+  <g class="idle">
+    <path d="M74 132 q28 12 54 0 l12 58 q-40 12 -78 0z" fill="var(--himmel)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
+    <rect x="84" y="182" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="103" y="182" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="74" y="134" width="52" height="48" rx="22" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <ellipse cx="136" cy="152" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <g>
+      <path d="M46 128 q22-12 44 0 v26 q0 22 -22 32 q-22-10 -22-32z" fill="var(--butter)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
+      <path d="M68 168 s-14-9-14-19 a7.5 7.5 0 0 1 14-4 a7.5 7.5 0 0 1 14 4 c0 10-14 19-14 19z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="3.4" stroke-linejoin="round"/>
+    </g>
+    <circle cx="100" cy="90" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <path d="M70 84 q12-7 24 0" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+    <path d="M106 84 q12-7 24 0" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
+    ${augen(82,118,100,9,false)}
+    <path d="M92 120 q8 6 16 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${wangen(68,132,113)}
+  </g>
+</svg>`; }
+
+/* --- Stufe 6: Champion – Aura, die vier Attribut-Symbole schweben mit --- */
+function avatar6(){ return `
+<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Champion: Mochi leuchtet, die vier Attribut-Symbole schweben um die Figur">
+  <defs>
+    <radialGradient id="aura" cx="50%" cy="50%">
+      <stop offset="0%" stop-color="var(--butter)" stop-opacity=".85"/>
+      <stop offset="70%" stop-color="var(--butter)" stop-opacity=".12"/>
+      <stop offset="100%" stop-color="var(--butter)" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <circle cx="100" cy="110" r="96" fill="url(#aura)"/>
+  <ellipse cx="100" cy="206" rx="44" ry="9" fill="var(--lavendel)" opacity=".35"/>
+  <g class="spin-slow" opacity=".95">
+    <path d="M100 24 q8 10 0 18 q-8-8 0-18z" fill="var(--at-koerper)" stroke="var(--ink)" stroke-width="3"/>
+    <path d="M176 104 l8 10 -8 10 -8-10z" fill="var(--at-geist)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M100 190 q10-6 10 4 q0 8-10 12 q-10-4-10-12 q0-10 10-4z" fill="var(--at-mut)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M24 104 l3.4 8 8.6 .6 -6.6 5.6 2.2 8.4 -7.6-4.8 -7.6 4.8 2.2-8.4 -6.6-5.6 8.6-.6z" fill="var(--at-verbundenheit)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/>
+  </g>
+  <g class="idle">
+    <path d="M72 128 q28 14 56 0 l14 62 q-42 14 -84 0z" fill="var(--lavendel)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
+    <rect x="84" y="182" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="103" y="182" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="72" y="130" width="56" height="50" rx="24" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <path d="M100 138 l5 12 13 1 -10 8 3 13 -11-7 -11 7 3-13 -10-8 13-1z" fill="var(--butter)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+    <ellipse cx="60" cy="146" rx="9" ry="13" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4" transform="rotate(24 60 146)"/>
+    <ellipse cx="140" cy="146" rx="9" ry="13" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4" transform="rotate(-24 140 146)"/>
+    <circle cx="100" cy="88" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    ${augen(82,118,96,10,false)}
+    <path d="M90 118 q10 9 20 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${wangen(68,132,110)}
+  </g>
+</svg>`; }
+
+/* --- Stufe 7: Superheld – Cape, Sprung-Pose, Sterne --------------------- */
+function avatar7(){ return `
+<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Superheld: Mochi springt mit wehendem Cape, umgeben von Sternen">
+  <ellipse cx="100" cy="212" rx="34" ry="6" fill="var(--lavendel)" opacity=".3"/>
+  <g class="float-slow">
+    <path d="M28 60 l3 8 8 .6 -6 5.2 1.9 8 -6.9-4.4 -6.9 4.4 1.9-8 -6-5.2 8-.6z" fill="var(--butter)" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="M170 48 l3 8 8 .6 -6 5.2 1.9 8 -6.9-4.4 -6.9 4.4 1.9-8 -6-5.2 8-.6z" fill="var(--himmel)" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="M164 168 l2.6 7 7 .5 -5.3 4.6 1.7 7 -6-3.9 -6 3.9 1.7-7 -5.3-4.6 7-.5z" fill="var(--mint)" stroke="var(--ink)" stroke-width="2.2" stroke-linejoin="round"/>
+    <circle cx="44" cy="150" r="4" fill="var(--koralle)" stroke="var(--ink)" stroke-width="2"/>
+    <circle cx="150" cy="104" r="3.4" fill="var(--lavendel)" stroke="var(--ink)" stroke-width="2"/>
+  </g>
+  <g class="idle">
+    <path d="M120 116 q46 6 54 52 q-30-6 -44-22 q-8-14 -10-30z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
+    <path d="M78 120 q-40 12 -46 54 q28-10 40-26 q6-14 6-28z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
+    <path d="M84 178 q-8 16 -22 22" fill="none" stroke="var(--sakura)" stroke-width="15" stroke-linecap="round"/>
+    <path d="M84 178 q-8 16 -22 22" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round" opacity=".0"/>
+    <path d="M116 178 q10 12 26 10" fill="none" stroke="var(--sakura)" stroke-width="15" stroke-linecap="round"/>
+    <rect x="72" y="128" width="56" height="52" rx="24" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <path d="M100 168 s-14-10-14-19 a7.5 7.5 0 0 1 14-4 a7.5 7.5 0 0 1 14 4 c0 9-14 19-14 19z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M64 140 q-16-22 -6-40" fill="none" stroke="var(--sakura)" stroke-width="15" stroke-linecap="round"/>
+    <ellipse cx="136" cy="150" rx="9" ry="13" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4" transform="rotate(-30 136 150)"/>
+    <circle cx="100" cy="84" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <path d="M56 74 q44-30 88 0 q-6-26 -44-26 q-38 0 -44 26z" fill="var(--lavendel)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+    ${augen(82,118,92,10,false)}
+    <path d="M88 114 q12 12 24 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${wangen(68,132,106)}
+  </g>
+</svg>`; }
+
+const AVATARE = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7];
+const avatarSvg = stufe => AVATARE[clamp(stufe,1,7)-1]();
+
+/* --- Attribut- und Kategorie-Symbole ------------------------------------ */
+const SYMBOLE = {
+  koerper:`<path d="M12 3c3 4 5 6 5 9a5 5 0 0 1-10 0c0-2 1-3 2-4 .5 2 1.5 3 3 3-1-3 0-6 0-8z" fill="currentColor"/>`,
+  geist:`<path d="M12 3l6 6-6 12-6-12z" fill="currentColor"/>`,
+  mut:`<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z" fill="currentColor"/>`,
+  verbundenheit:`<path d="M12 3l2.6 6.1 6.4.5-5 4.2 1.6 6.2L12 16.6 6.4 20l1.6-6.2-5-4.2 6.4-.5z" fill="currentColor"/>`,
+  atem:`<circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.4"/><circle cx="12" cy="12" r="3" fill="currentColor"/>`,
+  bewegung:`<path d="M5 19l5-7 3 2 6-8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="5" r="2.2" fill="currentColor"/>`,
+  kognitiv:`<path d="M9 20v-2a5 5 0 1 1 6 0v2z" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M10 20h4" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`,
+  achtsamkeit:`<path d="M12 4c4 4 6 6 6 9a6 6 0 0 1-12 0c0-3 2-5 6-9z" fill="none" stroke="currentColor" stroke-width="2.2"/>`,
+  verbundenheit_k:`<circle cx="8" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="16" cy="9" r="3" fill="none" stroke="currentColor" stroke-width="2.2"/><path d="M4 19c1-3 3-4 4-4m8 0c1 0 3 1 4 4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>`,
+  mini:`<circle cx="12" cy="12" r="4" fill="currentColor"/>`
+};
+const katIcon = kat => `<svg viewBox="0 0 24 24" aria-hidden="true">${
+  SYMBOLE[kat === "verbundenheit" ? "verbundenheit_k" : (kat === "mut" ? "mut" : kat)] || SYMBOLE.mini}</svg>`;
+const attrIcon = k => `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">${SYMBOLE[k]}</svg>`;
+
+/* --- Ruhetag-Schild ----------------------------------------------------- */
+const schildSvg = aktiv => `
+<svg class="shield ${aktiv?'':'used'}" viewBox="0 0 24 24" aria-hidden="true">
+  <path d="M12 2l8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5z"
+        fill="${aktiv?'var(--mint)':'var(--surface-2)'}" stroke="${aktiv?'var(--ink-dunkel)':'var(--line)'}" stroke-width="2"/>
+</svg>`;
+
+/* --- Achievement-Abzeichen im Sticker-Look ------------------------------ */
+const BADGE_GLYPH = {
+  "erster-atemzug":"atem", "drei-tage":"verbundenheit", "sieben-sonnen":"verbundenheit",
+  "vierzehn-monde":"verbundenheit", "detektiv-lehrling":"kognitiv", "detektiv-meister":"kognitiv",
+  "kartograf":"geist", "erste-sprosse":"mut", "netz-gelockert":"mut", "kreisbrecher":"mut",
+  "ausgeglichen":"geist", "nachtwache":"achtsamkeit", "wiederaufnahme":"koerper",
+  "atemmeister":"atem", "sammler":"bewegung", "wissensdurst":"kognitiv", "mutworte":"mut",
+  "lichtsammler":"verbundenheit", "werteanker":"geist", "verbunden":"verbundenheit_k",
+  "ruhepol":"achtsamkeit", "wanderer":"bewegung", "hundert":"verbundenheit",
+  "sanftmut":"achtsamkeit", "chronist":"kognitiv"
+};
+const BADGE_FARBEN = ["var(--sakura)","var(--mint)","var(--himmel)","var(--lavendel)","var(--butter)","var(--koralle)"];
+function badgeSvg(id, index){
+  const farbe = BADGE_FARBEN[index % BADGE_FARBEN.length];
+  const glyph = SYMBOLE[BADGE_GLYPH[id] || "verbundenheit"];
+  return `
+<svg viewBox="0 0 72 72" aria-hidden="true">
+  <g transform="translate(36,36)">
+    <path d="M0-33 L7.6-28 16.5-29.6 19-21 27-16.6 24.4-8 29-0 24.4 8 27 16.6 19 21 16.5 29.6 7.6 28 0 33 -7.6 28 -16.5 29.6 -19 21 -27 16.6 -24.4 8 -29 0 -24.4-8 -27-16.6 -19-21 -16.5-29.6 -7.6-28z"
+          fill="#fff" stroke="var(--ink-dunkel)" stroke-width="3.4" stroke-linejoin="round"/>
+    <circle r="21" fill="${farbe}" stroke="var(--ink-dunkel)" stroke-width="3"/>
+    <g transform="translate(-13,-13) scale(1.08)" color="var(--ink-dunkel)">
+      <svg viewBox="0 0 24 24" width="24" height="24">${glyph}</svg>
+    </g>
+  </g>
+</svg>`;
+}
+
+/* ===========================================================================
+   §E  OBERFLÄCHE  ·  Rückmeldungen, Router, Screens
+   =========================================================================== */
+
+/* --- E.1  Rückmeldungen ------------------------------------------------- */
+function melde(text){                       /* für Screenreader (aria-live) */
+  const el = $("#live"); if (el) el.textContent = text;
+}
+let toastTimer = null;
+function toast(text){
+  $$(".toast").forEach(t => t.remove());
+  const el = document.createElement("div");
+  el.className = "toast"; el.textContent = text;
+  document.body.appendChild(el);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.remove(), 3200);
+}
+function bewegungAus(){
+  return S.settings.reducedMotion ||
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+function konfetti(){
+  if (bewegungAus()) return;
+  const box = document.createElement("div");
+  box.className = "confetti"; box.setAttribute("aria-hidden","true");
+  const farben = ["var(--sakura)","var(--mint)","var(--himmel)","var(--lavendel)","var(--butter)","var(--koralle)"];
+  for (let i=0;i<60;i++){
+    const p = document.createElement("i");
+    p.style.left = Math.random()*100 + "vw";
+    p.style.background = farben[i % farben.length];
+    p.style.animationDuration = (1.6 + Math.random()*1.4) + "s";
+    p.style.animationDelay = (Math.random()*0.5) + "s";
+    p.style.transform = "rotate(" + Math.random()*360 + "deg)";
+    box.appendChild(p);
+  }
+  document.body.appendChild(box);
+  setTimeout(() => box.remove(), 3600);
+}
+/* Allgemeines Overlay mit Fokusfang */
+function overlay(inhaltHtml, beimSchliessen){
+  const root = $("#overlay-root");
+  root.innerHTML = `<div class="overlay" role="dialog" aria-modal="true">
+      <div class="card stack">${inhaltHtml}</div></div>`;
+  const box = root.querySelector(".card");
+  const schliessen = () => { root.innerHTML = ""; if (beimSchliessen) beimSchliessen(); };
+  root.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", schliessen));
+  root.querySelector(".overlay").addEventListener("keydown", e => {
+    if (e.key === "Escape") schliessen();
+  });
+  const fokus = box.querySelector("button, a, input, textarea, select");
+  if (fokus) fokus.focus();
+  return schliessen;
+}
+function zeigeLevelUp(level){
+  konfetti();
+  const anzahl = S.completions.length;
+  overlay(`
+    <div class="center">${avatarSvg(level.stufe)}</div>
+    <h2 class="center">Neue Stufe: ${esc(level.name)}</h2>
+    <p class="center">Du hast ${anzahl} Mal geübt, auch wenn es unbequem war. Deshalb sieht Mochi jetzt so aus.</p>
+    <p class="center muted">${esc(level.satz)}</p>
+    <button class="btn primary block" data-close>Weiter</button>`);
+  melde("Neue Stufe erreicht: " + level.name);
+}
+function zeigeAchievement(a){
+  overlay(`
+    <div class="center">${badgeSvg(a.id, ACHIEVEMENTS.findIndex(x=>x.id===a.id))}</div>
+    <h2 class="center">Abzeichen: ${esc(a.name)}</h2>
+    <p class="center">${esc(a.text)}</p>
+    <button class="btn primary block" data-close>Schön</button>`);
+  melde("Abzeichen freigeschaltet: " + a.name);
+}
+
+/* --- E.2  Router -------------------------------------------------------- */
+let ROUTE = { name:"heim", param:null };
+function gehe(name, param){
+  ROUTE = { name:name, param:param==null?null:param };
+  render();
+  window.scrollTo({ top:0, behavior: bewegungAus() ? "auto" : "smooth" });
+  const m = $("#main"); if (m) m.focus({preventScroll:true});
+}
+
+const TABS = [
+  { id:"heim",       label:"Heim",       icon:`<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>` },
+  { id:"bibliothek", label:"Bibliothek", icon:`<path d="M5 4h5a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5zM19 4h-5a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>` },
+  { id:"fortschritt",label:"Fortschritt",icon:`<path d="M4 19V9M10 19V5M16 19v-7M22 19H2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>` },
+  { id:"journal",    label:"Journal",    icon:`<path d="M6 3h9l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 12h7M9 16h7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>` }
+];
+function renderTabs(){
+  const box = $("#tabs"); if (!box) return;
+  box.innerHTML = TABS.map(t => `
+    <button class="tab" data-go="${t.id}" ${ROUTE.name===t.id?'aria-current="page"':''}>
+      <svg class="ic" viewBox="0 0 24 24" aria-hidden="true">${t.icon}</svg>${t.label}
+    </button>`).join("");
+}
+
+/* --- E.3  Hauptrender --------------------------------------------------- */
+function render(){
+  document.body.classList.toggle("no-motion", !!S.settings.reducedMotion);
+  const v = $("#view");
+  if (!S.onboarded){ v.innerHTML = screenOnboarding(); renderTabs(); bindeView(); return; }
+  if (S.stats.zeigeRueckkehr){ v.innerHTML = screenRueckkehr(); renderTabs(); bindeView(); return; }
+
+  let html = "";
+  switch (ROUTE.name){
+    case "heim":        html = screenHeim(); break;
+    case "quest":       html = screenQuest(ROUTE.param); break;
+    case "bibliothek":  html = screenBibliothek(); break;
+    case "fortschritt": html = screenFortschritt(); break;
+    case "journal":     html = screenJournal(); break;
+    case "einstellungen": html = screenEinstellungen(); break;
+    case "krisen":      html = screenKrisen(); break;
+    default:            html = screenHeim();
+  }
+  v.innerHTML = html + speicherBanner();
+  renderTabs();
+  bindeView();
+}
+function speicherBanner(){
+  return STORAGE_OK ? "" :
+    `<p class="banner">Fortschritt kann in diesem Browser nicht gespeichert werden –
+     vermutlich ist der Speicher gesperrt (z. B. privater Modus). Die App funktioniert trotzdem,
+     die Daten sind aber nach dem Schließen weg. Über „Daten sichern“ kannst du sie als Datei ablegen.</p>`;
+}
+
+/* --- E.4  Onboarding ----------------------------------------------------
+   Reihenfolge: Willkommen → Sicherheit & Datenschutz → Avatar benennen →
+   Wert wählen → Notfallkontakte. Der Sicherheitshinweis kommt vor allem
+   anderen und lässt sich nicht überspringen.                              */
+let ONB_STEP = 0;
+function screenOnboarding(){
+  const schritte = [
+    `<div class="card stack">
+       <div class="center">${avatarSvg(1)}</div>
+       <h1 class="center">Willkommen bei Kokoro Quest</h1>
+       <p>Das hier ist ein Übungsplatz. Jeden Tag ein paar kleine Schritte, die dich gegen
+          Angst und Panik widerstandsfähiger machen – aus Verhaltenstherapie, Körperarbeit
+          und Achtsamkeit.</p>
+       <p>Dein Fortschritt wird als Figur sichtbar. Sie beginnt klein und ängstlich.
+          Das ist keine Wertung – sie ist von Anfang an liebenswert, nur noch nicht gewachsen.</p>
+       <button class="btn primary block" data-onb="1">Los geht's</button>
+     </div>`,
+    `<div class="card stack">
+       <h1>Bevor wir anfangen</h1>
+       <p><strong>${esc(TEXTE.disclaimerKurz)}</strong></p>
+       <div class="warnbox">${esc(TEXTE.disclaimerKoerper)}</div>
+       <p>${esc(TEXTE.keineExposition)}</p>
+       <h2>Deine Daten</h2>
+       <p>${esc(TEXTE.datenschutz)}</p>
+       <p class="small muted">Hilfe in einer Krise erreichst du jederzeit über die Leiste ganz unten –
+          auf jedem Bildschirm dieser App.</p>
+       <button class="btn primary block" data-onb="2">Verstanden</button>
+       <button class="btn ghost block" data-onb="0">Zurück</button>
+     </div>`,
+    `<div class="card stack">
+       <h1>Wie soll deine Figur heißen?</h1>
+       <div class="center">${avatarSvg(1)}</div>
+       <div class="field">
+         <label for="onb-avatar">Name der Figur</label>
+         <input type="text" id="onb-avatar" maxlength="24" value="${esc(S.profile.avatarName||"Mochi")}" placeholder="Mochi">
+       </div>
+       <div class="field">
+         <label for="onb-name">Und wie dürfen wir dich nennen? (freiwillig)</label>
+         <input type="text" id="onb-name" maxlength="24" value="${esc(S.profile.name)}" placeholder="Dein Vorname oder Spitzname">
+       </div>
+       <button class="btn primary block" data-onb="3">Weiter</button>
+       <button class="btn ghost block" data-onb="1">Zurück</button>
+     </div>`,
+    `<div class="card stack">
+       <h1>Wofür machst du das?</h1>
+       <p>Wähle einen Wert, der dir wirklich wichtig ist. An Tagen, an denen das Gefühl keine
+          gute Auskunft gibt, zeigt er dir die Richtung.</p>
+       <div class="row" id="onb-werte">
+         ${WERTE.map(w => `<button class="btn sm ${S.profile.wert===w?'primary':''}" data-wert="${esc(w)}">${esc(w)}</button>`).join("")}
+       </div>
+       <div class="field">
+         <label for="onb-wert-eigen">Oder eigener Wert</label>
+         <input type="text" id="onb-wert-eigen" maxlength="30" placeholder="z. B. Für meine Kinder da sein">
+       </div>
+       <button class="btn primary block" data-onb="4">Weiter</button>
+       <button class="btn ghost block" data-onb="2">Zurück</button>
+     </div>`,
+    `<div class="card stack">
+       <h1>Notfallkontakte</h1>
+       <p>Trag ein bis drei Menschen ein, die du anrufen kannst, wenn es dir schlecht geht.
+          Sie erscheinen dann in der Ruhe-Insel – antippen genügt. Das ist freiwillig und
+          jederzeit änderbar.</p>
+       <div id="onb-kontakte">${kontakteFormular()}</div>
+       <button class="btn primary block" data-onb="fertig">Fertig – zur App</button>
+       <button class="btn ghost block" data-onb="3">Zurück</button>
+       <p class="small muted center">Krisennummern sind unabhängig davon immer in der Fußzeile.</p>
+     </div>`
+  ];
+  return `<div class="stack" style="padding-top:16px">
+    <p class="small muted center">Schritt ${ONB_STEP+1} von ${schritte.length}</p>
+    ${schritte[ONB_STEP]}</div>`;
+}
+function kontakteFormular(){
+  const rows = [0,1,2].map(i => {
+    const k = S.emergencyContacts[i] || { name:"", phone:"" };
+    return `<div class="row" style="margin-bottom:8px">
+      <input type="text" class="grow" data-kontakt-name="${i}" maxlength="40" placeholder="Name" value="${esc(k.name)}">
+      <input type="tel" class="grow" data-kontakt-tel="${i}" maxlength="30" placeholder="Telefonnummer" value="${esc(k.phone)}">
+    </div>`;
+  }).join("");
+  return rows;
+}
+function kontakteUebernehmen(){
+  const neu = [];
+  [0,1,2].forEach(i => {
+    const n = $(`[data-kontakt-name="${i}"]`), t = $(`[data-kontakt-tel="${i}"]`);
+    if (n && t && (n.value.trim() || t.value.trim()))
+      neu.push({ name:n.value.trim(), phone:t.value.trim() });
+  });
+  S.emergencyContacts = neu;
+  speichern();
+}
+
+/* --- E.5  Rückkehr nach einer Pause ------------------------------------- */
+function screenRueckkehr(){
+  return `<div class="stack" style="padding-top:20px">
+    <div class="card stack">
+      <div class="center">${avatarSvg(S.level)}</div>
+      <h1 class="center">${esc(TEXTE.rueckkehrTitel)}</h1>
+      <p>${esc(TEXTE.rueckkehrText)}</p>
+      <p>Fang klein an. Wenn heute wenig geht, leg den „Sanften Tag“ um – drei sehr kurze
+         Schritte, die genauso zählen.</p>
+      <button class="btn primary block" id="btn-rueckkehr">Weiter zu heute</button>
+    </div></div>`;
+}
+
+/* --- E.6  Heim ----------------------------------------------------------
+   Avatar, XP-Balken, Serie mit Schilden, drei Tagesquests.                */
+function screenHeim(){
+  const lvl = levelFuer(S.totalXp);
+  const fort = levelFortschritt(S.totalXp);
+  const mult = serienMultiplikator();
+  const grussName = S.profile.name ? ", " + esc(S.profile.name) : "";
+  const quests = S.daily.questIds.map(questById).filter(Boolean);
+
+  return `<div class="stack" style="padding-top:14px">
+    <div class="card stack">
+      <div class="stage">${avatarSvg(lvl.stufe)}</div>
+      <p class="levelname">${esc(S.profile.avatarName||"Mochi")} · Stufe ${lvl.stufe}: ${esc(lvl.name)}</p>
+      <div class="xpbar" role="img" aria-label="Fortschritt zur nächsten Stufe: ${fort.prozent} Prozent">
+        <i style="width:${fort.prozent}%"></i>
+      </div>
+      <p class="center small" style="margin:0"><strong>${esc(fort.text)}</strong></p>
+      <div class="streak">
+        <span class="pill">🔥 ${S.streak.current} ${S.streak.current===1?"Tag":"Tage"} in Folge</span>
+        <span class="pill">Punkte ×${mult.toFixed(2)}</span>
+        <span class="row" role="img" aria-label="${S.streak.shields} von 3 Ruhetag-Schilden verfügbar">
+          ${[0,1,2].map(i => schildSvg(i < S.streak.shields)).join("")}
+        </span>
+      </div>
+      <p class="small muted center">Ruhetag-Schilde fangen einen ausgelassenen Tag automatisch ab.
+        Der Multiplikator ist bei 14 Tagen gedeckelt – eine Unterbrechung kostet dich also nie viel.</p>
+    </div>
+
+    <h2 style="margin:0">Heute${grussName}</h2>
+    <button class="btn sm block ${S.daily.sanft?'mint':''}" id="btn-sanft">
+      ${S.daily.sanft ? "Sanfter Tag ist an – zurück zum vollen Pensum" : "Heute lieber sanft? Umschalten"}
+    </button>
+    ${S.daily.sanft ? `<p class="small muted">${esc(TEXTE.sanftTag)}</p>` : ""}
+
+    ${quests.map((q,i) => questKarte(q, i, true)).join("")}
+
+    <div class="card soft stack">
+      <h3>Wissenskarte</h3>
+      <p class="small">${esc(karteDesTages().titel)} – eine kurze Erklärung, drei Minuten.</p>
+      <button class="btn sm" data-go-quest="wissenskarte">Karte ansehen</button>
+    </div>
+  </div>`;
+}
+function questKarte(q, index, mitTausch){
+  const erledigt = S.daily.done.includes(q.id) ||
+    S.completions.some(c => c.questId===q.id && c.date===heute());
+  const punkte = Object.keys(q.attribute).map(k =>
+    `<span class="pill ${k}">${attrIcon(k)} +${q.attribute[k]}</span>`).join("");
+  return `<div class="stack">
+    <button class="quest ${erledigt?'done':''}" data-go-quest="${q.id}">
+      <span class="ic">${katIcon(q.kategorie)}</span>
+      <span class="grow">
+        <h3>${esc(q.titel)}</h3>
+        <span class="small muted">${q.dauerMin} Min · ${esc(kategorieName(q.kategorie))}</span>
+        <span class="meta">${punkte}</span>
+      </span>
+    </button>
+    ${mitTausch && !erledigt ? `<div class="row"><button class="btn sm ghost" data-tausch="${index}">Andere Übung vorschlagen</button></div>` : ""}
+  </div>`;
+}
+const KATEGORIE_NAMEN = {
+  atem:"Atem & Entspannung", bewegung:"Bewegung & Rhythmus", kognitiv:"Kopfarbeit",
+  achtsamkeit:"Achtsamkeit & Akzeptanz", mut:"Mut", verbundenheit:"Verbundenheit", mini:"Mini-Schritt"
+};
+const kategorieName = k => KATEGORIE_NAMEN[k] || k;
+function karteDesTages(){
+  const i = seedZahl(heute()) % WISSENSKARTEN.length;
+  return WISSENSKARTEN[i];
+}
+
+/* --- E.7  Quest-Detail ---------------------------------------------------
+   Ablauf: Stimmung vorher → Anleitung + Werkzeug → Abschluss →
+   Stimmung nachher → Karte „Warum das wirkt“.                             */
+let QSTATE = { id:null, phase:"vor", moodBefore:5, moodAfter:5, note:"", felder:{} };
+function screenQuest(id){
+  const q = questById(id);
+  if (!q) return `<div class="card">Diese Übung gibt es nicht (mehr).
+    <button class="btn sm" data-go="heim">Zurück</button></div>`;
+  if (QSTATE.id !== id) QSTATE = { id:id, phase:"vor", moodBefore:5, moodAfter:5, note:"", felder:{} };
+
+  const punkte = Object.keys(q.attribute).map(k =>
+    `<span class="pill ${k}">${attrIcon(k)} ${ATTRIBUTE[k].name} +${q.attribute[k]}</span>`).join("");
+
+  if (QSTATE.phase === "fertig"){
+    return `<div class="stack" style="padding-top:14px">
+      <div class="card stack">
+        <h1>Geschafft: ${esc(q.titel)}</h1>
+        <p class="center" style="font-size:2rem">🌸</p>
+        <div class="why"><h3>Warum das wirkt</h3><p>${esc(q.warumEsWirkt)}</p></div>
+        ${QSTATE.moodBefore!=null&&QSTATE.moodAfter!=null ? `<p class="small muted">
+          Deine Einschätzung: vorher ${QSTATE.moodBefore} – nachher ${QSTATE.moodAfter}.
+          Das ist keine Bewertung, nur dein persönlicher Verlauf.</p>`:""}
+        <button class="btn primary block" data-go="heim">Zurück nach Hause</button>
+        <button class="btn ghost block" data-go="bibliothek">Noch eine Übung suchen</button>
+      </div></div>`;
+  }
+
+  return `<div class="stack" style="padding-top:14px">
+    <button class="btn sm ghost" data-go="heim">← Zurück</button>
+    <div class="card stack">
+      <h1>${esc(q.titel)}</h1>
+      <div class="row">
+        <span class="pill">${q.dauerMin} Min</span>
+        <span class="pill">${esc(kategorieName(q.kategorie))}</span>
+        <span class="pill">${q.intensitaet === "sanft" ? "sanft" : "normal"}</span>
+        ${punkte}
+      </div>
+      ${q.sicherheitshinweis ? `<div class="warnbox"><strong>Hinweis:</strong> ${esc(q.sicherheitshinweis)}</div>` : ""}
+    </div>
+
+    ${QSTATE.phase === "vor" ? `
+    <div class="card stack">
+      <h2>Wie geht es dir gerade?</h2>
+      <label for="mood-vor">Anspannung / Angst von 0 (ruhig) bis 10 (sehr stark)</label>
+      <input type="range" id="mood-vor" min="0" max="10" step="1" value="${QSTATE.moodBefore}">
+      <p class="center" aria-hidden="true"><strong id="mood-vor-wert">${QSTATE.moodBefore}</strong> / 10</p>
+      <p class="small muted">Nur für deinen eigenen Verlauf. Es gibt hier kein „zu hoch“ und kein „zu niedrig“.</p>
+    </div>` : ""}
+
+    <div class="card stack">
+      <h2>So geht's</h2>
+      <ol class="steps">${q.anleitung.map(s => `<li>${esc(s)}</li>`).join("")}</ol>
+    </div>
+
+    ${werkzeugHtml(q)}
+
+    ${QSTATE.phase === "nach" ? `
+    <div class="card stack">
+      <h2>Und jetzt?</h2>
+      <label for="mood-nach">Anspannung / Angst von 0 bis 10</label>
+      <input type="range" id="mood-nach" min="0" max="10" step="1" value="${QSTATE.moodAfter}">
+      <p class="center" aria-hidden="true"><strong id="mood-nach-wert">${QSTATE.moodAfter}</strong> / 10</p>
+      <div class="field">
+        <label for="quest-note">Notiz (freiwillig)</label>
+        <textarea id="quest-note" maxlength="600" placeholder="Was ist dir aufgefallen?"></textarea>
+      </div>
+      <button class="btn primary block" id="btn-quest-final">Übung eintragen</button>
+      <p class="small muted center">Auch wenn die Zahl gestiegen ist: Die Übung zählt.
+         Nicht der Effekt am einzelnen Tag macht den Unterschied, sondern die Wiederholung.</p>
+    </div>` : `
+    <button class="btn primary block" id="btn-quest-done">Übung abgeschlossen</button>`}
+  </div>`;
+}
+
+/* --- E.8  Werkzeuge im Quest-Screen ------------------------------------- */
+function werkzeugHtml(q){
+  switch (q.tool){
+    case "atem": return atemHtml(q);
+    case "timer": return timerHtml(q.dauerMin);
+    case "pmr": return timerHtml(q.dauerMin) + gefuehrtHtml(PMR_SCHRITTE, "Muskelgruppen der Reihe nach");
+    case "bodyscan": return timerHtml(q.dauerMin) + gefuehrtHtml(BODYSCAN_SCHRITTE, "Stationen der Körperreise");
+    case "grounding": return groundingHtml();
+    case "gedankenprotokoll": return gedankenprotokollHtml();
+    case "katastrophe": return katastropheHtml();
+    case "teufelskreis": return teufelskreisHtml();
+    case "wissenskarte": return wissenskarteHtml();
+    case "angsttagebuch": return angsttagebuchHtml();
+    case "copingkarten": return copingHtml();
+    case "blaetter": return blaetterHtml();
+    case "werte": return werteHtml();
+    case "playlist": return playlistHtml();
+    case "vermeidung": return vermeidungHtml();
+    case "sprosse": return sprosseHtml();
+    case "exporeview": return exoReviewHtml();
+    default: return "";
+  }
+}
+
+/* Atemblase – 4 Sekunden ein, 6 Sekunden aus (oder questeigene Werte) */
+function atemHtml(q){
+  const a = q.atem || { ein:4, halten:0, aus:6, minuten:5 };
+  const dauer = a.minuten ? a.minuten + " Minuten" : a.runden + " Runden";
+  return `<div class="card stack" data-atem='${JSON.stringify(a)}'>
+    <h2>Atemblase</h2>
+    <div class="breath-stage">
+      <div class="breath" id="breath" role="img" aria-label="Atemanimation">
+        <span><span class="phase" id="breath-phase">Bereit</span><span class="count" id="breath-count">–</span></span>
+      </div>
+    </div>
+    <p class="center small muted" id="breath-info">${a.ein} Sek. ein${a.halten?` · ${a.halten} Sek. halten`:""} · ${a.aus} Sek. aus · ${dauer}</p>
+    <button class="btn primary block" id="btn-breath">Atmen starten</button>
+  </div>`;
+}
+/* Einfacher Countdown */
+function timerHtml(min){
+  return `<div class="card stack" data-timer="${min}">
+    <h2>Timer</h2>
+    <p class="center" style="font-size:2.4rem;font-weight:800" id="timer-anzeige">${String(min).padStart(2,"0")}:00</p>
+    <div class="row">
+      <button class="btn mint grow" id="btn-timer">Starten</button>
+      <button class="btn ghost" id="btn-timer-reset">Zurücksetzen</button>
+    </div>
+    <p class="small muted center">Der Timer ist ein Angebot, keine Vorgabe. Kürzer ist besser als gar nicht.</p>
+  </div>`;
+}
+const PMR_SCHRITTE = ["Hände zu Fäusten","Unterarme und Oberarme","Gesicht: Stirn, Augen, Kiefer",
+  "Nacken und Schultern","Bauch und Rücken","Oberschenkel und Gesäß","Waden und Füße"];
+const BODYSCAN_SCHRITTE = ["Füße und Zehen","Unterschenkel","Oberschenkel","Becken und Bauch",
+  "Brustkorb und Atem","Hände und Arme","Schultern und Nacken","Gesicht und Kopf","Der ganze Körper"];
+function gefuehrtHtml(schritte, titel){
+  return `<div class="card stack" data-gefuehrt='${JSON.stringify(schritte)}'>
+    <h2>${esc(titel)}</h2>
+    <p class="center" style="font-size:1.3rem;font-weight:800" id="gef-text">${esc(schritte[0])}</p>
+    <p class="center small muted"><span id="gef-nr">1</span> von ${schritte.length}</p>
+    <div class="row">
+      <button class="btn ghost" id="gef-zurueck">Zurück</button>
+      <button class="btn himmel grow" id="gef-weiter">Nächste Station</button>
+    </div>
+  </div>`;
+}
+function groundingHtml(){
+  const sinne = [["5 Dinge, die du sehen kannst","sehen"],["4 Dinge, die du hören kannst","hoeren"],
+    ["3 Dinge, die du fühlen kannst","fuehlen"],["2 Dinge, die du riechen kannst","riechen"],
+    ["1 Sache, die du schmeckst – oder die dir heute gefallen hat","schmecken"]];
+  return `<div class="card stack">
+    <h2>5-4-3-2-1</h2>
+    ${sinne.map(([label,key]) => `<div class="field">
+      <label for="gr-${key}">${esc(label)}</label>
+      <input type="text" id="gr-${key}" data-feld="${key}" maxlength="120" placeholder="Benennen – innerlich oder laut">
+    </div>`).join("")}
+    <p class="small muted">Das Benennen ist der wirksame Teil. Es muss nichts Besonderes sein.</p>
+  </div>`;
+}
+
+/* Gedankenprotokoll (KVT-Kernwerkzeug) */
+function gedankenprotokollHtml(){
+  const f = [
+    ["situation","Situation – was war los?","Wo warst du, was ist passiert?"],
+    ["koerper","Körperempfindung","Was hast du im Körper gespürt?"],
+    ["gedanke","Automatischer Gedanke","Was ist dir durch den Kopf geschossen?"],
+    ["dafuer","Beweise dafür","Was spricht wirklich für diesen Gedanken?"],
+    ["dagegen","Beweise dagegen","Was spricht dagegen? Wie ist es frühere Male ausgegangen?"],
+    ["hilfreicher","Hilfreicherer Gedanke","Nicht schöner – zutreffender."]
+  ];
+  return `<div class="card stack">
+    <h2>Dein Protokoll</h2>
+    ${f.map(([k,l,p]) => `<div class="field">
+      <label for="gp-${k}">${esc(l)}</label>
+      <textarea id="gp-${k}" data-feld="${k}" maxlength="800" placeholder="${esc(p)}"></textarea>
+    </div>`).join("")}
+    <div class="field">
+      <label for="gp-vorher">Angst vorher (0–10)</label>
+      <input type="range" id="gp-vorher" data-feld="angstVorher" min="0" max="10" value="5">
+    </div>
+    <div class="field">
+      <label for="gp-nachher">Angst nach dem Schreiben (0–10)</label>
+      <input type="range" id="gp-nachher" data-feld="angstNachher" min="0" max="10" value="5">
+    </div>
+    <p class="small muted">Wird im Journal gespeichert, sobald du die Übung einträgst.</p>
+  </div>`;
+}
+function katastropheHtml(){
+  const f = [
+    ["befuerchtung","Was befürchte ich konkret?","So genau wie möglich."],
+    ["wahrscheinlich","Wie wahrscheinlich ist das wirklich?","Was spricht dafür, was dagegen? Wie oft ist es bisher eingetreten?"],
+    ["wenn","Was wäre, wenn es einträte?","Der Tag danach – konkret."],
+    ["bewaeltigung","Wie käme ich damit zurecht?","Wer oder was würde helfen? Was habe ich früher geschafft?"]
+  ];
+  return `<div class="card stack">
+    <h2>Vier Fragen</h2>
+    ${f.map(([k,l,p]) => `<div class="field">
+      <label for="ka-${k}">${esc(l)}</label>
+      <textarea id="ka-${k}" data-feld="${k}" maxlength="800" placeholder="${esc(p)}"></textarea>
+    </div>`).join("")}
+    <p class="small muted">Die letzte Frage ist die wichtigste – sie stellt das Vertrauen in deine
+      Bewältigung wieder her, statt nur über Wahrscheinlichkeiten zu streiten.</p>
+  </div>`;
+}
+/* Interaktiver Teufelskreis – der Nutzer trägt sein eigenes Beispiel ein */
+function teufelskreisHtml(){
+  const knoten = [
+    ["ausloeser","Auslöser / Wahrnehmung","z. B. Herz stolpert im Supermarkt"],
+    ["gedanke","Gedanke „Gefahr“","z. B. Da stimmt etwas mit meinem Herz nicht"],
+    ["koerper","Körperreaktion","z. B. Puls rast, Hände kribbeln"],
+    ["verstaerkung","Verstärkte Wahrnehmung","z. B. Ich achte nur noch auf meinen Puls"]
+  ];
+  return `<div class="card stack">
+    <h2>Dein Teufelskreis</h2>
+    <svg viewBox="0 0 320 320" style="width:100%;height:auto" role="img" aria-label="Kreislauf aus Wahrnehmung, Gedanke, Körperreaktion und verstärkter Wahrnehmung">
+      <defs><marker id="pfeil" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M0 0 L10 5 L0 10z" fill="var(--ink)"/></marker></defs>
+      <circle cx="160" cy="160" r="104" fill="none" stroke="var(--ink)" stroke-width="3"
+              stroke-dasharray="10 12" marker-end="url(#pfeil)"/>
+      <g font-size="13" font-weight="700" text-anchor="middle" fill="var(--ink)">
+        <rect x="96" y="14" width="128" height="48" rx="16" fill="var(--himmel)" stroke="var(--ink)" stroke-width="3"/>
+        <text x="160" y="36">Auslöser /</text><text x="160" y="52">Wahrnehmung</text>
+        <rect x="220" y="132" width="96" height="48" rx="16" fill="var(--sakura)" stroke="var(--ink)" stroke-width="3"/>
+        <text x="268" y="153">Gedanke</text><text x="268" y="169">„Gefahr!“</text>
+        <rect x="96" y="256" width="128" height="48" rx="16" fill="var(--koralle)" stroke="var(--ink)" stroke-width="3"/>
+        <text x="160" y="277">Körper-</text><text x="160" y="293">reaktion</text>
+        <rect x="4" y="132" width="96" height="48" rx="16" fill="var(--butter)" stroke="var(--ink)" stroke-width="3"/>
+        <text x="52" y="153">Mehr</text><text x="52" y="169">Beobachten</text>
+      </g>
+    </svg>
+    ${knoten.map(([k,l,p]) => `<div class="field">
+      <label for="tk-${k}">${esc(l)}</label>
+      <input type="text" id="tk-${k}" data-feld="${k}" maxlength="160" placeholder="${esc(p)}">
+    </div>`).join("")}
+    <div class="field">
+      <label for="tk-ausstieg">Wo könntest du am ehesten aussteigen?</label>
+      <textarea id="tk-ausstieg" data-feld="ausstieg" maxlength="400" placeholder="z. B. Beim Gedanken – ihn als Gedanken benennen statt als Tatsache."></textarea>
+    </div>
+  </div>`;
+}
+function wissenskarteHtml(){
+  const k = karteDesTages();
+  return `<div class="card stack" id="wk-box" data-wk="${esc(k.id)}">
+    <h2>${esc(k.titel)}</h2>
+    <p>${esc(k.text)}</p>
+    <button class="btn sm ghost" id="btn-wk-neu">Andere Karte ziehen</button>
+  </div>`;
+}
+function angsttagebuchHtml(){
+  return `<div class="card stack">
+    <h2>Eintrag</h2>
+    <div class="field"><label for="at-trigger">Auslöser</label>
+      <input type="text" id="at-trigger" data-feld="trigger" maxlength="200" placeholder="Situation – oder „unklar“"></div>
+    <div class="field"><label for="at-intensitaet">Höchste Intensität (0–10)</label>
+      <input type="range" id="at-intensitaet" data-feld="intensitaet" min="0" max="10" value="5"></div>
+    <div class="field"><label for="at-dauer">Dauer in Minuten</label>
+      <input type="number" id="at-dauer" data-feld="dauer" min="0" max="600" step="1" value="10"></div>
+    <div class="field"><label for="at-geholfen">Was hat geholfen?</label>
+      <textarea id="at-geholfen" data-feld="geholfen" maxlength="600" placeholder="Und was nicht?"></textarea></div>
+    <p class="small muted">Aus diesen Werten entsteht im Fortschritt deine Verlaufskurve.</p>
+  </div>`;
+}
+function copingHtml(){
+  return `<div class="card stack" id="coping-box">
+    <h2>Deine Mut-Sätze</h2>
+    <div id="coping-liste">${copingListeHtml()}</div>
+    <div class="field">
+      <label for="cp-neu">Eigenen Satz schreiben</label>
+      <input type="text" id="cp-neu" maxlength="140" placeholder="Kurz, nüchtern, im Ernstfall glaubbar">
+    </div>
+    <button class="btn sm mint" id="btn-cp-add">Satz speichern</button>
+    <h3>Vorschläge</h3>
+    <p class="small muted">Bewusst ohne Verneinungen: „Ich habe keine Angst“ lenkt die Aufmerksamkeit
+      erst recht auf die Angst.</p>
+    <div class="stack">
+      ${COPING_VORLAGEN.map(v => `<button class="btn sm ghost block" data-cp-vorlage="${esc(v)}">„${esc(v)}“</button>`).join("")}
+    </div>
+  </div>`;
+}
+function copingListeHtml(){
+  if (!S.copingCards.length) return `<p class="small muted">Noch keine Sätze gespeichert.</p>`;
+  return `<ul class="stack" style="list-style:none;padding:0">${S.copingCards.map(c =>
+    `<li class="card soft row between"><span class="grow">„${esc(c.text)}“</span>
+     <button class="btn sm ghost" data-cp-del="${esc(c.id)}" aria-label="Satz löschen">Löschen</button></li>`).join("")}</ul>`;
+}
+function blaetterHtml(){
+  return `<div class="card stack">
+    <h2>Der Bach</h2>
+    <svg viewBox="0 0 320 140" style="width:100%;height:auto" role="img" aria-label="Blätter treiben auf einem Bach vorbei">
+      <rect x="0" y="40" width="320" height="70" rx="18" fill="var(--himmel)" opacity=".55"/>
+      <path d="M0 62 q40 8 80 0 t80 0 t80 0 t80 0" fill="none" stroke="#fff" stroke-width="3" opacity=".6"/>
+      <path d="M0 88 q40 8 80 0 t80 0 t80 0 t80 0" fill="none" stroke="#fff" stroke-width="3" opacity=".4"/>
+      <g id="blaetter-g">
+        <g class="blatt" style="animation:treiben 12s linear infinite">
+          <path d="M0 0 q14-14 28 0 q-14 14 -28 0z" fill="var(--mint)" stroke="var(--ink)" stroke-width="2.4" transform="translate(-40,66)"/>
+        </g>
+        <g class="blatt" style="animation:treiben 16s linear infinite;animation-delay:-5s">
+          <path d="M0 0 q12-12 24 0 q-12 12 -24 0z" fill="var(--butter)" stroke="var(--ink)" stroke-width="2.4" transform="translate(-40,90)"/>
+        </g>
+        <g class="blatt" style="animation:treiben 14s linear infinite;animation-delay:-9s">
+          <path d="M0 0 q12-12 24 0 q-12 12 -24 0z" fill="var(--sakura)" stroke="var(--ink)" stroke-width="2.4" transform="translate(-40,52)"/>
+        </g>
+      </g>
+    </svg>
+    <style>@keyframes treiben{from{transform:translateX(0)}to{transform:translateX(400px)}}</style>
+    <div class="field">
+      <label for="bl-gedanke">Welchen Gedanken legst du gerade auf ein Blatt?</label>
+      <input type="text" id="bl-gedanke" data-feld="gedanke" maxlength="160" placeholder="Nur benennen – nicht diskutieren">
+    </div>
+    <p class="small muted">Du musst das Blatt weder festhalten noch wegschieben. Zuschauen genügt.</p>
+  </div>`;
+}
+function werteHtml(){
+  return `<div class="card stack">
+    <h2>Dein Wert</h2>
+    <div class="row" id="werte-box">
+      ${WERTE.map(w => `<button class="btn sm ${S.profile.wert===w?'primary':''}" data-wert="${esc(w)}">${esc(w)}</button>`).join("")}
+    </div>
+    <div class="field">
+      <label for="we-eigen">Eigener Wert</label>
+      <input type="text" id="we-eigen" maxlength="40" value="${esc(WERTE.includes(S.profile.wert)?"":S.profile.wert)}" placeholder="In deinen Worten">
+    </div>
+    <div class="field">
+      <label for="we-handlung">Welche kleine Handlung passt heute dazu?</label>
+      <textarea id="we-handlung" data-feld="handlung" maxlength="400" placeholder="Klein und konkret – auch wenn Unbehagen dabei ist."></textarea>
+    </div>
+  </div>`;
+}
+function playlistHtml(){
+  const liste = (key, titel) => `<div class="field">
+    <label for="pl-${key}">${esc(titel)}</label>
+    <textarea id="pl-${key}" data-playlist="${key}" maxlength="1200"
+      placeholder="Ein Titel pro Zeile">${esc((S.playlists[key]||[]).join("\n"))}</textarea></div>`;
+  return `<div class="card stack">
+    <h2>Deine Playlists</h2>
+    ${liste("ruhe","Ruhe-Playlist")}
+    ${liste("kraft","Kraft-Playlist")}
+    <button class="btn sm mint" id="btn-pl-save">Playlists speichern</button>
+    <p class="small muted">Vorbereitet zu sein hilft: In der Angst ist Suchen zu anstrengend.</p>
+  </div>`;
+}
+
+/* Landkarte der Vermeidung – SUD 0–100, ergibt eine sortierte Leiter */
+function vermeidungHtml(){
+  return `<div class="card stack" id="verm-box">
+    <h2>Deine Landkarte</h2>
+    <div class="field">
+      <label for="vm-situation">Situation, die du meidest</label>
+      <input type="text" id="vm-situation" maxlength="160" placeholder="z. B. allein mit dem Bus zur Arbeit">
+    </div>
+    <div class="field">
+      <label for="vm-sud">Wie viel Angst löst allein die Vorstellung aus? <span id="vm-sud-wert">50</span> von 100</label>
+      <input type="range" id="vm-sud" min="0" max="100" step="5" value="50">
+    </div>
+    <button class="btn sm mint" id="btn-vm-add">Zur Leiter hinzufügen</button>
+    <h3>Leiter (von unten nach oben)</h3>
+    <div id="vm-liste">${leiterHtml()}</div>
+  </div>`;
+}
+function leiterHtml(){
+  if (!S.avoidanceMap.length) return `<p class="small muted">Noch keine Einträge.</p>`;
+  const sortiert = S.avoidanceMap.slice().sort((a,b) => a.sud - b.sud);
+  return `<ol class="ladder stack" style="padding-left:20px">${sortiert.map(e => `
+    <li>
+      <div class="row between">
+        <span class="grow"><strong>${esc(e.situation)}</strong>
+          <span class="small muted">· SUD ${e.sud}${e.status==="geschafft"?" · geschafft":""}</span></span>
+        <button class="btn sm ghost" data-vm-del="${esc(e.id)}" aria-label="Eintrag entfernen">×</button>
+      </div>
+      <div class="xpbar" style="height:12px;margin-top:4px"><i style="width:${e.sud}%"></i></div>
+    </li>`).join("")}</ol>`;
+}
+/* Eine Sprosse höher – Planung und drei Angstwerte */
+function sprosseHtml(){
+  const offen = S.avoidanceMap.slice().filter(e => e.status !== "geschafft").sort((a,b)=>a.sud-b.sud);
+  return `<div class="card stack">
+    <h2>Deine nächste Sprosse</h2>
+    ${offen.length ? `
+      <div class="field">
+        <label for="sp-wahl">Welche Situation nimmst du dir vor?</label>
+        <select id="sp-wahl" data-feld="situation">
+          ${offen.map(e => `<option value="${esc(e.id)}">${esc(e.situation)} (SUD ${e.sud})</option>`).join("")}
+        </select>
+      </div>` : `
+      <p class="small">Du hast noch keine Leiter. Leg zuerst die
+        <button class="btn sm" data-go-quest="landkarte-vermeidung">Landkarte der Vermeidung</button> an –
+        dann weiß die App, welche Sprosse als nächstes dran ist.</p>`}
+    <div class="field">
+      <label for="sp-plan">Plan: wo, wann, wie lange – und ohne welche Absicherung?</label>
+      <textarea id="sp-plan" data-feld="plan" maxlength="600" placeholder="z. B. Dienstag 9 Uhr, drei Haltestellen, ohne Wasserflasche"></textarea>
+    </div>
+    <div class="field"><label for="sp-vorher">Angst vorher (0–10)</label>
+      <input type="range" id="sp-vorher" data-feld="vorher" min="0" max="10" value="5"></div>
+    <div class="field"><label for="sp-hoehe">Angst auf dem Höhepunkt (0–10)</label>
+      <input type="range" id="sp-hoehe" data-feld="hoehepunkt" min="0" max="10" value="7"></div>
+    <div class="field"><label for="sp-nachher">Angst danach (0–10)</label>
+      <input type="range" id="sp-nachher" data-feld="nachher" min="0" max="10" value="3"></div>
+    <div class="warnbox">In der Situation bleiben, bis die Angst spürbar nachlässt oder die geplante Zeit
+      vorbei ist. Im Angst-Hoch zu gehen ist der einzige Teil, der die Angst füttert – nicht die Angst selbst.</div>
+    <label class="row small"><input type="checkbox" id="sp-geschafft" style="width:auto"> Diese Sprosse als geschafft markieren</label>
+  </div>`;
+}
+function exoReviewHtml(){
+  const f = [
+    ["befuerchtet","Was hatte ich befürchtet?","Möglichst wörtlich."],
+    ["passiert","Was ist tatsächlich passiert?",""],
+    ["hoehepunkt","Wie hoch war die Angst im höchsten Moment – und wie lange hielt sie dort?",""],
+    ["bedeutung","Was sagt mir das über meine Befürchtung?",""],
+    ["naechstes","Was nehme ich für den nächsten Schritt mit?",""]
+  ];
+  return `<div class="card stack">
+    <h2>Rückblick</h2>
+    ${f.map(([k,l,p]) => `<div class="field">
+      <label for="er-${k}">${esc(l)}</label>
+      <textarea id="er-${k}" data-feld="${k}" maxlength="800" placeholder="${esc(p)}"></textarea>
+    </div>`).join("")}
+    <p class="small muted">Dieser Vergleich ist der eigentliche Wirkfaktor – nicht das Aushalten allein.</p>
+  </div>`;
+}
+
+/* --- E.9  Bibliothek ---------------------------------------------------- */
+let BIB_FILTER = "alle";
+function screenBibliothek(){
+  const kats = ["alle","atem","bewegung","kognitiv","achtsamkeit","mut","verbundenheit","mini"];
+  const liste = QUESTS.filter(q => BIB_FILTER === "alle" || q.kategorie === BIB_FILTER);
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Bibliothek</h1>
+    <p class="small muted">${QUESTS.length} Übungen. Du kannst jederzeit jede davon freiwillig starten –
+      sie zählen genauso wie die Tagesvorschläge.</p>
+    <div class="chips">
+      ${kats.map(k => `<button class="btn sm ${BIB_FILTER===k?'primary':''}" data-filter="${k}">
+        ${k==="alle"?"Alle":esc(kategorieName(k))}</button>`).join("")}
+    </div>
+    ${liste.map(q => questKarte(q, -1, false)).join("")}
+  </div>`;
+}
+
+/* --- E.10  Fortschritt: Radar, Heatmap, Verlauf, Abzeichen -------------- */
+function screenFortschritt(){
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Fortschritt</h1>
+    <div class="card stack">
+      <h2>Deine vier Attribute</h2>
+      ${radarSvg()}
+      <div class="row">
+        ${ATTR_KEYS.map(k => `<span class="pill ${k}">${attrIcon(k)} ${ATTRIBUTE[k].name} ${S.xp[k]}</span>`).join("")}
+      </div>
+      <p class="small muted">${ATTR_KEYS.map(k => ATTRIBUTE[k].name + ": " + ATTRIBUTE[k].wirkprinzip).join(" ")}</p>
+    </div>
+
+    <div class="card stack">
+      <h2>Aktive Tage</h2>
+      ${heatmapHtml()}
+      <p class="small muted">Die letzten 13 Wochen. Leere Felder sind Pausen – keine Lücken, die
+        irgendetwas beweisen.</p>
+    </div>
+
+    <div class="card stack">
+      <h2>Verlauf deiner Angstwerte</h2>
+      ${verlaufSvg()}
+      <p class="small muted">Aus deinem Angst-Tagebuch. Die Kurve ist eine Beobachtung,
+        keine Bewertung – auch Zacken nach oben gehören dazu.</p>
+    </div>
+
+    <div class="card stack">
+      <h2>Abzeichen <span class="small muted">(${S.achievements.length}/${ACHIEVEMENTS.length})</span></h2>
+      <div class="badges">
+        ${ACHIEVEMENTS.map((a,i) => {
+          const frei = S.achievements.some(x => x.id === a.id);
+          return `<div class="badge ${frei?'':'locked'}">
+            ${badgeSvg(a.id,i)}
+            <div class="txt"><div>${esc(a.name)}</div>
+              <div class="small muted" style="font-weight:400">${esc(a.text)}${frei ? "" : " · noch offen"}</div>
+            </div></div>`;
+        }).join("")}
+      </div>
+    </div>
+
+    <div class="card stack">
+      <h2>Zahlen</h2>
+      <p>Übungen insgesamt: <strong>${S.completions.length}</strong><br>
+         Längste Serie: <strong>${S.streak.longest}</strong> Tage<br>
+         Aktuelle Serie: <strong>${S.streak.current}</strong> Tage<br>
+         Gesamtpunkte: <strong>${S.totalXp}</strong><br>
+         Dabei seit: <strong>${datumDe(S.profile.startDate)}</strong></p>
+    </div>
+  </div>`;
+}
+function radarSvg(){
+  const max = Math.max(300, ...ATTR_KEYS.map(k => S.xp[k]));
+  const cx=110, cy=110, r=74;
+  const winkel = [-90, 0, 90, 180];               // oben, rechts, unten, links
+  const punkt = (i, f) => {
+    const w = winkel[i] * Math.PI/180;
+    return [cx + Math.cos(w)*r*f, cy + Math.sin(w)*r*f];
+  };
+  const netz = [0.25,0.5,0.75,1].map(f =>
+    `<polygon points="${[0,1,2,3].map(i => punkt(i,f).join(",")).join(" ")}"
+      fill="none" stroke="var(--line)" stroke-width="2"/>`).join("");
+  const achsen = [0,1,2,3].map(i =>
+    `<line x1="${cx}" y1="${cy}" x2="${punkt(i,1)[0]}" y2="${punkt(i,1)[1]}" stroke="var(--line)" stroke-width="2"/>`).join("");
+  const werte = ATTR_KEYS.map((k,i) => punkt(i, clamp(S.xp[k]/max,0.02,1)).join(",")).join(" ");
+  /* Beschriftung als farbige Symbol-Marken direkt an den Achsen –
+     ausgeschriebene Namen stehen als Pillen unter dem Diagramm.          */
+  const marken = ATTR_KEYS.map((k,i) => {
+    const p = punkt(i, 1.24);
+    return `<g transform="translate(${p[0]},${p[1]})">
+      <circle r="15" fill="${ATTRIBUTE[k].farbe}" stroke="var(--ink-dunkel)" stroke-width="2.6"/>
+      <g transform="translate(-9,-9)" color="var(--ink-dunkel)">
+        <svg viewBox="0 0 24 24" width="18" height="18">${SYMBOLE[k]}</svg>
+      </g></g>`;
+  }).join("");
+  return `<svg viewBox="0 0 220 220" style="width:100%;max-width:320px;margin:0 auto;display:block"
+      role="img" aria-label="Radar-Diagramm: ${ATTR_KEYS.map(k=>ATTRIBUTE[k].name+" "+S.xp[k]+" Punkte").join(", ")}">
+    ${netz}${achsen}
+    <polygon points="${werte}" fill="var(--sakura)" fill-opacity=".55" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
+    ${ATTR_KEYS.map((k,i) => { const p = punkt(i, clamp(S.xp[k]/max,0.02,1));
+      return `<circle cx="${p[0]}" cy="${p[1]}" r="5" fill="${ATTRIBUTE[k].farbe}" stroke="var(--ink)" stroke-width="2.4"/>`; }).join("")}
+    ${marken}
+  </svg>`;
+}
+function heatmapHtml(){
+  const proTag = {};
+  S.completions.forEach(c => { proTag[c.date] = (proTag[c.date]||0)+1; });
+  const wochen = 13;
+  const heuteD = new Date(); heuteD.setHours(12,0,0,0);
+  const wochentag = (heuteD.getDay()+6)%7;                 // Montag = 0
+  const ende = new Date(heuteD); ende.setDate(ende.getDate() + (6-wochentag));
+  const zellen = [];
+  for (let reihe=0; reihe<7; reihe++){
+    for (let sp=0; sp<wochen; sp++){
+      const d = new Date(ende);
+      d.setDate(ende.getDate() - ((wochen-1-sp)*7) - (6-reihe));
+      const iso = d.toISOString().slice(0,10);
+      const n = proTag[iso]||0;
+      const stufe = n===0?0 : n===1?1 : n===2?2 : 3;
+      const zukunft = d > heuteD;
+      zellen.push(`<i data-l="${zukunft?0:stufe}" title="${datumDe(iso)}: ${zukunft?"–":n+" Übung(en)"}"></i>`);
+    }
+  }
+  return `<div class="heat" role="img" aria-label="Kalender der aktiven Tage der letzten 13 Wochen">${zellen.join("")}</div>`;
+}
+function verlaufSvg(){
+  const eintraege = S.journal.filter(j => j.type === "angsttagebuch" && j.fields &&
+      j.fields.intensitaet != null).slice(-30);
+  if (eintraege.length < 2){
+    return `<p class="small muted">Sobald du zwei Einträge im Angst-Tagebuch hast, erscheint hier eine Kurve.</p>`;
+  }
+  const w=300, h=140, pad=24;
+  const punkte = eintraege.map((e,i) => {
+    const x = pad + i*(w-2*pad)/(eintraege.length-1);
+    const y = h-pad - (Number(e.fields.intensitaet)/10)*(h-2*pad);
+    return [x,y];
+  });
+  const linie = punkte.map(p => p.join(",")).join(" ");
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto"
+      role="img" aria-label="Verlauf der Angstwerte, ${eintraege.length} Einträge, zuletzt ${eintraege[eintraege.length-1].fields.intensitaet} von 10">
+    <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="var(--line)" stroke-width="2"/>
+    <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${h-pad}" stroke="var(--line)" stroke-width="2"/>
+    <text x="4" y="${pad+4}" font-size="10" fill="var(--text-muted)">10</text>
+    <text x="8" y="${h-pad}" font-size="10" fill="var(--text-muted)">0</text>
+    <polyline points="${linie}" fill="none" stroke="var(--at-geist)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+    ${punkte.map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--sakura)" stroke="var(--ink)" stroke-width="2"/>`).join("")}
+  </svg>`;
+}
+
+/* --- E.11  Journal ------------------------------------------------------ */
+let JOURNAL_SUCHE = "";
+let JOURNAL_FILTER = "alle";
+function screenJournal(){
+  const typen = [["alle","Alles"],["gedankenprotokoll","Gedankenprotokolle"],["angsttagebuch","Angst-Tagebuch"],
+    ["expo-review","Mutproben"],["katastrophe","Vier Fragen"],["teufelskreis","Teufelskreise"],["sonstiges","Notizen"]];
+  const such = JOURNAL_SUCHE.toLowerCase();
+  const eintraege = S.journal.slice().reverse().filter(j => {
+    const typOk = JOURNAL_FILTER === "alle" ||
+      (JOURNAL_FILTER === "sonstiges" ? !["gedankenprotokoll","angsttagebuch","expo-review","katastrophe","teufelskreis"].includes(j.type)
+        : j.type === JOURNAL_FILTER);
+    if (!typOk) return false;
+    if (!such) return true;
+    return JSON.stringify(j.fields||{}).toLowerCase().includes(such) || j.date.includes(such);
+  });
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Journal</h1>
+    <div class="field">
+      <label for="j-suche">Durchsuchen</label>
+      <input type="text" id="j-suche" value="${esc(JOURNAL_SUCHE)}" placeholder="Stichwort oder Datum">
+    </div>
+    <div class="chips">
+      ${typen.map(([k,l]) => `<button class="btn sm ${JOURNAL_FILTER===k?'primary':''}" data-jfilter="${k}">${esc(l)}</button>`).join("")}
+    </div>
+
+    <div class="card stack">
+      <h2>Deine Mut-Sätze</h2>
+      <div>${copingListeHtml()}</div>
+      <button class="btn sm" data-go-quest="mut-saetze">Sätze bearbeiten</button>
+    </div>
+
+    <div class="card stack">
+      <h2>Landkarte der Vermeidung</h2>
+      ${leiterHtml()}
+      <button class="btn sm" data-go-quest="landkarte-vermeidung">Landkarte bearbeiten</button>
+    </div>
+
+    <h2>Einträge (${eintraege.length})</h2>
+    ${eintraege.length ? eintraege.map(journalKarte).join("") :
+      `<p class="small muted">Noch nichts hier. Einträge entstehen automatisch, wenn du Übungen
+        wie den Gedanken-Detektiv oder das Angst-Tagebuch abschließt.</p>`}
+  </div>`;
+}
+const FELD_LABEL = {
+  situation:"Situation", koerper:"Körper", gedanke:"Gedanke", dafuer:"Dafür", dagegen:"Dagegen",
+  hilfreicher:"Hilfreicherer Gedanke", angstVorher:"Angst vorher", angstNachher:"Angst nachher",
+  trigger:"Auslöser", intensitaet:"Intensität", dauer:"Dauer (Min)", geholfen:"Geholfen hat",
+  befuerchtung:"Befürchtung", wahrscheinlich:"Wahrscheinlichkeit", wenn:"Wenn es einträte",
+  bewaeltigung:"Bewältigung", ausloeser:"Auslöser", verstaerkung:"Verstärkung", ausstieg:"Ausstieg",
+  befuerchtet:"Befürchtet", passiert:"Tatsächlich passiert", hoehepunkt:"Höhepunkt",
+  bedeutung:"Bedeutung", naechstes:"Nächster Schritt", plan:"Plan", vorher:"Vorher", nachher:"Nachher",
+  handlung:"Handlung", gedanken:"Gedanke", sehen:"Sehen", hoeren:"Hören", fuehlen:"Fühlen",
+  riechen:"Riechen", schmecken:"Schmecken", notiz:"Notiz", anlass:"Anlass"
+};
+const TYP_LABEL = { gedankenprotokoll:"Gedankenprotokoll", angsttagebuch:"Angst-Tagebuch",
+  "expo-review":"Rückblick Mutprobe", katastrophe:"Vier Fragen", teufelskreis:"Teufelskreis",
+  grounding:"5-4-3-2-1", werte:"Werte-Kompass", blaetter:"Gedanken auf Blättern", notiz:"Notiz" };
+function journalKarte(j){
+  const felder = Object.keys(j.fields||{}).filter(k => String(j.fields[k]).trim() !== "");
+  return `<div class="card stack entry">
+    <div class="row between">
+      <strong>${esc(TYP_LABEL[j.type] || j.type)}</strong>
+      <span class="small muted">${datumDe(j.date)}</span>
+    </div>
+    ${felder.map(k => `<p class="small"><strong>${esc(FELD_LABEL[k]||k)}:</strong> ${esc(j.fields[k])}</p>`).join("")}
+    <div class="row"><button class="btn sm ghost" data-j-del="${esc(j.id)}">Eintrag löschen</button></div>
+  </div>`;
+}
+
+/* --- E.12  Einstellungen ------------------------------------------------ */
+function screenEinstellungen(){
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Einstellungen</h1>
+
+    <div class="card stack">
+      <h2>Du und deine Figur</h2>
+      <div class="field"><label for="set-name">Dein Name</label>
+        <input type="text" id="set-name" maxlength="24" value="${esc(S.profile.name)}"></div>
+      <div class="field"><label for="set-avatar">Name der Figur</label>
+        <input type="text" id="set-avatar" maxlength="24" value="${esc(S.profile.avatarName)}"></div>
+      <div class="field"><label for="set-wert">Dein Wert</label>
+        <input type="text" id="set-wert" maxlength="40" value="${esc(S.profile.wert)}"></div>
+      <div class="field"><label for="set-intensitaet">Grundeinstellung</label>
+        <select id="set-intensitaet">
+          <option value="normal" ${S.profile.intensity==="normal"?"selected":""}>normal – volles Tagespensum</option>
+          <option value="sanft" ${S.profile.intensity==="sanft"?"selected":""}>sanft – kürzere Übungen bevorzugen</option>
+        </select></div>
+      <button class="btn sm mint" id="btn-profil-speichern">Speichern</button>
+    </div>
+
+    <div class="card stack">
+      <h2>Darstellung</h2>
+      <label class="row"><input type="checkbox" id="set-motion" style="width:auto" ${S.settings.reducedMotion?"checked":""}>
+        Bewegungen abschalten (Hüpfen, Konfetti, Atemblase animiert)</label>
+      <label class="row"><input type="checkbox" id="set-sound" style="width:auto" ${S.settings.sound?"checked":""}>
+        Töne (aktuell nicht belegt – die App bleibt still)</label>
+      <div class="field"><label for="set-reminder">Erinnerungszeit (nur als Notiz für dich)</label>
+        <input type="time" id="set-reminder" value="${esc(S.settings.dailyReminderTime||"")}"></div>
+      <p class="small muted">Die App verschickt keine Benachrichtigungen – dafür bräuchte sie Rechte,
+        die sie bewusst nicht hat. Die Zeit steht hier nur als dein eigener Vorsatz.</p>
+      <button class="btn sm mint" id="btn-settings-speichern">Speichern</button>
+    </div>
+
+    <div class="card stack">
+      <h2>Notfallkontakte</h2>
+      <p class="small muted">Erscheinen in der Ruhe-Insel zum direkten Antippen.</p>
+      ${kontakteFormular()}
+      <button class="btn sm mint" id="btn-kontakte-speichern">Kontakte speichern</button>
+    </div>
+
+    <div class="card stack">
+      <h2>Daten</h2>
+      <p class="small">Alles liegt nur in diesem Browser. Wenn du den Verlauf löschst oder das Gerät
+        wechselst, ist der Fortschritt weg – deshalb ab und zu sichern.</p>
+      <button class="btn sm" id="btn-export">Daten sichern (Datei herunterladen)</button>
+      <label class="btn sm ghost" for="file-import" style="cursor:pointer">Daten laden (Datei auswählen)</label>
+      <input type="file" id="file-import" accept="application/json,.json" class="sr-only">
+    </div>
+
+    <div class="card stack">
+      <h2>Alles zurücksetzen</h2>
+      <p class="small">Löscht Fortschritt, Journal, Karten und Kontakte auf diesem Gerät. Das lässt sich
+        nicht rückgängig machen.</p>
+      <button class="btn sm" id="btn-reset">Zurücksetzen …</button>
+    </div>
+
+    <div class="card stack">
+      <h2>Haftungshinweis & Impressum</h2>
+      <p class="small">${esc(TEXTE.disclaimerKurz)}</p>
+      <p class="small">${esc(TEXTE.disclaimerKoerper)}</p>
+      <p class="small">${esc(TEXTE.keineExposition)}</p>
+      <p class="small">${esc(TEXTE.datenschutz)}</p>
+      <p class="small muted">Kokoro Quest ist ein privates, nicht-kommerzielles Übungswerkzeug ohne
+        Gewähr auf Vollständigkeit oder Richtigkeit der Inhalte. Krisennummern Stand ${esc(KRISEN_STAND)} –
+        bitte vor Weitergabe prüfen.</p>
+    </div>
+  </div>`;
+}
+
+/* --- E.13  Krisenkontakte als eigener Screen ---------------------------- */
+function screenKrisen(){
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Hilfe holen</h1>
+    <p>Wenn du gerade nicht weiterweißt, ist ein Anruf der richtige nächste Schritt.
+       Diese Stellen sind dafür da – auch nachts, auch wenn du unsicher bist, ob es „schlimm genug“ ist.</p>
+    ${S.emergencyContacts.length ? `<div class="card stack">
+      <h2>Deine eigenen Kontakte</h2>
+      ${S.emergencyContacts.map(k => `<a class="btn block" href="tel:${esc((k.phone||"").replace(/[^0-9+]/g,""))}">
+        ${esc(k.name||"Kontakt")} anrufen</a>`).join("")}
+    </div>` : ""}
+    <div class="card stack">
+      <h2>Krisennummern</h2>
+      ${KRISENKONTAKTE.map(k => `<div class="card soft stack">
+        <strong>${esc(k.name)}</strong>
+        <span class="small muted">${esc(k.land)} · ${esc(k.hinweis)}</span>
+        <a class="btn sm primary" href="tel:${esc(k.tel)}">${esc(k.nummer)} anrufen</a>
+      </div>`).join("")}
+      <p class="small muted">Stand: ${esc(KRISEN_STAND)}. Nummern ändern sich – bitte gelegentlich prüfen.</p>
+    </div>
+    <button class="btn ghost block" data-go="heim">Zurück</button>
+  </div>`;
+}
+
+/* ===========================================================================
+   §F  RUHE-INSEL (Notfallmodus)
+   ---------------------------------------------------------------------------
+   Bewusst ein anderer Raum: gedämpfte Farben, keine Punkte, kein Zähler,
+   kein Timerdruck, keine Animation außer dem Atem. Der Kontrast zum
+   Spielmodus ist Absicht. Hier wird NIE questAbschliessen() aufgerufen.
+   =========================================================================== */
+let ISLAND_VIEW = "atem";
+function inselOeffnen(){
+  ISLAND_VIEW = "atem";
+  S.stats.islandOpened = (S.stats.islandOpened||0) + 1;
+  speichern();
+  inselRendern();
+  document.body.style.overflow = "hidden";
+}
+function inselSchliessen(){
+  atemStop();
+  document.body.style.overflow = "";
+  $("#island-root").innerHTML = `<div id="island-abschluss"></div>`;
+  inselNachfrage();
+}
+function inselRendern(){
+  const root = $("#island-root");
+  root.innerHTML = `<section class="island" role="dialog" aria-modal="true" aria-label="Ruhe-Insel">
+    <div class="wrap stack">
+      ${inselInhalt()}
+      <button class="btn block" id="btn-insel-zu">Ruhe-Insel verlassen</button>
+      <p class="small muted center">${esc(TEXTE.akutKeinePunkte)}</p>
+    </div></section>`;
+  inselBinden();
+  const h = root.querySelector("h1, h2"); if (h) h.setAttribute("tabindex","-1"), h.focus();
+}
+function inselInhalt(){
+  if (ISLAND_VIEW === "atem"){
+    return `
+      <h1 class="center">Atme mit. Mehr musst du gerade nicht.</h1>
+      <div class="breath-stage">
+        <div class="breath" id="breath" role="img" aria-label="Langsame Atemanimation, vier Sekunden ein, sechs Sekunden aus">
+          <span><span class="phase" id="breath-phase">Einatmen</span><span class="count" id="breath-count">4</span></span>
+        </div>
+      </div>
+      <div class="stack">
+        <button class="btn block" data-insel="grounding">5-4-3-2-1 – hier ankommen</button>
+        <button class="btn block" data-insel="saetze">Meine Mut-Sätze</button>
+        <button class="btn block" data-insel="was">Was gerade passiert</button>
+        <button class="btn block" data-insel="kuehlung">Kühlung & Erdung</button>
+        <button class="btn block" data-insel="hilfe">Hilfe holen</button>
+      </div>`;
+  }
+  if (ISLAND_VIEW === "grounding"){
+    return `<h2>Schritt für Schritt</h2>
+      <div class="card stack" id="grounding-card">
+        <p style="font-size:1.3rem;font-weight:700" id="gi-titel">${esc(GROUNDING_INSEL[0][0])}</p>
+        <p class="muted" id="gi-text">${esc(GROUNDING_INSEL[0][1])}</p>
+        <p class="small muted"><span id="gi-nr">1</span> von ${GROUNDING_INSEL.length}</p>
+        <button class="btn block" id="gi-weiter">Weiter</button>
+      </div>
+      <button class="btn block" data-insel="atem">Zurück zum Atem</button>`;
+  }
+  if (ISLAND_VIEW === "saetze"){
+    const saetze = S.copingCards.length ? S.copingCards.map(c => c.text) : COPING_VORLAGEN.slice(0,4);
+    return `<h2>Deine Mut-Sätze</h2>
+      ${saetze.map(t => `<div class="card"><p style="font-size:1.25rem;font-weight:700;margin:0">„${esc(t)}“</p></div>`).join("")}
+      ${S.copingCards.length ? "" : `<p class="small muted">Das sind Vorschläge – eigene Sätze kannst du später
+        in der Übung „Mut-Sätze verinnerlichen“ anlegen.</p>`}
+      <button class="btn block" data-insel="atem">Zurück zum Atem</button>`;
+  }
+  if (ISLAND_VIEW === "was"){
+    return `<h2>Was gerade passiert</h2>
+      <div class="card stack">
+        <p style="font-size:1.15rem">Dein Körper hat den Alarm ausgelöst. Herz, Atem und Muskeln sind bereit –
+           das ist ein Notfallprogramm, das gerade zum falschen Zeitpunkt läuft.</p>
+        <p style="font-size:1.15rem">Adrenalin wird im Körper laufend abgebaut. Deshalb geht das vorbei –
+           auch wenn es sich gerade endlos anfühlt.</p>
+        <p class="muted">Du musst nichts dagegen tun. Warten und weiteratmen reicht.</p>
+      </div>
+      <button class="btn block" data-insel="atem">Zurück zum Atem</button>`;
+  }
+  if (ISLAND_VIEW === "kuehlung"){
+    return `<h2>Kühlung & Erdung</h2>
+      <div class="card stack">
+        <p>Lass kaltes Wasser über deine Handgelenke laufen. Oder ein kaltes Tuch in den Nacken.</p>
+        <p>Stell beide Füße fest auf den Boden. Drück die Fersen hinein und spüre den Widerstand.</p>
+        <p>Sag laut, wo du bist: „Ich bin in … Es ist … Uhr. Hier ist gerade nichts gefährlich.“</p>
+        <p class="muted small">Kein Eiswasser, kein Eintauchen des Gesichts.</p>
+      </div>
+      <button class="btn block" data-insel="atem">Zurück zum Atem</button>`;
+  }
+  /* hilfe */
+  return `<h2>Hilfe holen</h2>
+    ${S.emergencyContacts.length ? `<div class="card stack"><h3>Deine Kontakte</h3>
+      ${S.emergencyContacts.map(k => `<a class="btn block" href="tel:${esc((k.phone||"").replace(/[^0-9+]/g,""))}">
+        ${esc(k.name||"Kontakt")} anrufen</a>`).join("")}</div>` :
+      `<p class="small muted">Du hast noch keine eigenen Kontakte hinterlegt – das geht in den Einstellungen.</p>`}
+    <div class="card stack"><h3>Krisennummern</h3>
+      ${KRISENKONTAKTE.map(k => `<a class="btn block" href="tel:${esc(k.tel)}">
+        ${esc(k.name)}: ${esc(k.nummer)}</a>`).join("")}
+      <p class="small muted">Stand: ${esc(KRISEN_STAND)}</p>
+    </div>
+    <button class="btn block" data-insel="atem">Zurück zum Atem</button>`;
+}
+/* Ausstieg ohne Bewertung, danach die ruhige Frage */
+function inselNachfrage(){
+  overlay(`
+    <h2>Möchtest du kurz festhalten, was los war?</h2>
+    <p class="small muted">Nur wenn du magst. Für die Attacke selbst gibt es keine Punkte –
+       fürs freiwillige Nachdenken danach ein paar Geist-Punkte.</p>
+    <button class="btn primary block" id="btn-insel-ja">Ja, kurz eintragen</button>
+    <button class="btn ghost block" data-close>Jetzt nicht</button>`);
+  const b = $("#btn-insel-ja");
+  if (b) b.addEventListener("click", () => {
+    $("#overlay-root").innerHTML = "";
+    gehe("quest","angst-tagebuch");
+  });
+}
+
+/* ===========================================================================
+   §G  INTERAKTION  ·  Atem, Timer, Formulare, Export/Import, Start
+   =========================================================================== */
+
+/* --- G.1  Atem-Engine ---------------------------------------------------
+   Bei abgeschalteter Bewegung wird nur ein-/ausgeblendet und gezählt,
+   die Blase bleibt still (Vorgabe aus prefers-reduced-motion).            */
+let ATEM = { timer:null };
+function atemStop(){
+  if (ATEM.timer){ clearInterval(ATEM.timer); ATEM.timer = null; }
+}
+function atemStart(cfg, endlos){
+  atemStop();
+  const blase = $("#breath"), phaseEl = $("#breath-phase"), countEl = $("#breath-count");
+  if (!blase) return;
+  const ruhig = bewegungAus();
+  const phasen = [{ name:"Einatmen", sek:cfg.ein, scale:1 }];
+  if (cfg.halten) phasen.push({ name:"Halten", sek:cfg.halten, scale:1 });
+  phasen.push({ name:"Ausatmen", sek:cfg.aus, scale:0.62 });
+  const proRunde = phasen.reduce((a,p) => a + p.sek, 0);
+  const maxRunden = endlos ? Infinity
+    : (cfg.runden || Math.max(1, Math.round((cfg.minuten || 5) * 60 / proRunde)));
+
+  let pi = 0, rest = phasen[0].sek, runde = 0;
+  const anwenden = p => {
+    if (ruhig){ blase.style.transform = "scale(1)"; blase.style.opacity = p.name === "Ausatmen" ? ".65" : "1"; }
+    else { blase.style.transitionDuration = p.sek + "s"; blase.style.transform = "scale(" + p.scale + ")"; }
+    phaseEl.textContent = p.name;
+  };
+  anwenden(phasen[0]); countEl.textContent = rest;
+  ATEM.timer = setInterval(() => {
+    rest--;
+    if (rest <= 0){
+      pi++;
+      if (pi >= phasen.length){
+        pi = 0; runde++;
+        if (runde >= maxRunden){
+          atemStop(); phaseEl.textContent = "Fertig"; countEl.textContent = "✓";
+          melde("Atemübung beendet."); return;
+        }
+      }
+      anwenden(phasen[pi]); rest = phasen[pi].sek;
+    }
+    countEl.textContent = rest;
+  }, 1000);
+}
+
+/* --- G.2  Countdown ----------------------------------------------------- */
+let TIMER = { id:null, rest:0, laeuft:false };
+function timerSetzen(sek){
+  TIMER.rest = sek;
+  const el = $("#timer-anzeige");
+  if (el) el.textContent = String(Math.floor(sek/60)).padStart(2,"0") + ":" + String(sek%60).padStart(2,"0");
+}
+function timerToggle(startSek){
+  const btn = $("#btn-timer");
+  if (TIMER.laeuft){
+    clearInterval(TIMER.id); TIMER.laeuft = false; if (btn) btn.textContent = "Weiter";
+    return;
+  }
+  if (!TIMER.rest) TIMER.rest = startSek;
+  TIMER.laeuft = true; if (btn) btn.textContent = "Pause";
+  TIMER.id = setInterval(() => {
+    TIMER.rest--;
+    timerSetzen(Math.max(0,TIMER.rest));
+    if (TIMER.rest <= 0){
+      clearInterval(TIMER.id); TIMER.laeuft = false;
+      if (btn) btn.textContent = "Starten";
+      toast("Zeit ist um – gut gemacht.");
+      melde("Timer abgelaufen.");
+    }
+  }, 1000);
+}
+
+/* --- G.3  Werkzeug-Eingaben einsammeln ---------------------------------- */
+function sammleWerkzeug(){
+  const felder = {};
+  $$("#view [data-feld]").forEach(el => {
+    const v = (el.value != null ? String(el.value) : "").trim();
+    if (v !== "") felder[el.dataset.feld] = v;
+  });
+  return felder;
+}
+const JOURNAL_TYP = {
+  gedankenprotokoll:"gedankenprotokoll", katastrophe:"katastrophe", teufelskreis:"teufelskreis",
+  angsttagebuch:"angsttagebuch", exporeview:"expo-review", sprosse:"expo-review",
+  grounding:"grounding", werte:"werte", blaetter:"blaetter"
+};
+
+/* --- G.4  Ereignisse an den gerenderten Screen binden -------------------- */
+function bindeView(){
+  atemStop();
+  if (TIMER.id) { clearInterval(TIMER.id); TIMER.laeuft = false; TIMER.rest = 0; }
+
+  /* Navigation */
+  $$("[data-go]").forEach(b => b.addEventListener("click", () => gehe(b.dataset.go)));
+  $$("[data-go-quest]").forEach(b => b.addEventListener("click", e => {
+    e.stopPropagation(); gehe("quest", b.dataset.goQuest);
+  }));
+  $$("[data-tausch]").forEach(b => b.addEventListener("click", () => questTauschen(Number(b.dataset.tausch))));
+
+  const sanft = $("#btn-sanft"); if (sanft) sanft.addEventListener("click", sanftUmschalten);
+  const zurueck = $("#btn-rueckkehr");
+  if (zurueck) zurueck.addEventListener("click", () => {
+    S.stats.zeigeRueckkehr = false;
+    const neu = pruefeAchievements({ rueckkehr:true });
+    speichern(); render();
+    if (neu.length) zeigeAchievement(neu[0]);
+  });
+
+  /* Onboarding */
+  $$("[data-onb]").forEach(b => b.addEventListener("click", () => {
+    if (ONB_STEP === 2){
+      const a = $("#onb-avatar"), n = $("#onb-name");
+      if (a) S.profile.avatarName = a.value.trim() || "Mochi";
+      if (n) S.profile.name = n.value.trim();
+    }
+    if (ONB_STEP === 3){
+      const eigen = $("#onb-wert-eigen");
+      if (eigen && eigen.value.trim()) S.profile.wert = eigen.value.trim();
+    }
+    if (ONB_STEP === 4) kontakteUebernehmen();
+    if (b.dataset.onb === "fertig"){
+      S.onboarded = true; S.profile.startDate = heute();
+      speichern(); gehe("heim"); return;
+    }
+    ONB_STEP = Number(b.dataset.onb);
+    speichern(); render();
+  }));
+  $$("[data-wert]").forEach(b => b.addEventListener("click", () => {
+    S.profile.wert = b.dataset.wert; speichern(); pruefeAchievements(); render();
+  }));
+
+  /* Stimmungs-Schieber */
+  const mv = $("#mood-vor");
+  if (mv) mv.addEventListener("input", () => { QSTATE.moodBefore = Number(mv.value); $("#mood-vor-wert").textContent = mv.value; });
+  const mn = $("#mood-nach");
+  if (mn) mn.addEventListener("input", () => { QSTATE.moodAfter = Number(mn.value); $("#mood-nach-wert").textContent = mn.value; });
+
+  /* Atemblase */
+  const bBtn = $("#btn-breath");
+  if (bBtn){
+    const cfg = JSON.parse(bBtn.closest("[data-atem]").dataset.atem);
+    bBtn.addEventListener("click", () => {
+      if (ATEM.timer){ atemStop(); bBtn.textContent = "Atmen starten"; }
+      else { atemStart(cfg,false); bBtn.textContent = "Anhalten"; }
+    });
+  }
+  /* Timer */
+  const tBox = $("[data-timer]");
+  if (tBox){
+    const sek = Number(tBox.dataset.timer) * 60;
+    timerSetzen(sek);
+    $("#btn-timer").addEventListener("click", () => timerToggle(sek));
+    $("#btn-timer-reset").addEventListener("click", () => {
+      clearInterval(TIMER.id); TIMER.laeuft = false; TIMER.rest = 0;
+      timerSetzen(sek); $("#btn-timer").textContent = "Starten";
+    });
+  }
+  /* Geführte Schrittfolgen (PMR, Body-Scan) */
+  const gBox = $("[data-gefuehrt]");
+  if (gBox){
+    const schritte = JSON.parse(gBox.dataset.gefuehrt);
+    let i = 0;
+    const zeige = () => { $("#gef-text").textContent = schritte[i]; $("#gef-nr").textContent = i+1; melde(schritte[i]); };
+    $("#gef-weiter").addEventListener("click", () => { i = (i+1) % schritte.length; zeige(); });
+    $("#gef-zurueck").addEventListener("click", () => { i = (i-1+schritte.length) % schritte.length; zeige(); });
+  }
+  /* Wissenskarte neu ziehen */
+  const wkNeu = $("#btn-wk-neu");
+  if (wkNeu) wkNeu.addEventListener("click", () => {
+    const k = WISSENSKARTEN[Math.floor(Math.random()*WISSENSKARTEN.length)];
+    const box = $("#wk-box");
+    box.querySelector("h2").textContent = k.titel;
+    box.querySelector("p").textContent = k.text;
+    box.dataset.wk = k.id;
+  });
+  /* Mut-Sätze */
+  const cpAdd = $("#btn-cp-add");
+  if (cpAdd) cpAdd.addEventListener("click", () => {
+    const inp = $("#cp-neu"); const t = inp.value.trim();
+    if (!t) return;
+    S.copingCards.push({ id:neueId(), text:t, createdAt:new Date().toISOString() });
+    inp.value = ""; speichern(); pruefeAchievements();
+    $("#coping-liste").innerHTML = copingListeHtml(); bindeCoping();
+    toast("Satz gespeichert.");
+  });
+  $$("[data-cp-vorlage]").forEach(b => b.addEventListener("click", () => {
+    const t = b.dataset.cpVorlage;
+    if (S.copingCards.some(c => c.text === t)) { toast("Hast du schon."); return; }
+    S.copingCards.push({ id:neueId(), text:t, createdAt:new Date().toISOString() });
+    speichern(); pruefeAchievements();
+    $("#coping-liste").innerHTML = copingListeHtml(); bindeCoping();
+    toast("Satz übernommen.");
+  }));
+  bindeCoping();
+
+  /* Landkarte der Vermeidung */
+  const vmSud = $("#vm-sud");
+  if (vmSud) vmSud.addEventListener("input", () => { $("#vm-sud-wert").textContent = vmSud.value; });
+  const vmAdd = $("#btn-vm-add");
+  if (vmAdd) vmAdd.addEventListener("click", () => {
+    const s = $("#vm-situation").value.trim();
+    if (!s) { toast("Bitte eine Situation eintragen."); return; }
+    S.avoidanceMap.push({ id:neueId(), situation:s, sud:Number($("#vm-sud").value), status:"offen" });
+    $("#vm-situation").value = "";
+    speichern(); pruefeAchievements();
+    $("#vm-liste").innerHTML = leiterHtml(); bindeLeiter();
+    toast("Sprosse ergänzt.");
+  });
+  bindeLeiter();
+
+  /* Playlists */
+  const plSave = $("#btn-pl-save");
+  if (plSave) plSave.addEventListener("click", () => {
+    ["ruhe","kraft"].forEach(k => {
+      const el = $(`[data-playlist="${k}"]`);
+      if (el) S.playlists[k] = el.value.split("\n").map(z => z.trim()).filter(Boolean);
+    });
+    speichern(); toast("Playlists gespeichert.");
+  });
+
+  /* Bibliothek & Journal-Filter */
+  $$("[data-filter]").forEach(b => b.addEventListener("click", () => { BIB_FILTER = b.dataset.filter; render(); }));
+  $$("[data-jfilter]").forEach(b => b.addEventListener("click", () => { JOURNAL_FILTER = b.dataset.jfilter; render(); }));
+  const js = $("#j-suche");
+  if (js) js.addEventListener("input", () => {
+    JOURNAL_SUCHE = js.value;
+    const pos = js.selectionStart; render();
+    const neu = $("#j-suche"); if (neu){ neu.focus(); neu.setSelectionRange(pos,pos); }
+  });
+  $$("[data-j-del]").forEach(b => b.addEventListener("click", () => {
+    S.journal = S.journal.filter(j => j.id !== b.dataset.jDel); speichern(); render(); toast("Eintrag gelöscht.");
+  }));
+
+  /* Quest abschließen */
+  const done = $("#btn-quest-done");
+  if (done) done.addEventListener("click", () => {
+    const q = questById(QSTATE.id);
+    QSTATE.felder = Object.assign({}, QSTATE.felder, sammleWerkzeug());
+    const chk = $("#sp-geschafft");
+    if (chk) QSTATE.felder._geschafft = chk.checked ? "1" : "";
+    const wk = $("#wk-box"); if (wk) QSTATE.felder._wissenskarte = wk.dataset.wk;
+    QSTATE.phase = "nach"; render();
+  });
+  const final = $("#btn-quest-final");
+  if (final) final.addEventListener("click", () => questEintragen());
+
+  /* Einstellungen */
+  bindeEinstellungen();
+}
+function bindeCoping(){
+  $$("[data-cp-del]").forEach(b => b.addEventListener("click", () => {
+    S.copingCards = S.copingCards.filter(c => c.id !== b.dataset.cpDel);
+    speichern();
+    const box = $("#coping-liste"); if (box){ box.innerHTML = copingListeHtml(); bindeCoping(); } else render();
+  }));
+}
+function bindeLeiter(){
+  $$("[data-vm-del]").forEach(b => b.addEventListener("click", () => {
+    S.avoidanceMap = S.avoidanceMap.filter(e => e.id !== b.dataset.vmDel);
+    speichern();
+    const box = $("#vm-liste"); if (box){ box.innerHTML = leiterHtml(); bindeLeiter(); } else render();
+  }));
+}
+
+/* --- G.5  Quest eintragen ----------------------------------------------- */
+function questEintragen(){
+  const q = questById(QSTATE.id);
+  if (!q) return;
+  const note = ($("#quest-note") && $("#quest-note").value.trim()) || "";
+  const felder = QSTATE.felder || {};
+
+  /* Werkzeug-abhängige Nebenwirkungen */
+  const typ = JOURNAL_TYP[q.tool];
+  if (typ){
+    const sauber = {};
+    Object.keys(felder).forEach(k => { if (!k.startsWith("_")) sauber[k] = felder[k]; });
+    if (Object.keys(sauber).length) journalEintrag(typ, sauber);
+  }
+  if (q.tool === "werte"){
+    const eigen = felder.handlung;      // Wert selbst wird beim Antippen gespeichert
+    if (eigen) { /* bereits im Journal */ }
+  }
+  if (q.tool === "sprosse" && felder._geschafft === "1" && felder.situation){
+    const e = S.avoidanceMap.find(x => x.id === felder.situation);
+    if (e){ e.status = "geschafft"; }
+  }
+  if (q.tool === "wissenskarte" && felder._wissenskarte){
+    S.stats.letzteKarte = felder._wissenskarte;
+  }
+  speichern();
+
+  questAbschliessen(q, {
+    durationMin: q.dauerMin,
+    moodBefore: QSTATE.moodBefore,
+    moodAfter: QSTATE.moodAfter,
+    note: note
+  });
+  QSTATE.phase = "fertig";
+  render();
+}
+
+/* --- G.6  Einstellungen, Export & Import -------------------------------- */
+function bindeEinstellungen(){
+  const p = $("#btn-profil-speichern");
+  if (p) p.addEventListener("click", () => {
+    S.profile.name = $("#set-name").value.trim();
+    S.profile.avatarName = $("#set-avatar").value.trim() || "Mochi";
+    S.profile.wert = $("#set-wert").value.trim();
+    const alteIntensitaet = S.profile.intensity;
+    S.profile.intensity = $("#set-intensitaet").value;
+    if (alteIntensitaet !== S.profile.intensity && !S.daily.sanft){
+      S.daily.questIds = planBauen(heute(), false);     // Vorschläge neu dosieren
+    }
+    speichern(); pruefeAchievements(); toast("Gespeichert."); render();
+  });
+  const s = $("#btn-settings-speichern");
+  if (s) s.addEventListener("click", () => {
+    S.settings.reducedMotion = $("#set-motion").checked;
+    S.settings.sound = $("#set-sound").checked;
+    S.settings.dailyReminderTime = $("#set-reminder").value;
+    speichern(); toast("Gespeichert."); render();
+  });
+  const k = $("#btn-kontakte-speichern");
+  if (k) k.addEventListener("click", () => { kontakteUebernehmen(); toast("Kontakte gespeichert."); });
+
+  const ex = $("#btn-export"); if (ex) ex.addEventListener("click", datenExportieren);
+  const im = $("#file-import"); if (im) im.addEventListener("change", datenImportieren);
+
+  const r = $("#btn-reset");
+  if (r) r.addEventListener("click", () => {
+    overlay(`<h2>Wirklich alles löschen?</h2>
+      <p>Fortschritt, Journal, Mut-Sätze, Landkarte und Kontakte werden entfernt.
+         Das kann nicht rückgängig gemacht werden.</p>
+      <p class="small muted">Tipp: Sichere vorher deine Daten als Datei.</p>
+      <button class="btn ghost block" data-close>Abbrechen</button>
+      <button class="btn primary block" id="btn-reset-2">Ja, weiter zur letzten Bestätigung</button>`);
+    $("#btn-reset-2").addEventListener("click", () => {
+      overlay(`<h2>Letzte Bestätigung</h2>
+        <p>Tippe zum Bestätigen das Wort <strong>LÖSCHEN</strong> ein.</p>
+        <input type="text" id="reset-wort" autocomplete="off">
+        <button class="btn ghost block" data-close>Abbrechen</button>
+        <button class="btn primary block" id="btn-reset-3">Endgültig löschen</button>`);
+      $("#btn-reset-3").addEventListener("click", () => {
+        if (($("#reset-wort").value||"").trim().toUpperCase() !== "LÖSCHEN"){
+          toast("Bitte das Wort genau eintippen."); return;
+        }
+        try { localStorage.removeItem(STORAGE_KEY); } catch(e){}
+        S = leererState(); ONB_STEP = 0; $("#overlay-root").innerHTML = "";
+        speichern(); gehe("heim");
+        toast("Alles zurückgesetzt.");
+      });
+    });
+  });
+}
+function datenExportieren(){
+  try{
+    const blob = new Blob([JSON.stringify(S,null,2)], { type:"application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "kokoro-quest-" + heute() + ".json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast("Datei wurde erstellt.");
+  }catch(e){
+    toast("Download hat nicht geklappt.");
+  }
+}
+function datenImportieren(ev){
+  const datei = ev.target.files && ev.target.files[0];
+  if (!datei) return;
+  const leser = new FileReader();
+  leser.onload = () => {
+    try{
+      const daten = JSON.parse(leser.result);
+      if (!daten || typeof daten !== "object") throw new Error("Format");
+      overlay(`<h2>Daten übernehmen?</h2>
+        <p>Der aktuelle Stand auf diesem Gerät wird durch die Datei ersetzt.</p>
+        <button class="btn ghost block" data-close>Abbrechen</button>
+        <button class="btn primary block" id="btn-import-ok">Übernehmen</button>`);
+      $("#btn-import-ok").addEventListener("click", () => {
+        S = migrate(daten);
+        speichern();
+        $("#overlay-root").innerHTML = "";
+        gehe("heim");
+        toast("Daten geladen.");
+      });
+    }catch(e){
+      toast("Diese Datei konnte nicht gelesen werden.");
+    }
+    ev.target.value = "";
+  };
+  leser.onerror = () => { toast("Datei konnte nicht gelesen werden."); };
+  leser.readAsText(datei);
+}
+
+/* --- G.7  Ruhe-Insel binden --------------------------------------------- */
+const GROUNDING_INSEL = [
+  ["Sieh dich um. Fünf Dinge, die du sehen kannst.","Benenne sie – innerlich oder laut."],
+  ["Hör hin. Vier Geräusche.","Auch leise zählen."],
+  ["Spüre. Drei Dinge, die du fühlst.","Boden, Stoff, Temperatur."],
+  ["Rieche. Zwei Dinge.","Wenn nichts da ist: an etwas Vertrautes denken."],
+  ["Eine Sache, die du schmeckst.","Oder eine, die dir heute gefallen hat."]
+];
+function inselBinden(){
+  const zu = $("#btn-insel-zu");
+  if (zu) zu.addEventListener("click", inselSchliessen);
+  $$("#island-root [data-insel]").forEach(b => b.addEventListener("click", () => {
+    atemStop(); ISLAND_VIEW = b.dataset.insel; inselRendern();
+  }));
+  if (ISLAND_VIEW === "atem") atemStart({ ein:4, halten:0, aus:6 }, true);
+  const gi = $("#gi-weiter");
+  if (gi){
+    let i = 0;
+    gi.addEventListener("click", () => {
+      i = (i+1) % GROUNDING_INSEL.length;
+      $("#gi-titel").textContent = GROUNDING_INSEL[i][0];
+      $("#gi-text").textContent  = GROUNDING_INSEL[i][1];
+      $("#gi-nr").textContent    = i+1;
+    });
+  }
+}
+
+/* --- G.8  Globale Schalter ---------------------------------------------- */
+$("#btn-panic").addEventListener("click", inselOeffnen);
+$("#btn-settings").addEventListener("click", () => gehe("einstellungen"));
+$("#btn-crisis").addEventListener("click", () => gehe("krisen"));
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && $(".island")) inselSchliessen();
+});
+
+/* --- G.9  Start ---------------------------------------------------------- */
+function start(){
+  S = ladeState();
+  const info = tagesUebergang();
+  tagesplanSicherstellen();
+  if (info.schild) setTimeout(() => toast(TEXTE.schildEingeloest), 600);
+  document.body.classList.toggle("no-motion", !!S.settings.reducedMotion);
+  render();
+  if (!STORAGE_OK) melde("Speichern ist in diesem Browser nicht möglich.");
+}
+start();
+</script>
+</body>
+</html>
