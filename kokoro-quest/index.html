@@ -4049,6 +4049,7 @@ function screenJournal(){
   });
   return `<div class="stack" style="padding-top:14px">
     <h1>Journal</h1>
+    ${regelnKarteHtml()}
     <div class="field">
       <label for="j-suche">Durchsuchen</label>
       <input type="text" id="j-suche" value="${esc(JOURNAL_SUCHE)}" placeholder="Stichwort oder Datum">
@@ -4627,12 +4628,18 @@ function screenKurs(){
       </button>`;
     }).join("")}
 
-    <div class="card stack" data-titel="Zum Nachlesen">
-      <h2>Die Regeln</h2>
-      <p class="small">Zwei Listen, die im Ernstfall mehr helfen als jede Erklärung.</p>
-      <button class="btn block primary" data-go="regeln">Die zehn goldenen Regeln</button>
-      <button class="btn block" data-go="regeln-rueckschlag">Umgang mit Rückschlägen</button>
-    </div>
+    ${regelnKarteHtml()}
+  </div>`;
+}
+
+/* Die beiden Regellisten – steht im Behandlungspfad und ganz oben im
+   Journal, weil man sie im Zweifel schnell braucht. */
+function regelnKarteHtml(){
+  return `<div class="card stack" data-titel="Zum Nachlesen">
+    <h2 style="margin:0">Die Regeln</h2>
+    <p class="small">Zwei Listen, die im Ernstfall mehr helfen als jede Erklärung.</p>
+    <button class="btn block primary" data-go="regeln">Die zehn goldenen Regeln</button>
+    <button class="btn block" data-go="regeln-rueckschlag">Umgang mit Rückschlägen</button>
   </div>`;
 }
 
