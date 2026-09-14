@@ -39,7 +39,7 @@ Gesamtpunkte (die über die Stufe entscheiden), mit Rechenbeispiel und der Tabel
 Schwellen. Dazu Serie und Schilde, Abzeichen gegen Medaillen, alle Bereiche, Datenhaltung und ein
 Abschnitt „Was diese App bewusst nicht tut".
 
-**Medic** listet pflanzliche Mittel, geordnet nach Nutzen bei Angst *unter Berücksichtigung der
+**Medic** ist ein eigener Punkt in der Hauptnavigation und listet pflanzliche Mittel, geordnet nach Nutzen bei Angst *unter Berücksichtigung der
 Sicherheit*, mit Datenlage-Balken (drei Stufen) je Mittel: Lavendelöl-Spezialextrakt (am besten
 untersucht), Kamille, Passionsblume, Ashwagandha, Baldrian, Melisse/Hopfen, Johanniskraut, CBD.
 Kava steht bewusst nicht in der Rangfolge, sondern als Sonderfall am Ende — gute Wirksamkeitsdaten,
