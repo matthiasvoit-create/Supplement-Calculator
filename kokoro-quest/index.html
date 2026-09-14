@@ -518,6 +518,22 @@ body.no-motion .confetti{display:none}
 .artwahl.klein .bild{max-width:86px}
 .artwahl.klein .artkarte{padding:8px 4px}
 
+/* Handbuch: Tabelle der Stufen */
+.tabelle{width:100%;border-collapse:collapse;font-size:.9rem}
+.tabelle th,.tabelle td{border:2px solid var(--line);padding:6px 8px;text-align:left}
+.tabelle th{background:var(--surface-2);font-weight:800}
+
+/* Medic: Balken für die Datenlage */
+.datenlage{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.datenlage i{
+  width:22px;height:11px;border:2px solid var(--ink-dunkel);border-radius:3px;
+  background:var(--surface-2);display:block;
+}
+.datenlage i.an{background:var(--mint)}
+.datenlage .small{margin-left:6px;color:var(--text-muted)}
+.medic-karte.w1{box-shadow:var(--hart), 0 0 0 3px var(--butter)}
+.medic-karte.w2{box-shadow:var(--hart), 0 0 0 3px var(--koralle)}
+
 /* Behandlungspfad: Modulkarten */
 .modulkarte{
   display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;
@@ -665,6 +681,7 @@ input[type=text],input[type=tel],input[type=time],input[type=number],textarea,se
       <span>Kokoro&nbsp;Quest</span>
     </div>
     <div class="grow"></div>
+    <button class="btn sm ghost" id="btn-handbuch" aria-label="Handbuch öffnen">?<span class="sr-only">Handbuch</span></button>
     <button class="btn sm ghost" id="btn-settings" aria-label="Einstellungen öffnen">⚙︎<span class="sr-only">Einstellungen</span></button>
   </div>
 </header>
@@ -1643,7 +1660,7 @@ const WISSENSKARTEN = [
   { id:"wk-wirksamkeit", titel:"Wie gut das behandelbar ist",
     text:"Angststörungen gehören zu den psychischen Erkrankungen mit den besten Behandlungsaussichten. Kognitive Verhaltenstherapie mit Konfrontation gilt in den deutschsprachigen Leitlinien als Verfahren der ersten Wahl bei Panikstörung und Agoraphobie; ein großer Teil der Behandelten ist danach deutlich gebessert oder beschwerdefrei. Das ist der wichtigste Satz dieser ganzen Kartensammlung." },
   { id:"wk-medikamente", titel:"Medikamente – was in ärztliche Hände gehört",
-    text:"Leitlinien nennen bestimmte Antidepressiva (vor allem SSRI und SNRI) als medikamentöse Option bei Angststörungen, oft in Kombination mit Psychotherapie. Beruhigungsmittel vom Benzodiazepin-Typ wirken schnell, machen aber innerhalb weniger Wochen abhängig und werden deshalb nur in Ausnahmen und kurz eingesetzt. Was für dich passt, entscheidet eine Ärztin mit dir – diese App gibt dazu keine Empfehlung und ersetzt kein Gespräch." },
+    text:"Leitlinien nennen bestimmte Antidepressiva (vor allem SSRI und SNRI) als medikamentöse Option bei Angststörungen, oft in Kombination mit Psychotherapie. Beruhigungsmittel vom Benzodiazepin-Typ wirken schnell, machen aber innerhalb weniger Wochen abhängig und werden deshalb nur in Ausnahmen und kurz eingesetzt. Was für dich passt, entscheidet eine Ärztin mit dir – diese App gibt dazu keine Empfehlung und ersetzt kein Gespräch. Zu pflanzlichen Mitteln findest du eine Übersicht im Bereich Medic." },
   { id:"wk-therapieplatz", titel:"Wie du in Deutschland an einen Therapieplatz kommst",
     text:"Erster Schritt ist meist die psychotherapeutische Sprechstunde: Praxen direkt anrufen, oder über die Terminservicestelle unter 116 117 vermitteln lassen. Dort wird geklärt, ob und welche Behandlung sinnvoll ist. Wartezeiten sind oft lang – deshalb parallel mehrere Praxen anfragen, auf Wartelisten setzen lassen und nach dem Kostenerstattungsverfahren fragen, wenn nichts frei ist. Das Anrufen selbst ist für viele schon eine Mutprobe; es zählt als eine." },
   { id:"wk-hilfe-holen", titel:"Wann Fachbegleitung sinnvoll ist",
@@ -1807,6 +1824,53 @@ const modulVon = id => KURS_MODULE.find(m => m.id === id);
 const modulFertig = id => S.kursModule.includes(id);
 const kursFortschritt = () => ({
   fertig: KURS_MODULE.filter(m => modulFertig(m.id)).length, gesamt: KURS_MODULE.length });
+
+/* --- A.12  Pflanzliche Mittel --------------------------------------------
+   Reine Information, keine Empfehlung und keine Dosierung. Die Reihenfolge
+   richtet sich nach dem Nutzen bei Angst UNTER Berücksichtigung der
+   Sicherheit – deshalb steht Kava trotz guter Wirksamkeitsdaten nicht oben,
+   sondern als Sonderfall am Ende.
+   datenlage: 3 = mehrere kontrollierte Studien · 2 = einzelne kleinere
+   Studien · 1 = überwiegend Tradition und Erfahrung
+   ------------------------------------------------------------------------ */
+const MEDIC_STAND = "September 2026";
+const MEDIC = [
+  { id:"lavendel", name:"Lavendelöl (Spezialextrakt)", latein:"Lavandula angustifolia",
+    datenlage:3, warnstufe:0,
+    wirkung:"Das am besten untersuchte pflanzliche Mittel speziell gegen Angst. Mehrere kontrollierte Studien zeigen eine Wirkung bei Unruhe und ängstlicher Verstimmung; in Deutschland ist ein Spezialextrakt als Arzneimittel zugelassen. Es macht nicht abhängig und nicht müde – anders als Beruhigungsmittel.",
+    sicherheit:"Meist gut verträglich. Häufigste Nebenwirkung: Aufstoßen mit Lavendelgeschmack. Wirkung setzt über Wochen ein, nicht als Akuthilfe." },
+  { id:"kamille", name:"Kamille (Hochdosis-Extrakt)", latein:"Matricaria chamomilla",
+    datenlage:2, warnstufe:0,
+    wirkung:"In Studien zu generalisierter Angst zeigte ein hochdosierter Extrakt eine moderate Wirkung auf Anspannung und Sorgen. Der Tee aus dem Supermarkt ist damit nicht gemeint – die Mengen sind nicht vergleichbar.",
+    sicherheit:"Vorsicht bei Allergie gegen Korbblütler (Beifuß, Ambrosia). Wechselwirkung mit Blutverdünnern möglich." },
+  { id:"passionsblume", name:"Passionsblume", latein:"Passiflora incarnata",
+    datenlage:2, warnstufe:0,
+    wirkung:"Kleinere Studien deuten auf eine leicht beruhigende Wirkung bei Unruhe und Anspannung. Steckt häufig in Kombipräparaten zusammen mit Baldrian und Melisse.",
+    sicherheit:"Kann müde machen. Nicht zum ersten Mal ausprobieren, bevor du Auto fährst." },
+  { id:"ashwagandha", name:"Ashwagandha", latein:"Withania somnifera",
+    datenlage:2, warnstufe:1,
+    wirkung:"Mehrere kleine Studien zu Stress und Angst mit positiven Ergebnissen. Die Qualität der Untersuchungen und der Präparate schwankt allerdings stark, und als Nahrungsergänzungsmittel ist der Inhalt schlechter kontrolliert als bei einem Arzneimittel.",
+    sicherheit:"Einzelfälle von Leberschäden beschrieben. Nicht in Schwangerschaft und Stillzeit. Kann Schilddrüsenwerte und die Wirkung von Schilddrüsenmedikamenten beeinflussen." },
+  { id:"baldrian", name:"Baldrian", latein:"Valeriana officinalis",
+    datenlage:1, warnstufe:0,
+    wirkung:"Traditionell bei Unruhe und Einschlafproblemen. Für Angststörungen selbst ist die Datenlage dünn – der Nutzen liegt eher beim Schlaf. Das ist trotzdem relevant: Schlechter Schlaf senkt die Schwelle für Panik messbar.",
+    sicherheit:"Gut verträglich. Wirkt nicht sofort, sondern erst nach ein bis zwei Wochen regelmäßiger Einnahme." },
+  { id:"melisse", name:"Melisse und Hopfen", latein:"Melissa officinalis · Humulus lupulus",
+    datenlage:1, warnstufe:0,
+    wirkung:"Milde Beruhigungsmittel aus der Tradition, fast immer in Kombipräparaten. Für Angststörungen gibt es kaum belastbare Studien; als abendliches Ritual können sie beim Herunterkommen helfen.",
+    sicherheit:"Sehr gut verträglich. Kann müde machen." },
+  { id:"johanniskraut", name:"Johanniskraut", latein:"Hypericum perforatum",
+    datenlage:1, warnstufe:2,
+    wirkung:"Bei leichter bis mittelgradiger Depression gut belegt – für Angststörungen dagegen kaum. Wer es wegen einer begleitenden depressiven Verstimmung nimmt, sollte die Wechselwirkungen kennen.",
+    sicherheit:"Die wichtigste Warnung dieser ganzen Liste: Johanniskraut schwächt die Wirkung vieler Medikamente ab – Pille, Blutverdünner, Immunsuppressiva, HIV-Medikamente und andere. Zusammen mit Antidepressiva besteht die Gefahr eines Serotoninsyndroms. Außerdem wird die Haut lichtempfindlicher. Nie ohne Rücksprache einnehmen, wenn du irgendein anderes Medikament nimmst." },
+  { id:"cbd", name:"CBD", latein:"Cannabidiol",
+    datenlage:1, warnstufe:1,
+    wirkung:"Viel diskutiert, für Angststörungen bisher dünn belegt. Die verfügbaren Produkte unterscheiden sich stark in Gehalt und Qualität, was Studienergebnisse schwer übertragbar macht.",
+    sicherheit:"Kann Wechselwirkungen mit anderen Medikamenten haben, unter anderem mit Blutverdünnern und Antiepileptika. Rechtlicher Status und Reinheit sind je nach Produkt unterschiedlich." }
+];
+const MEDIC_SONDERFALL = {
+  name:"Kava-Kava", latein:"Piper methysticum",
+  text:"Kava hat unter allen Pflanzen die besten Wirksamkeitsdaten gegen Angst – und steht trotzdem nicht in der Liste oben. Grund sind schwere Leberschäden, die zu Zulassungsstopps und Einschränkungen geführt haben. Deshalb ist es zur Selbstmedikation nicht geeignet, auch nicht als Bestellung aus dem Ausland. Wirksam und sicher sind zwei verschiedene Fragen." };
 
 /* --- A.9  Achievements --------------------------------------------------
    pruef(state, ctx) liefert true, sobald das Abzeichen verdient ist.        */
@@ -2996,6 +3060,8 @@ function render(){
     case "medaillen":   html = screenMedaillen(); break;
     case "kurs":        html = screenKurs(); break;
     case "kurs-modul":  html = screenKursModul(ROUTE.param); break;
+    case "handbuch":    html = screenHandbuch(); break;
+    case "medic":       html = screenMedic(); break;
     case "regeln":      html = screenRegeln("gold"); break;
     case "regeln-rueckschlag": html = screenRegeln("rueckschlag"); break;
     case "einstellungen": html = screenEinstellungen(); break;
@@ -4710,6 +4776,230 @@ function screenRegeln(art){
   </div>`;
 }
 
+/* --- E.17  Handbuch ------------------------------------------------------
+   Erklärt in einfachen Worten, wofür die App da ist, wie die Spielschleife
+   funktioniert und wie sich die täglichen Übungen konkret auf die Figur
+   auswirken.
+   ------------------------------------------------------------------------ */
+function abschnitt(titel, inhalt, offen){
+  return `<details class="lernkarte" ${offen?"open":""}>
+    <summary>${esc(titel)}</summary>
+    <div class="small" style="margin-top:8px">${inhalt}</div>
+  </details>`;
+}
+function screenHandbuch(){
+  const stufen = LEVELS.map(l => `<tr>
+      <td>${l.stufe}</td>
+      <td><strong>${esc(l.stufe === 1 ? meineArt().stufe1Name : l.name)}</strong></td>
+      <td>ab ${l.ab}</td>
+    </tr>`).join("");
+
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Handbuch</h1>
+
+    <div class="card stack" data-titel="Worum es geht">
+      <h2 style="margin:0">Das Ziel dieser App</h2>
+      <p><strong>Dich widerstandsfähiger gegen Angst und Panikattacken zu machen.</strong>
+         Nicht, dich von Angst zu befreien – Angst gehört zur Grundausstattung jedes Menschen.
+         Sondern dafür zu sorgen, dass sie dich seltener überrollt, kürzer dauert und dich weniger
+         davon abhält, das zu tun, was du eigentlich willst.</p>
+      <p>Das erreichst du nicht durch Lesen, sondern durch Wiederholung. Die App ist deshalb kein
+         Ratgeber, sondern ein Übungsplatz: jeden Tag ein paar kleine Schritte, über Wochen.
+         Fünf Minuten an sechs Tagen bringen mehr als eine Stunde am Sonntag.</p>
+      <div class="warnbox">Kokoro Quest ist ein Übungs- und Selbsthilfe-Werkzeug – keine Behandlung
+        und keine Diagnose. Sie ersetzt weder Psychotherapie noch ärztliche Abklärung.</div>
+    </div>
+
+    <div class="card stack" data-titel="So läuft ein Tag">
+      ${abschnitt("Das Tagespensum", `
+        <p>Jeden Morgen schlägt die App drei Übungen vor: eine kurze, eine mittlere und eine
+        Mut-Quest. Zusammen sind das etwa 15 bis 30 Minuten. Jede einzelne kannst du gegen eine
+        andere aus derselben Kategorie tauschen.</p>
+        <p>An drei Tagen pro Woche ist eine <strong>Elite-Aktivität</strong> dabei – etwas, das du
+        gemeinsam mit ${esc(elitePartner())} machst. Sie ersetzt dann einen der beiden Alltagsslots,
+        damit das Pensum nicht wächst.</p>`, true)}
+      ${abschnitt("Der sanfte Tag", `
+        <p>Wenn wenig geht, legst du den Schalter „Heute lieber sanft“ um. Dann bekommst du drei
+        Mini-Schritte von zwei bis fünf Minuten. Die zählen genauso, und deine Serie bleibt
+        erhalten. Dieser Schalter ist wichtig: Er verhindert Alles-oder-nichts-Denken, das die
+        häufigste Ursache für Abbrüche ist.</p>`)}
+      ${abschnitt("Freiwillig üben", `
+        <p>Unter <strong>Übungen</strong> findest du den gesamten Katalog nach Kategorien sortiert.
+        Alles, was du dort freiwillig startest, zählt genauso wie die Tagesvorschläge.</p>`)}
+    </div>
+
+    <div class="card stack" data-titel="Wirkung auf die Figur">
+      <h2 style="margin:0">Wie Übungen auf deine Figur wirken</h2>
+      <p class="small">Jede abgeschlossene Übung vergibt Punkte auf ein oder zwei der vier
+        Attribute. Diese Punkte zählen zweimal: einmal auf das jeweilige Attribut – das formt dein
+        Radar-Diagramm – und einmal auf die Gesamtpunkte. <strong>Die Gesamtpunkte bestimmen die
+        Stufe deiner Figur.</strong></p>
+      <div class="bubble"><strong>Beispiel:</strong> Der Gedanken-Detektiv gibt 35 Punkte auf Geist.
+        Bei neun Tagen Serie werden daraus 35 × 1,32 = 46 Punkte. Die gehen auf Geist – und
+        gleichzeitig auf dein Gesamtkonto, das über die Stufe entscheidet.</p></div>
+      <div style="overflow-x:auto">
+        <table class="tabelle">
+          <thead><tr><th>Stufe</th><th>Figur</th><th>Gesamtpunkte</th></tr></thead>
+          <tbody>${stufen}</tbody>
+        </table>
+      </div>
+      <p class="small muted">Deine Figur wird mit jeder Stufe größer, aufrechter und bekommt mehr
+        Ausrüstung – vom zittrigen Wesen bis zum Superhelden. Sie wird dabei nie abgewertet: Sie ist
+        von Anfang an liebenswert, nur noch nicht gewachsen. Die Art der Figur änderst du jederzeit
+        in den Einstellungen, ohne Fortschritt zu verlieren.</p>
+      ${abschnitt("Die vier Attribute", `
+        <ul style="padding-left:18px;margin:0">
+        ${ATTR_KEYS.map(k => `<li style="margin-bottom:6px"><strong>${esc(ATTRIBUTE[k].name)}
+          (${esc(ATTRIBUTE[k].untertitel)}, ${esc(ATTRIBUTE[k].symbol)}):</strong>
+          ${esc(ATTRIBUTE[k].wirkprinzip)}</li>`).join("")}
+        </ul>
+        <p style="margin-top:8px">Die Attribute sind keine Wertung, sondern eine Landkarte: Sie
+        zeigen, woran du viel und woran du wenig gearbeitet hast. Wer nur eine Ecke füllt, merkt es
+        am Radar.</p>`)}
+      ${abschnitt("Serie, Multiplikator und Ruhetag-Schilde", `
+        <p>Für jeden Tag, an dem du mindestens eine Übung machst, wächst deine Serie. Sie erhöht die
+        Punkte um bis zu 50 % – gedeckelt bei 14 Tagen. Das ist Absicht: So fühlt sich ein
+        Serienabbruch nie wie ein Totalverlust an.</p>
+        <p>Du startest mit zwei <strong>Ruhetag-Schilden</strong>, jede volle Woche kommt eines dazu
+        (höchstens drei). Ein Schild fängt einen ausgelassenen Tag automatisch ab. Reichen die
+        Schilde nicht, beginnt die Serie neu – ohne Punktverlust und ohne Tadel. Nach einer längeren
+        Pause begrüßt dich ein eigener Bildschirm, und es gibt ein Abzeichen nur fürs Wiederkommen.</p>`)}
+      ${abschnitt("Abzeichen und Medaillen", `
+        <p><strong>Abzeichen</strong> halten einmalige Momente fest: die erste Übung, das erste
+        Gedankenprotokoll, die erste Sprosse.</p>
+        <p><strong>Medaillen</strong> messen Ausdauer – dieselbe Art von Übung, viele Male gemacht.
+        Jede hat drei Stufen: Bronze, Silber, Gold. <strong>Goldmedaillen erscheinen neben deinem
+        Avatar</strong>, alles andere bleibt im Medaillen-Bereich.</p>`)}
+    </div>
+
+    <div class="card stack" data-titel="Die Bereiche">
+      ${abschnitt("Behandlungspfad", `
+        <p>Sechs Module in der Reihenfolge, in der eine kognitive Verhaltenstherapie bei
+        Panikstörung und Agoraphobie vorgeht: verstehen, eigenes Modell, Gedanken prüfen,
+        Sicherheitsverhalten abbauen, Vermeidung abbauen, vorbeugen. Gesperrt ist nichts – die
+        Reihenfolge ist eine Empfehlung. Zu finden unter <strong>Übungen</strong>.</p>`, true)}
+      ${abschnitt("Mein Gipfel", `
+        <p>Ein einziges, selbst gesetztes Ziel: eine Situation, der du seit Langem ausweichst.
+        Du zerlegst sie in Etappen und gehst jede mehrfach. Vor jedem Durchgang notierst du deine
+        Vorhersage, danach vergleichst du sie mit dem, was tatsächlich passiert ist. Am Ende steht
+        der größte Punktegewinn der App – und eine Kurve, die zeigt, wie dein Angst-Höhepunkt über
+        die Durchgänge sinkt.</p>
+        <p><strong>Abbrechen ist eingeplant und gibt Punkte</strong>, nicht null. Es soll nie einen
+        Anreiz geben, über die eigene Grenze zu gehen.</p>`)}
+      ${abschnitt("Journal", `
+        <p>Alles, was du in Übungen aufschreibst, landet hier: Gedankenprotokolle, Panik-Protokolle,
+        Angst-Tagebuch, Experimente, Rückblicke. Durchsuchbar nach Stichwort und Datum. Ganz oben
+        stehen die beiden Regellisten zum schnellen Nachlesen.</p>`)}
+      ${abschnitt("Ruhe-Insel", `
+        <p>Der runde Knopf unten rechts, auf jedem Bildschirm erreichbar. Ein Tippen führt sofort zu
+        einer langsamen Atemanimation. Dort ist alles anders: gedämpfte Farben, keine Punkte, kein
+        Zähler, kein Zeitdruck.</p>
+        <p><strong>Der Notfallmodus vergibt bewusst keine Punkte.</strong> Es soll nie einen Anreiz
+        geben, Angst zu suchen. Nur das freiwillige Nachdenken danach zahlt auf Geist ein.</p>`)}
+      ${abschnitt("Verlauf", `
+        <p>Radar der vier Attribute, Kalender der aktiven Tage, die Kurve deiner Angstwerte aus dem
+        Tagebuch, Medaillen und die Abzeichen-Galerie.</p>`)}
+    </div>
+
+    <div class="card stack" data-titel="Daten">
+      <h2 style="margin:0">Deine Daten</h2>
+      <p class="small">Alles bleibt in diesem Browser auf diesem Gerät. Keine Konten, keine Server,
+        kein Tracking, keine Werbung, keine Netzwerkverbindung. Niemand außer dir sieht das.</p>
+      <p class="small"><strong>Deshalb wichtig:</strong> Wenn du den Browserverlauf löschst oder das
+        Gerät wechselst, ist der Fortschritt weg. Sichere ihn ab und zu über
+        <em>Einstellungen → Daten sichern</em> als Datei.</p>
+    </div>
+
+    <div class="card stack" data-titel="Grenzen">
+      <h2 style="margin:0">Was diese App bewusst nicht tut</h2>
+      <ul class="small" style="padding-left:18px">
+        <li><strong>Keine Diagnose.</strong> Selbsteinschätzungen von 0 bis 10 sind nur dein
+          persönlicher Verlauf, nie eine Bewertung und nie ein Befund.</li>
+        <li><strong>Keine Übungen, die Panik-Symptome absichtlich auslösen</strong> – kein
+          willentliches Hyperventilieren, kein Drehen bis zum Schwindel, keine Strohhalm-Atmung.
+          Diese Methode wirkt, gehört aber in therapeutische Begleitung.</li>
+        <li><strong>Keine Bestrafung.</strong> Kein Punktverlust, keine Schuld-Rhetorik. Ein
+          verpasster Tag ist kein Scheitern.</li>
+        <li><strong>Keine Medikamentenempfehlung.</strong> Der Bereich <em>Medic</em> informiert
+          über pflanzliche Mittel, empfiehlt aber nichts und nennt keine Dosierungen.</li>
+        <li><strong>Kein Ersatz für Therapie.</strong> Bei Panikstörung und Agoraphobie gilt
+          kognitive Verhaltenstherapie mit Konfrontation als Verfahren der ersten Wahl.</li>
+      </ul>
+      <button class="btn sm block" data-go="medic">Zum Bereich Medic</button>
+    </div>
+  </div>`;
+}
+
+/* --- E.18  Medic ---------------------------------------------------------
+   Information über pflanzliche Mittel. Bewusst ohne Dosierungen und ohne
+   Empfehlung – die Entscheidung gehört in die Apotheke oder Arztpraxis.
+   ------------------------------------------------------------------------ */
+function datenlageBalken(n){
+  const text = ["überwiegend Tradition", "einzelne kleinere Studien", "mehrere kontrollierte Studien"][n-1];
+  return `<span class="datenlage" role="img" aria-label="Datenlage ${n} von 3: ${text}">
+    ${[1,2,3].map(i => `<i class="${i<=n?'an':''}"></i>`).join("")}
+    <span class="small">${esc(text)}</span></span>`;
+}
+function screenMedic(){
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Medic</h1>
+
+    <div class="card stack" data-titel="Bevor du liest">
+      <div class="warnbox"><strong>Das ist Information, keine Empfehlung.</strong>
+        Diese App rät zu keinem Mittel, nennt keine Dosierungen und ersetzt kein Gespräch.
+        Ob etwas für dich passt – und ob es sich mit deinen anderen Medikamenten verträgt –,
+        klärst du mit einer Ärztin oder in der Apotheke.</div>
+      <p class="small"><strong>Pflanzlich heißt nicht harmlos.</strong> Pflanzliche Mittel haben
+        Nebenwirkungen und Wechselwirkungen, teilweise erhebliche. Und sie sind nicht reguliert wie
+        verschreibungspflichtige Arzneimittel: Bei Nahrungsergänzungsmitteln ist oft unklar, was
+        tatsächlich drin ist.</p>
+      <div class="bubble"><strong>Der wichtigste Punkt für diese App:</strong> Ein Mittel, das du
+        nimmst, <em>damit du eine Situation aushältst</em>, wird zum Sicherheitsverhalten – und
+        Sicherheitsverhalten hält Angst langfristig aufrecht. Etwas zur Grundberuhigung über Wochen
+        ist etwas anderes als die Tablette in der Tasche für den Notfall.</div>
+    </div>
+
+    <div class="card stack" data-titel="Rangfolge">
+      <p class="small" style="margin:0">Geordnet nach dem Nutzen bei Angst – unter Berücksichtigung
+        der Sicherheit. Stand der Zusammenstellung: ${esc(MEDIC_STAND)}.</p>
+    </div>
+
+    ${MEDIC.map((m,i) => `
+      <div class="card stack medic-karte w${m.warnstufe}" data-titel="Platz ${i+1}">
+        <h2 style="margin:0">${esc(m.name)}</h2>
+        <p class="small muted" style="margin:0"><em>${esc(m.latein)}</em></p>
+        ${datenlageBalken(m.datenlage)}
+        <p style="margin:0">${esc(m.wirkung)}</p>
+        <div class="${m.warnstufe >= 2 ? "warnbox" : "why"}">
+          <strong>${m.warnstufe >= 2 ? "Achtung" : "Sicherheit"}:</strong> ${esc(m.sicherheit)}
+        </div>
+      </div>`).join("")}
+
+    <div class="card stack" data-titel="Sonderfall">
+      <h2 style="margin:0">${esc(MEDIC_SONDERFALL.name)}</h2>
+      <p class="small muted" style="margin:0"><em>${esc(MEDIC_SONDERFALL.latein)}</em></p>
+      <div class="warnbox">${esc(MEDIC_SONDERFALL.text)}</div>
+    </div>
+
+    <div class="card stack" data-titel="Zum Vergleich">
+      <h2 style="margin:0">Was besser belegt ist als alles auf dieser Liste</h2>
+      <p class="small">Damit die Rangfolge nicht den falschen Eindruck macht: Die wirksamsten
+        Werkzeuge bei Panikstörung und Agoraphobie stehen nicht in dieser Liste, sondern im Rest
+        dieser App.</p>
+      <ul class="small" style="padding-left:18px;margin:0">
+        <li><strong>Kognitive Verhaltenstherapie mit Konfrontation</strong> – in den Leitlinien
+          Verfahren der ersten Wahl.</li>
+        <li><strong>Regelmäßige Bewegung</strong> – senkt Angstsymptome messbar.</li>
+        <li><strong>Stabiler Schlaf</strong> – zu wenig Schlaf senkt die Schwelle für Panik.</li>
+        <li><strong>Weniger Koffein und Alkohol</strong> – beide verstärken Angstsymptome direkt.</li>
+      </ul>
+      <p class="small muted">Pflanzliche Mittel können bestenfalls begleiten. Sie ersetzen das
+        Üben nicht – und wenn sie es ersetzen, arbeiten sie sogar dagegen.</p>
+      <button class="btn sm block" data-go="kurs">Zum Behandlungspfad</button>
+    </div>
+  </div>`;
+}
+
 /* --- E.13  Einstellungen ------------------------------------------------ */
 function screenEinstellungen(){
   return `<div class="stack" style="padding-top:14px">
@@ -4791,6 +5081,13 @@ function screenEinstellungen(){
       <p class="small">Löscht Fortschritt, Journal, Karten und Kontakte auf diesem Gerät. Das lässt sich
         nicht rückgängig machen.</p>
       <button class="btn sm" id="btn-reset">Zurücksetzen …</button>
+    </div>
+
+    <div class="card stack" data-titel="Hilfe & Infos">
+      <h2>Nachlesen</h2>
+      <button class="btn sm block" data-go="handbuch">Handbuch – wie die App funktioniert</button>
+      <button class="btn sm block" data-go="medic">Medic – pflanzliche Mittel im Überblick</button>
+      <button class="btn sm block" data-go="regeln">Die zehn goldenen Regeln</button>
     </div>
 
     <div class="card stack" data-titel="Rechtliches">
@@ -5696,6 +5993,7 @@ function inselBinden(){
 /* --- G.8  Globale Schalter ---------------------------------------------- */
 $("#btn-panic").addEventListener("click", inselOeffnen);
 $("#btn-settings").addEventListener("click", () => gehe("einstellungen"));
+$("#btn-handbuch").addEventListener("click", () => gehe("handbuch"));
 $("#btn-crisis").addEventListener("click", () => gehe("krisen"));
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && $(".island")) inselSchliessen();

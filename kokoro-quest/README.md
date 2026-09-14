@@ -29,6 +29,29 @@ Diese Punkte stehen über jedem Spielmechanismus:
   Angst zu provozieren. Nur das freiwillige Reflektieren danach zahlt auf Geist ein.
   Sie ist außerdem bewusst vom Y2K-Look ausgenommen: im Panikmodus gilt gedämpft und reizarm.
 
+## Handbuch und Medic
+
+**Handbuch** (Fragezeichen in der Kopfzeile, oder Einstellungen → Nachlesen) erklärt in einfacher
+Sprache, wofür die App da ist — *dich widerstandsfähiger gegen Angst und Panikattacken machen, nicht
+angstfrei* —, wie der Tagesablauf funktioniert und vor allem, **wie sich Übungen konkret auf die
+Figur auswirken**: Punkte gehen auf ein oder zwei Attribute (die das Radar formen) *und* auf die
+Gesamtpunkte (die über die Stufe entscheiden), mit Rechenbeispiel und der Tabelle aller sieben
+Schwellen. Dazu Serie und Schilde, Abzeichen gegen Medaillen, alle Bereiche, Datenhaltung und ein
+Abschnitt „Was diese App bewusst nicht tut".
+
+**Medic** listet pflanzliche Mittel, geordnet nach Nutzen bei Angst *unter Berücksichtigung der
+Sicherheit*, mit Datenlage-Balken (drei Stufen) je Mittel: Lavendelöl-Spezialextrakt (am besten
+untersucht), Kamille, Passionsblume, Ashwagandha, Baldrian, Melisse/Hopfen, Johanniskraut, CBD.
+Kava steht bewusst nicht in der Rangfolge, sondern als Sonderfall am Ende — gute Wirksamkeitsdaten,
+aber Leberschäden.
+
+Drei Leitplanken: keine Dosierungen und keine Empfehlung; die Johanniskraut-Wechselwirkungen (Pille,
+Blutverdünner, Immunsuppressiva, HIV-Medikamente, Serotoninsyndrom) sind rot hervorgehoben; und der
+für diese App entscheidende Punkt steht ganz oben — ein Mittel, das man nimmt, *damit man eine
+Situation aushält*, wird zum Sicherheitsverhalten und arbeitet gegen die Exposition. Am Ende steht,
+was besser belegt ist als alles auf der Liste: KVT mit Konfrontation, Bewegung, Schlaf, weniger
+Koffein und Alkohol.
+
 ## Behandlungspfad
 
 Sechs Module in der Reihenfolge, in der eine kognitive Verhaltenstherapie bei Panikstörung und
