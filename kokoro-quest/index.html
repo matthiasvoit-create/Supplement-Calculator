@@ -518,6 +518,45 @@ body.no-motion .confetti{display:none}
 .artwahl.klein .bild{max-width:86px}
 .artwahl.klein .artkarte{padding:8px 4px}
 
+/* Behandlungspfad: Modulkarten */
+.modulkarte{
+  display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;
+  background:var(--surface);border:var(--outline) solid var(--ink-dunkel);
+  border-radius:var(--radius);padding:14px;box-shadow:var(--hart);
+  font:inherit;color:var(--text);cursor:pointer;
+}
+.modulkarte .nr{
+  width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;
+  border:3px solid var(--ink-dunkel);background:var(--surface-2);
+  font-weight:800;font-size:1.05rem;
+}
+.modulkarte.fertig .nr{background:var(--mint)}
+.modulkarte.fertig{background:var(--surface-2)}
+.modulkarte.dran{box-shadow:var(--hart), 0 0 0 3px var(--butter)}
+.modulkarte strong{display:block}
+
+/* Aufklappbare Wissenskarten im Modul */
+.lernkarte{border:2px solid var(--line);border-radius:8px;padding:8px 12px;background:var(--surface-2)}
+.lernkarte+.lernkarte{margin-top:8px}
+.lernkarte summary{font-weight:800;cursor:pointer;font-size:.95rem}
+.lernkarte[open]{border-color:var(--ink-dunkel)}
+
+/* Regellisten */
+.regeln{counter-reset:r;list-style:none;padding:0;margin:0}
+.regeln li{
+  counter-increment:r;position:relative;padding:10px 0 10px 40px;
+  border-bottom:2px dashed var(--line);font-size:.98rem;
+}
+.regeln li:last-child{border-bottom:0}
+.regeln li::before{
+  content:counter(r);position:absolute;left:0;top:9px;
+  width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+  background:var(--butter);color:var(--ink-dunkel);border:2px solid var(--ink-dunkel);
+  font-weight:800;font-size:.85rem;
+}
+.island .regeln li::before{background:#4E6E8C;color:#F2F8FF;border-color:#7C9AB6}
+.island .regeln li{border-bottom-color:#3E5476}
+
 /* Elite-Quests: Regenbogen-Chrom, damit sie sofort auffallen */
 .quest.elite{
   background:
@@ -1002,6 +1041,124 @@ const QUESTS = [
     "Wähle einen einzigen Punkt aus, den du demnächst weglassen möchtest."],
   warumEsWirkt:"Sicherheitsverhalten wirkt kurzfristig entlastend und ist langfristig der Grund, warum die Angst bleibt: Geht es gut, schreibst du den Erfolg dem Trick zu und nicht der Harmlosigkeit der Situation. Erst das Weglassen erlaubt die neue Erfahrung." },
 
+/* ===== GEIST · Kernwerkzeuge der Verhaltenstherapie bei Panik ==========
+   Das ist das Handwerkszeug aus dem Standard-Behandlungsprotokoll für
+   Panikstörung und Agoraphobie (Margraf/Schneider; kognitives Modell nach
+   Clark). Reihenfolge und Zusammenhang stehen im Behandlungspfad (§A.11).
+   ------------------------------------------------------------------- */
+{ id:"panikprotokoll", titel:"Panik-Protokoll", kategorie:"kognitiv", attribute:{geist:28}, dauerMin:10,
+  intensitaet:"sanft", tool:"panikprotokoll",
+  anleitung:[
+    "Füll das aus, wenn eine Attacke oder eine starke Angstwelle vorbei ist – nicht mittendrin.",
+    "Wo warst du, was hast du gerade getan, was war kurz davor?",
+    "Welches Körpersignal kam zuerst? Herz, Atem, Schwindel, Kribbeln, Enge?",
+    "Welcher Gedanke kam dazu – und was hast du daraufhin getan?",
+    "Wie lange hat es gedauert, und wodurch ist es abgeklungen?"],
+  warumEsWirkt:"Eine Panikattacke fühlt sich an, als käme sie aus dem Nichts. Im Protokoll zeigt sich fast immer eine Reihenfolge: eine harmlose Körperempfindung, eine Deutung als Gefahr, dann die Eskalation. Nach fünf bis zehn Protokollen erkennst du dein eigenes Muster – und ein erkanntes Muster ist angreifbar." },
+
+{ id:"abc-schema", titel:"A-B-C: Was zwischen Auslöser und Gefühl steht", kategorie:"kognitiv", attribute:{geist:26}, dauerMin:10,
+  intensitaet:"normal", tool:"abc",
+  anleitung:[
+    "A – Auslöser: Was ist passiert? Nur Fakten, keine Bewertung.",
+    "B – Bewertung: Was hast du dir in dem Moment gesagt?",
+    "C – Konsequenz: Welches Gefühl kam, wie stark, und was hast du getan?",
+    "Lies es noch einmal von unten nach oben: Das Gefühl folgt aus B, nicht aus A.",
+    "Formuliere ein alternatives B – und überleg, welches C daraus folgen würde."],
+  warumEsWirkt:"Das ABC-Schema ist die Grundformel der kognitiven Therapie: Nicht die Situation macht die Angst, sondern die Bewertung dazwischen. Das klingt banal, bis man es zum ersten Mal an einem eigenen Beispiel sieht. Genau an dieser Stelle – dem B – setzt die gesamte weitere Arbeit an." },
+
+{ id:"reattribution", titel:"Kuchendiagramm: andere Erklärungen", kategorie:"kognitiv", attribute:{geist:30}, dauerMin:12,
+  intensitaet:"normal", tool:"reattribution",
+  anleitung:[
+    "Nimm ein Körpersymptom, das dich beunruhigt – Herzstolpern, Schwindel, Enge in der Brust.",
+    "Schreib deine Katastrophenerklärung auf und schätze, wie viel Prozent du ihr gibst.",
+    "Sammle jetzt mindestens drei harmlose Erklärungen: Koffein, wenig Schlaf, Anspannung, Aufstehen, Hitze, Sport, Hunger.",
+    "Verteile die Prozente neu – ehrlich, nicht beschönigend.",
+    "Schau dir das Diagramm an und lass es einen Moment wirken."],
+  warumEsWirkt:"Bei Panik schnappt die Erklärung sofort auf die bedrohlichste Möglichkeit. Die Umverteilung – in der Therapie Reattribution genannt – zwingt dazu, die Konkurrenz aufzulisten, die es immer gibt. Wer erst zehn harmlose Gründe für Herzrasen aufgeschrieben hat, greift beim nächsten Mal seltener zum schlimmsten." },
+
+{ id:"verhaltensexperiment", titel:"Verhaltensexperiment", kategorie:"mut", attribute:{mut:35, geist:15}, dauerMin:25,
+  intensitaet:"normal", tool:"experiment",
+  anleitung:[
+    "Formuliere deine Befürchtung als überprüfbare Vorhersage: „Wenn ich X tue, dann passiert Y.“",
+    "Leg fest, woran du erkennen würdest, dass Y eingetreten ist – vorher, nicht hinterher.",
+    "Schätze, wie wahrscheinlich Y ist (0–100 %).",
+    "Führ das Experiment durch, ohne Sicherheitsverhalten.",
+    "Vergleiche: Was hast du vorhergesagt, was ist tatsächlich passiert?",
+    "Zieh eine Schlussfolgerung in einem Satz."],
+  warumEsWirkt:"Das Verhaltensexperiment ist das wirksamste einzelne Werkzeug der Verhaltenstherapie. Argumente ändern Überzeugungen kaum – Erfahrungen schon. Entscheidend ist, dass die Vorhersage vorher schriftlich feststeht: Sonst erinnert das Gedächtnis sie hinterher passend zum Ausgang.",
+  sicherheitshinweis:"Nur Experimente, die an sich ungefährlich sind. Es geht darum, eine Vorhersage zu prüfen – nicht darum, sich etwas zu beweisen." },
+
+{ id:"aufmerksamkeitstraining", titel:"Aufmerksamkeit nach außen", kategorie:"kognitiv", attribute:{geist:22}, dauerMin:8,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Setz dich irgendwohin, wo etwas los ist – Fenster, Café, Park.",
+    "Nimm dir zwei Minuten nur für Geräusche: zähle, wie viele verschiedene du unterscheiden kannst.",
+    "Zwei Minuten nur für Details, die du siehst – Farben, Bewegungen, Formen.",
+    "Zwei Minuten für beides gleichzeitig.",
+    "Wenn die Aufmerksamkeit zum Körper zurückspringt: bemerken und wieder nach außen lenken."],
+  warumEsWirkt:"Bei Angststörungen wandert die Aufmerksamkeit dauerhaft nach innen, auf den eigenen Körper. Dadurch bemerkt man mehr Empfindungen – nicht weil mehr passiert, sondern weil man hinschaut. Aufmerksamkeitstraining ist das gezielte Gegenteil und lässt sich üben wie ein Muskel." },
+
+{ id:"erwartungsangst", titel:"Die Angst vor der Angst prüfen", kategorie:"kognitiv", attribute:{geist:24}, dauerMin:10,
+  intensitaet:"normal", tool:"experiment",
+  anleitung:[
+    "Nimm dir etwas vor, vor dem dir schon jetzt graut.",
+    "Schreib auf, wie schlimm es wird – als Zahl von 0 bis 10.",
+    "Schreib dazu, was genau du erwartest: Attacke? Blamage? Weglaufen müssen?",
+    "Mach es.",
+    "Trag danach ein, wie schlimm es tatsächlich war, und vergleiche die Zahlen."],
+  warumEsWirkt:"Erwartungsangst hält Panikstörungen oft stärker aufrecht als die Attacken selbst. Die Vorhersage fällt fast immer schlimmer aus als die Wirklichkeit – aber das merkt man nur, wenn beides nebeneinander steht. Nach einigen Durchgängen wird die Vorhersage von selbst realistischer." },
+
+{ id:"notfallkarte", titel:"Notfallkarte schreiben", kategorie:"kognitiv", attribute:{geist:25, mut:10}, dauerMin:12,
+  intensitaet:"sanft", tool:"notfallkarte",
+  anleitung:[
+    "Schreib in einem Satz auf, was gerade passiert, wenn die Angst hochkommt – in deinen Worten.",
+    "Schreib drei Dinge auf, die dir zuverlässig helfen. Konkret, nicht allgemein.",
+    "Schreib auf, wen du anrufen kannst.",
+    "Formuliere einen Satz, der dich erreicht, wenn wenig anderes durchkommt.",
+    "Speichern – die Karte erscheint ab dann sofort in der Ruhe-Insel."],
+  warumEsWirkt:"Im Angsthoch funktioniert komplexes Denken kaum noch; abrufbar ist nur, was vorbereitet ist. Genau dafür gibt es in der Therapie die Notfallkarte. Sie wird im ruhigen Zustand geschrieben – von der Person, die dich am besten kennt." },
+
+{ id:"fruehwarnzeichen", titel:"Frühwarnzeichen und Rückfallplan", kategorie:"kognitiv", attribute:{geist:26}, dauerMin:15,
+  intensitaet:"normal", tool:"fruehwarn",
+  anleitung:[
+    "Denk an die Wochen zurück, bevor es das letzte Mal schlechter wurde.",
+    "Woran hättest du es früher merken können? Schlaf, Rückzug, mehr Kontrollieren, Termine absagen?",
+    "Schreib drei Frühwarnzeichen auf.",
+    "Leg zu jedem fest, was du dann konkret tust – klein und sofort machbar.",
+    "Halte fest, ab wann du dir Unterstützung holst."],
+  warumEsWirkt:"Rückfallprophylaxe ist fester Bestandteil jeder Verhaltenstherapie und wird trotzdem am häufigsten weggelassen. Der Punkt ist nicht, Rückschläge zu verhindern – die gehören dazu –, sondern sie früh zu erkennen, solange gegensteuern noch leicht ist." },
+
+{ id:"vermeidungs-check", titel:"Wochen-Check: Was habe ich gemieden?", kategorie:"mut", attribute:{mut:25, geist:10}, dauerMin:10,
+  intensitaet:"sanft", tool:"timer",
+  anleitung:[
+    "Geh die letzte Woche im Kopf durch, Tag für Tag.",
+    "Wo hast du etwas nicht gemacht, abgesagt oder anders gelöst, weil Angst im Spiel war?",
+    "Zähl auch die kleinen Sachen: Treppe statt Aufzug, Nachricht statt Anruf, später statt jetzt.",
+    "Such dir eine einzige Sache davon aus, die du in der kommenden Woche anders machst.",
+    "Trag sie in deine Landkarte der Vermeidung ein."],
+  warumEsWirkt:"Vermeidung wächst leise. Sie besteht selten aus großen Entscheidungen, sondern aus vielen kleinen Umwegen, die man nach ein paar Wochen nicht mehr bemerkt. Ein fester Wochen-Check macht sie wieder sichtbar, bevor der Radius unbemerkt kleiner wird." },
+
+{ id:"goldene-regeln", titel:"Die zehn goldenen Regeln lesen", kategorie:"kognitiv", attribute:{geist:20}, dauerMin:8,
+  intensitaet:"sanft", tool:"regeln-gold",
+  anleitung:[
+    "Lies die zehn Regeln einmal ganz durch – laut, wenn du kannst.",
+    "Sie stehen in der Ich-Form: Es ist dein Selbstgespräch, nicht ein Ratschlag von außen.",
+    "Such dir die eine heraus, die heute am meisten für dich gilt.",
+    "Sprich sie dreimal aus und merk sie dir für den Tag.",
+    "An ruhigen Tagen lesen heißt: im Ernstfall abrufbar haben."],
+  warumEsWirkt:"Diese Regeln fassen zusammen, worauf es bei Angst ankommt: nicht bekämpfen, nicht weglaufen, in der Gegenwart bleiben, abwarten. Im Angsthoch ist kaum noch komplexes Denken möglich – vorformulierte Sätze in der eigenen Stimme sind dann das, was noch funktioniert. Deshalb liest man sie, wenn es einem gut geht." },
+
+{ id:"rueckschlag-regeln", titel:"Wenn es wieder schlechter wird", kategorie:"mut", attribute:{mut:22, geist:18}, dauerMin:12,
+  intensitaet:"sanft", tool:"regeln-rueckschlag",
+  anleitung:[
+    "Lies die zehn Punkte zum Umgang mit Rückschlägen durch.",
+    "Markiere ehrlich, wo du gerade stehst: Vermeidest du wieder etwas?",
+    "Nimm Punkt 10 ernst – welchen kleineren Schritt kannst du als Nächstes machen?",
+    "Trag diesen Schritt in deine Landkarte der Vermeidung ein.",
+    "Mach ihn innerhalb der nächsten drei Tage."],
+  warumEsWirkt:"Ein Rückschlag ist kein Rückfall in den Anfang – er ist der Moment, in dem sich entscheidet, ob Vermeidung wieder wächst. Wer vorher weiß, was dann zu tun ist, verliert Tage statt Wochen. Der wichtigste Satz darin: Wenn du abgebrochen hast, such die Situation so schnell wie möglich erneut auf.",
+  sicherheitshinweis:"„So schnell wie möglich wieder hin“ heißt nicht „sofort und in derselben Größe“. Kleiner wieder anfangen ist der Regelfall, nicht die Ausnahme." },
+
 /* ===== GEIST · Achtsamkeit & Akzeptanz (ACT / MBSR) ==================== */
 { id:"koerperreise", titel:"Körperreise", kategorie:"achtsamkeit", attribute:{geist:25, koerper:10}, dauerMin:10,
   intensitaet:"normal", tool:"bodyscan",
@@ -1463,6 +1620,32 @@ const WISSENSKARTEN = [
     text:"Beruhigungsfertigkeiten funktionieren wie Muskeln: Fünf Minuten an sechs Tagen bringen mehr als eine halbe Stunde am Sonntag. Entscheidend ist, dass du sie im ruhigen Zustand übst – nur dann sind sie im Alarmzustand überhaupt abrufbar. Eine Übung, die man erst in der Panik zum ersten Mal probiert, funktioniert selten." },
   { id:"wk-rueckfall", titel:"Rückschritte gehören dazu",
     text:"Fortschritt bei Angst verläuft in Zacken, nicht auf einer Geraden. Nach guten Wochen kommt oft ein schlechter Tag – das ist kein Beweis dafür, dass nichts hilft, sondern der normale Verlauf. Was du gelernt hast, ist nicht weg; es steht beim nächsten Schritt wieder zur Verfügung." },
+  /* --- Störungsbilder und Behandlung --------------------------------------
+     Beschreibend, nie beurteilend: Die App stellt keine Diagnose und sagt
+     niemandem, was er hat. Sie erklärt, was die Fachliteratur beschreibt –
+     die Einordnung macht eine Fachperson gemeinsam mit dir.               */
+  { id:"wk-panikstoerung", titel:"Was mit „Panikstörung“ gemeint ist",
+    text:"Fachlich beschrieben ist eine Panikstörung: wiederkehrende Panikattacken, die unerwartet kommen, plus die anhaltende Sorge vor der nächsten – oft mit deutlichen Verhaltensänderungen, um sie zu vermeiden. Entscheidend ist also nicht die einzelne Attacke, sondern der Kreislauf danach. Ob das auf dich zutrifft, klärt eine Fachperson mit dir, nicht diese App." },
+  { id:"wk-agoraphobie", titel:"Was mit „Agoraphobie“ gemeint ist",
+    text:"Nicht „Angst vor großen Plätzen“, sondern Angst vor Situationen, aus denen ein Entkommen schwierig oder peinlich wäre: Busse, Bahn, Schlangen, Kino, Menschenmengen, weite Wege von zu Hause. Oft entsteht sie nach Panikattacken, weil man beginnt, genau diese Orte zu meiden. Sie ist das am besten untersuchte Anwendungsgebiet für Exposition – und spricht darauf gut an." },
+  { id:"wk-gas", titel:"Sorgen-Angst und Panik sind nicht dasselbe",
+    text:"Panik ist ein kurzer, heftiger Alarm mit klaren Körpersymptomen. Generalisierte Angst ist ein Dauerzustand aus Sorgen, Anspannung und Grübeln, meist ohne Attacken. Beides kommt zusammen vor, braucht aber unterschiedliche Werkzeuge: bei Panik Reattribution und Exposition, bei Sorgen eher Sorgen-Termin, Unsicherheitstoleranz und Aufmerksamkeitslenkung." },
+  { id:"wk-haeufigkeit", titel:"Du bist damit nicht selten",
+    text:"Angststörungen gehören zu den häufigsten psychischen Erkrankungen überhaupt; ein erheblicher Teil der Bevölkerung ist im Lauf des Lebens betroffen, Frauen etwa doppelt so oft wie Männer. Eine einzelne Panikattacke erlebt sogar ein noch größerer Teil der Menschen mindestens einmal. Das macht es nicht leichter – aber es macht dich weder besonders schwach noch besonders selten." },
+  { id:"wk-drei-ebenen", titel:"Angst hat drei Ebenen",
+    text:"Gedanken („Da stimmt etwas nicht“), Körper (Herz, Atem, Muskeln) und Verhalten (fliehen, vermeiden, absichern). Die drei verstärken sich gegenseitig – deshalb arbeitet Verhaltenstherapie auch an allen dreien: Gedanken prüfen, Körper regulieren, Verhalten ändern. An welcher Ecke du anfängst, ist zweitrangig; dass du nicht nur an einer bleibst, ist entscheidend." },
+  { id:"wk-rueckversicherung", titel:"Warum Nachfragen und Googeln nicht helfen",
+    text:"Rückversicherung – nachfragen, googeln, Puls messen, Symptome vergleichen – beruhigt für Minuten und verstärkt die Angst langfristig. Die Botschaft, die hängen bleibt, lautet: Ohne Prüfen wäre es gefährlich gewesen. Der Drang zu prüfen ist eine Welle wie die Angst selbst: Er steigt, und er fällt auch wieder, wenn man ihm nicht nachgibt." },
+  { id:"wk-verhaltensexperiment", titel:"Was ein Verhaltensexperiment ist",
+    text:"Kein Mutbeweis, sondern ein Test: Du formulierst vorher eine überprüfbare Vorhersage, legst fest, woran du ihr Eintreten erkennen würdest, führst die Situation herbei und vergleichst. Überzeugungen ändern sich durch Erfahrung, kaum durch Argumente – und die Vorhersage muss vorher schriftlich feststehen, weil die Erinnerung sich sonst an den Ausgang anpasst." },
+  { id:"wk-therapie", titel:"Was in einer Verhaltenstherapie passiert",
+    text:"Meist: gemeinsame Klärung, wie die Angst bei dir entstanden ist und was sie aufrechterhält; ein individuelles Teufelskreismodell; Prüfen der Katastrophengedanken; Abbau von Sicherheitsverhalten; geplante Konfrontation mit gemiedenen Situationen, zuerst begleitet, dann allein; am Ende Rückfallprophylaxe. Vieles davon findest du hier wieder – die Begleitung dabei ersetzt eine App nicht." },
+  { id:"wk-wirksamkeit", titel:"Wie gut das behandelbar ist",
+    text:"Angststörungen gehören zu den psychischen Erkrankungen mit den besten Behandlungsaussichten. Kognitive Verhaltenstherapie mit Konfrontation gilt in den deutschsprachigen Leitlinien als Verfahren der ersten Wahl bei Panikstörung und Agoraphobie; ein großer Teil der Behandelten ist danach deutlich gebessert oder beschwerdefrei. Das ist der wichtigste Satz dieser ganzen Kartensammlung." },
+  { id:"wk-medikamente", titel:"Medikamente – was in ärztliche Hände gehört",
+    text:"Leitlinien nennen bestimmte Antidepressiva (vor allem SSRI und SNRI) als medikamentöse Option bei Angststörungen, oft in Kombination mit Psychotherapie. Beruhigungsmittel vom Benzodiazepin-Typ wirken schnell, machen aber innerhalb weniger Wochen abhängig und werden deshalb nur in Ausnahmen und kurz eingesetzt. Was für dich passt, entscheidet eine Ärztin mit dir – diese App gibt dazu keine Empfehlung und ersetzt kein Gespräch." },
+  { id:"wk-therapieplatz", titel:"Wie du in Deutschland an einen Therapieplatz kommst",
+    text:"Erster Schritt ist meist die psychotherapeutische Sprechstunde: Praxen direkt anrufen, oder über die Terminservicestelle unter 116 117 vermitteln lassen. Dort wird geklärt, ob und welche Behandlung sinnvoll ist. Wartezeiten sind oft lang – deshalb parallel mehrere Praxen anfragen, auf Wartelisten setzen lassen und nach dem Kostenerstattungsverfahren fragen, wenn nichts frei ist. Das Anrufen selbst ist für viele schon eine Mutprobe; es zählt als eine." },
   { id:"wk-hilfe-holen", titel:"Wann Fachbegleitung sinnvoll ist",
     text:"Selbsthilfe ist wirksam und hat Grenzen. Wenn Angst deinen Alltag stark einschränkt, seit Monaten anhält, du dich zurückziehst, Alkohol oder Beruhigungsmittel einsetzt, oder wenn dich Gedanken beschäftigen, dir das Leben zu nehmen: Dann ist Fachbegleitung der nächste richtige Schritt – kein Scheitern, sondern die passende Werkzeugkiste für diese Größenordnung." }
 ];
@@ -1480,6 +1663,39 @@ const COPING_VORLAGEN = [
   "Länger ausatmen als einatmen. Mehr ist gerade nicht zu tun.",
   "Gedanken sind Vorschläge, keine Tatsachen.",
   "Ich darf langsam machen. Das ist kein Rückschritt."
+];
+
+/* --- A.7b  Die zehn goldenen Regeln (Selbstgespräch) ----------------------
+   Klassische Regelliste aus der Angstbehandlung, wie sie in deutsch-
+   sprachigen Selbsthilfe- und Therapiemanualen verbreitet ist. Bewusst in
+   der Ich-Form: Sie sind als Selbstgespräch gedacht, nicht als Ratschlag
+   von außen – laut gelesen wirken sie im Ernstfall besser als gedacht.    */
+const REGELN_GOLD = [
+  "Meine Angstgefühle und die dabei auftretenden körperlichen Symptome sind nichts anderes als eine Übersteigerung normaler Körperreaktionen in einer Stresssituation.",
+  "Solche vorübergehenden Gefühle und Körperreaktionen sind zwar unangenehm, aber weder gefährlich noch in irgendeiner Weise schädlich.",
+  "Ich steigere mich in Angstsituationen nicht selber in noch größere Ängste hinein, durch Gedanken wie: „Was wird geschehen?“ oder „Was mache ich, wenn es noch schlimmer wird?“.",
+  "Ich konzentriere mich nur auf das, was um mich herum und mit meinem Körper gerade jetzt geschieht – nicht auf das, was in meiner Vorstellung noch alles geschehen könnte. Ich bleibe in der Realität!",
+  "Ich warte ab und gebe der Angst Zeit, vorüberzugehen. Ich laufe nicht davon und bleibe in der Situation! Ich versuche nicht, die Angst zu unterdrücken, ich lasse meine Angst zu. Ich akzeptiere meine Angst.",
+  "Ich beobachte, wie meine Angst von selbst wieder abnimmt, wenn ich beginne, auch die Realität um mich herum wahrzunehmen.",
+  "Ich denke daran, dass es für mich beim Üben nur darauf ankommt, zu lernen, mit meiner Angst umzugehen – nicht sie zu vermeiden. So gebe ich mir die Chance, Fortschritte zu machen.",
+  "Ich halte mir meine Ziele vor Augen und die Fortschritte, die ich trotz aller Schwierigkeiten bereits gemacht habe. Ich denke daran, wie zufrieden ich sein werde, wenn ich auch dieses Mal Erfolg habe.",
+  "Ich beende eine Übung erst dann, wenn ich merke, dass meine Angst merklich nachlässt.",
+  "Danach beginne ich mit der nächsten Übung. Ich bin aktiv und übe täglich!"
+];
+
+/* --- A.7c  Umgang mit Rückschlägen ---------------------------------------
+   In die Du-Form der App übertragen. Inhaltlich unverändert.              */
+const REGELN_RUECKSCHLAG = [
+  "Stell dich darauf ein, dass deine Ängste erneut auftreten können.",
+  "Werde aktiv, sobald du bemerkst, dass du wieder anfängst, Angstsituationen zu vermeiden.",
+  "Nutze die Erfahrungen und das Wissen, die du in den bisherigen Übungen erworben hast.",
+  "Versuch nach Möglichkeit, so lange in der Situation zu bleiben, in der die Angst auftritt, bis sie merklich abgenommen hat.",
+  "Falls dir ein Verbleiben nicht möglich erscheint: Entfern dich bewusst ein kleines Stück von dem angstbesetzten Ort – aber versuch, nicht gänzlich zu flüchten.",
+  "Sobald der Fluchtimpuls abgeklungen ist, such die Situation möglichst sofort wieder auf und bewältige sie.",
+  "Wenn du eine Übung abgebrochen hast und nach Hause gegangen bist: Such die Situation so schnell wie möglich erneut auf.",
+  "Vergegenwärtige dir immer wieder die zehn goldenen Regeln zur Angstbewältigung – sie helfen dir, mit deinen Ängsten besser umzugehen.",
+  "Achte auf angstverstärkende Gedanken und such nach hilfreichen Alternativgedanken.",
+  "Denk an das Prinzip der kleinen Schritte und überleg, welchen kleineren Schritt du als Nächstes ausprobieren kannst."
 ];
 
 /* --- A.8  Werte-Vorschläge ---------------------------------------------- */
@@ -1533,7 +1749,7 @@ const MEDAILLEN = [
     stufen:[25,100,300], wert:s => s.completions.length,
     text:"Die schlichteste Zahl der App – und die, die am meisten über Beharrlichkeit sagt." },
   { id:"med-vielfalt", name:"Entdeckung", symbol:"atem", einheit:"verschiedene Übungen",
-    stufen:[10,25,45], wert:s => new Set(s.completions.map(c=>c.questId).filter(id=>!/^gipfel-/.test(id))).size,
+    stufen:[10,25,45], wert:s => new Set(s.completions.map(c=>c.questId).filter(id=>!/^(gipfel|kurs)-/.test(id))).size,
     text:"Breit geübt statt nur das Bequeme wiederholt – das macht die Werkzeugkiste erst brauchbar." }
 ];
 /* Wie weit ist eine Medaille? Liefert Stand, erreichte Stufe und Ziel. */
@@ -1547,6 +1763,50 @@ function medaillenStand(m, s){
   return { wert, stufe, naechstesZiel, prozent };
 }
 const goldMedaillen = () => MEDAILLEN.filter(m => medaillenStand(m).stufe >= 3);
+
+
+/* --- A.11  Behandlungspfad ----------------------------------------------
+   Sechs Module in der Reihenfolge, in der eine Verhaltenstherapie bei
+   Panikstörung und Agoraphobie üblicherweise vorgeht: erst verstehen, dann
+   das eigene Modell, dann die Gedanken, dann Sicherheitsverhalten, dann
+   Vermeidung, zuletzt Vorbeugen. Nichts ist gesperrt – die Reihenfolge ist
+   eine Empfehlung, keine Bedingung.                                       */
+const KURS_MODULE = [
+  { id:"m1", titel:"Verstehen, was passiert",
+    ziel:"Du kannst in eigenen Worten erklären, was im Körper bei einer Panikattacke abläuft – und warum sie von allein aufhört.",
+    karten:["wk-fehlalarm","wk-abklingen","wk-herzrasen","wk-hyperventilation","wk-panikstoerung"],
+    quests:["wissenskarte","teufelskreis","goldene-regeln"],
+    merksatz:"Der Alarm ist echt. Die Gefahr ist es nicht." },
+  { id:"m2", titel:"Dein eigenes Modell",
+    ziel:"Du kennst deine typischen Auslöser, dein erstes Körpersignal und den Gedanken, der daraus eine Attacke macht.",
+    karten:["wk-aufmerksamkeit","wk-erwartungsangst","wk-drei-ebenen","wk-agoraphobie"],
+    quests:["panikprotokoll","angst-tagebuch","teufelskreis"],
+    merksatz:"Ein erkanntes Muster ist ein angreifbares Muster." },
+  { id:"m3", titel:"Gedanken prüfen",
+    ziel:"Du kannst einen Katastrophengedanken schriftlich prüfen und ihm eine realistischere Erklärung entgegensetzen.",
+    karten:["wk-kontrollverlust","wk-unwirklich","wk-ohnmacht","wk-atem-vertrauen"],
+    quests:["abc-schema","gedanken-detektiv","reattribution","katastrophen-entzauberer"],
+    merksatz:"Nicht die Situation macht die Angst, sondern die Bewertung dazwischen." },
+  { id:"m4", titel:"Sicherheitsverhalten abbauen",
+    ziel:"Du erkennst deine Absicherungen – und lässt die erste davon weg.",
+    karten:["wk-sicherheitsverhalten","wk-rueckversicherung","wk-koffein-alkohol"],
+    quests:["sicherheitsverhalten-liste","sicherheitsnetz-lockern","unsicherheit-aushalten","aufmerksamkeitstraining"],
+    merksatz:"Solange der Talisman dabei ist, lernt die Angst nichts dazu." },
+  { id:"m5", titel:"Vermeidung abbauen",
+    ziel:"Du hast eine Leiter aus konkreten Situationen – und stehst auf der ersten Sprosse.",
+    karten:["wk-vermeidung","wk-kurve","wk-verhaltensexperiment"],
+    quests:["landkarte-vermeidung","eine-sprosse","verhaltensexperiment","erwartungsangst","rueckblick-mutprobe"],
+    merksatz:"Bleiben, bis die Angst fällt. Nicht im Hoch gehen." },
+  { id:"m6", titel:"Dranbleiben und vorbeugen",
+    ziel:"Du hast eine Notfallkarte, kennst deine Frühwarnzeichen und weißt, was nach einem Rückschlag zu tun ist.",
+    karten:["wk-rueckfall","wk-uebung-dosis","wk-wirksamkeit","wk-therapie","wk-therapieplatz","wk-medikamente","wk-hilfe-holen"],
+    quests:["notfallkarte","fruehwarnzeichen","vermeidungs-check","rueckschlag-regeln"],
+    merksatz:"Rückschläge gehören dazu. Früh bemerken ist alles." }
+];
+const modulVon = id => KURS_MODULE.find(m => m.id === id);
+const modulFertig = id => S.kursModule.includes(id);
+const kursFortschritt = () => ({
+  fertig: KURS_MODULE.filter(m => modulFertig(m.id)).length, gesamt: KURS_MODULE.length });
 
 /* --- A.9  Achievements --------------------------------------------------
    pruef(state, ctx) liefert true, sobald das Abzeichen verdient ist.        */
@@ -1580,7 +1840,7 @@ const ACHIEVEMENTS = [
   { id:"atemmeister", name:"Atemhandwerk", text:"Zwanzig Atemübungen gemacht.",
     pruef:s=>zaehleKategorie(s,"atem")>=20 },
   { id:"sammler", name:"Entdeckerin", text:"25 verschiedene Quests ausprobiert.",
-    pruef:s=>new Set(s.completions.map(c=>c.questId).filter(id=>!/^gipfel-/.test(id))).size>=25 },
+    pruef:s=>new Set(s.completions.map(c=>c.questId).filter(id=>!/^(gipfel|kurs)-/.test(id))).size>=25 },
   { id:"wissensdurst", name:"Wissensdurst", text:"Zehn Wissenskarten gelesen.",
     pruef:s=>zaehleQuest(s,"wissenskarte")>=10 },
   { id:"mutworte", name:"Mutworte", text:"Fünf eigene Mut-Sätze gespeichert.",
@@ -1625,6 +1885,22 @@ const ACHIEVEMENTS = [
   { id:"elite-nachtaktiv", name:"Nachtaktiv", text:"Dreimal gemeinsam ausgegangen.",
     pruef:s=>["elite-clubnacht","elite-konzert","elite-essen","elite-kino"]
       .reduce((a,id)=>a+zaehleQuest(s,id),0)>=3 },
+  /* --- Behandlungspfad -------------------------------------------------- */
+  { id:"kurs-start", name:"Angefangen", text:"Das erste Modul des Behandlungspfads abgeschlossen.",
+    pruef:s=>(s.kursModule||[]).length>=1 },
+  { id:"kurs-halb", name:"Halbe Strecke", text:"Drei von sechs Modulen durch.",
+    pruef:s=>(s.kursModule||[]).length>=3 },
+  { id:"kurs-fertig", name:"Ganzer Pfad", text:"Alle sechs Module des Behandlungspfads durchgearbeitet.",
+    pruef:s=>(s.kursModule||[]).length>=KURS_MODULE.length },
+  { id:"protokollant", name:"Protokollant", text:"Fünf Panik-Protokolle geschrieben – dein Muster wird sichtbar.",
+    pruef:s=>s.journal.filter(j=>j.type==="panikprotokoll").length>=5 },
+  { id:"experimentator", name:"Experimentator", text:"Fünf Verhaltensexperimente durchgeführt.",
+    pruef:s=>s.journal.filter(j=>j.type==="experiment").length>=5 },
+  { id:"notfallkarte-da", name:"Vorbereitet", text:"Notfallkarte geschrieben – sie steht in der Ruhe-Insel.",
+    pruef:s=>!!(s.notfallkarte && (s.notfallkarte.satz || s.notfallkarte.was)) },
+  { id:"vorgesorgt", name:"Vorgesorgt", text:"Frühwarnzeichen und Rückfallplan festgelegt.",
+    pruef:s=>!!(s.fruehwarnplan && (s.fruehwarnplan.zeichen||[]).some(z=>z)) },
+
   { id:"elite-woche", name:"Volle Woche", text:"Drei Elite-Aktivitäten in sieben Tagen.",
     pruef:s=>{
       const daten = s.completions.filter(c=>{const q=questById(c.questId);return q&&q.kategorie==="elite";})
@@ -1679,6 +1955,9 @@ function leererState(){
     completions: [],
     achievements: [],
     medals: [],                   // erreichte Medaillenstufen
+    kursModule: [],               // abgeschlossene Module des Behandlungspfads
+    notfallkarte: { was:"", hilft:"", wen:"", satz:"" },
+    fruehwarnplan: { zeichen:["","",""], schritte:["","",""], ab:"" },
 
     journal: [],
     copingCards: [],
@@ -1712,7 +1991,7 @@ function migrate(state){
   out.playlists = Object.assign({}, std.playlists, state.playlists || {});
 
   // Arrays absichern
-  ["completions","achievements","medals","journal","copingCards","avoidanceMap","emergencyContacts","gipfelArchiv"]
+  ["completions","achievements","medals","kursModule","journal","copingCards","avoidanceMap","emergencyContacts","gipfelArchiv"]
     .forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
   /* Gipfel absichern: fehlende Teilstrukturen ergänzen, Unfertiges verwerfen */
   if (out.gipfel && typeof out.gipfel === "object"){
@@ -1742,6 +2021,10 @@ function migrate(state){
 
   if (!ARTEN[out.profile.art]) out.profile.art = "mochi";   // unbekannte Art abfangen
   if (!out.profile.elitePartner) out.profile.elitePartner = ELITE_PARTNER_STANDARD;
+  out.notfallkarte = Object.assign({ was:"", hilft:"", wen:"", satz:"" }, out.notfallkarte || {});
+  out.fruehwarnplan = Object.assign({ zeichen:["","",""], schritte:["","",""], ab:"" }, out.fruehwarnplan || {});
+  if (!Array.isArray(out.fruehwarnplan.zeichen)) out.fruehwarnplan.zeichen = ["","",""];
+  if (!Array.isArray(out.fruehwarnplan.schritte)) out.fruehwarnplan.schritte = ["","",""];
   out.level = levelFuer(out.totalXp).stufe;
   return out;
 }
@@ -2711,6 +2994,10 @@ function render(){
     case "fortschritt": html = screenFortschritt(); break;
     case "journal":     html = screenJournal(); break;
     case "medaillen":   html = screenMedaillen(); break;
+    case "kurs":        html = screenKurs(); break;
+    case "kurs-modul":  html = screenKursModul(ROUTE.param); break;
+    case "regeln":      html = screenRegeln("gold"); break;
+    case "regeln-rueckschlag": html = screenRegeln("rueckschlag"); break;
     case "einstellungen": html = screenEinstellungen(); break;
     case "krisen":      html = screenKrisen(); break;
     default:            html = screenHeim();
@@ -2892,6 +3179,8 @@ function screenHeim(){
 
     ${quests.map((q,i) => questKarte(q, i, true)).join("")}
 
+    ${kursHeimZeile()}
+
     ${gipfelHeimKarte()}
 
     <div class="card soft stack">
@@ -2901,6 +3190,33 @@ function screenHeim(){
     </div>
   </div>`;
 }
+/* Behandlungspfad: kompakte Zeile auf dem Heim-Screen, volle Karte in den
+   Übungen. Verschwindet vom Heim-Screen, sobald alle Module durch sind. */
+function kursHeimZeile(){
+  const f = kursFortschritt();
+  if (f.fertig >= f.gesamt) return "";
+  const naechstes = KURS_MODULE.find(m => !modulFertig(m.id));
+  return `<button class="quest" data-modul="${naechstes.id}">
+    <span class="ic">${katIcon("kognitiv")}</span>
+    <span class="grow">
+      <h3>Behandlungspfad · Modul ${KURS_MODULE.indexOf(naechstes)+1}</h3>
+      <span class="small muted">${esc(naechstes.titel)} · ${f.fertig} von ${f.gesamt} abgeschlossen</span>
+    </span>
+  </button>`;
+}
+function kursKarteHtml(){
+  const f = kursFortschritt();
+  return `<div class="card stack" data-titel="Behandlungspfad">
+    <h2 style="margin:0">Der Weg durch die Angst – in sechs Schritten</h2>
+    <p class="small">Aufgebaut wie eine kognitive Verhaltenstherapie bei Panikstörung und
+      Agoraphobie: verstehen, eigenes Modell, Gedanken prüfen, Sicherheitsverhalten abbauen,
+      Vermeidung abbauen, vorbeugen.</p>
+    <div class="xpbar" style="height:18px" role="img" aria-label="${f.fertig} von ${f.gesamt} Modulen">
+      <i style="width:${Math.round(f.fertig/f.gesamt*100)}%"></i></div>
+    <button class="btn sm primary" data-go="kurs">${f.fertig ? "Weiter im Pfad" : "Pfad ansehen"}</button>
+  </div>`;
+}
+
 /* Der Gipfel bekommt auf dem Heim-Screen eine eigene Karte – er ist das
    Erste, was morgens sichtbar sein soll. */
 function gipfelHeimKarte(){
@@ -2948,8 +3264,8 @@ function questKarte(q, index, mitTausch){
   </div>`;
 }
 const KATEGORIE_NAMEN = {
-  atem:"Atem & Entspannung", bewegung:"Bewegung & Rhythmus", kognitiv:"Kopfarbeit",
-  achtsamkeit:"Achtsamkeit & Akzeptanz", mut:"Mut", verbundenheit:"Verbundenheit",
+  atem:"Atem & Entspannung", bewegung:"Bewegung & Rhythmus", kognitiv:"KVT · Kopfarbeit",
+  achtsamkeit:"Achtsamkeit & Akzeptanz", mut:"Mut · Exposition", verbundenheit:"Verbundenheit",
   elite:"Elite", mini:"Mini-Schritt"
 };
 const kategorieName = k => KATEGORIE_NAMEN[k] || k;
@@ -3055,6 +3371,14 @@ function werkzeugHtml(q){
     case "vermeidung": return vermeidungHtml();
     case "sprosse": return sprosseHtml();
     case "exporeview": return exoReviewHtml();
+    case "panikprotokoll": return panikprotokollHtml();
+    case "abc": return abcHtml();
+    case "reattribution": return reattributionHtml();
+    case "experiment": return experimentHtml();
+    case "notfallkarte": return notfallkarteHtml();
+    case "fruehwarn": return fruehwarnHtml();
+    case "regeln-gold": return regelnHtml("gold");
+    case "regeln-rueckschlag": return regelnHtml("rueckschlag");
     default: return "";
   }
 }
@@ -3297,6 +3621,179 @@ function playlistHtml(){
   </div>`;
 }
 
+/* --- Panik-Protokoll: die Reihenfolge einer Attacke sichtbar machen ------ */
+function panikprotokollHtml(){
+  const f = [
+    ["situation","Wo warst du, was hast du gerade getan?","Auch: was war kurz davor?"],
+    ["koerper","Welches Körpersignal kam zuerst?","Herz, Atem, Schwindel, Kribbeln, Enge …"],
+    ["gedanke","Welcher Gedanke kam dazu?","Möglichst wörtlich."],
+    ["verhalten","Was hast du daraufhin getan?","Rausgegangen, abgesagt, jemanden angerufen, ausgehalten …"],
+    ["abgeklungen","Wodurch ist es abgeklungen?","Oder: von allein, nach wie vielen Minuten?"]
+  ];
+  return `<div class="card stack" data-titel="Protokoll">
+    <h2>Was ist abgelaufen?</h2>
+    ${f.map(([k,l,p]) => `<div class="field">
+      <label for="pp-${k}">${esc(l)}</label>
+      <textarea id="pp-${k}" data-feld="${k}" maxlength="600" placeholder="${esc(p)}"></textarea>
+    </div>`).join("")}
+    <div class="field">
+      <label for="pp-staerke">Stärke auf dem Höhepunkt <span id="pp-staerke-wert">7</span> von 10</label>
+      <input type="range" id="pp-staerke" data-feld="staerke" min="0" max="10" value="7">
+    </div>
+    <div class="field">
+      <label for="pp-dauer">Dauer in Minuten</label>
+      <input type="number" id="pp-dauer" data-feld="dauer" min="0" max="600" value="15">
+    </div>
+    <p class="small muted">Nach ein paar Protokollen zeigt sich fast immer dieselbe Reihenfolge:
+      Körpersignal → Deutung als Gefahr → Eskalation. Genau da lässt sich später eingreifen.</p>
+  </div>`;
+}
+
+/* --- ABC-Schema ---------------------------------------------------------- */
+function abcHtml(){
+  return `<div class="card stack" data-titel="A-B-C">
+    <div class="field"><label for="abc-a">A · Auslöser – nur Fakten</label>
+      <textarea id="abc-a" data-feld="ausloeser" maxlength="500" placeholder="Was ist passiert? Ohne Bewertung."></textarea></div>
+    <div class="field"><label for="abc-b">B · Bewertung – was hast du dir gesagt?</label>
+      <textarea id="abc-b" data-feld="bewertung" maxlength="500" placeholder="Der Gedanke, möglichst wörtlich."></textarea></div>
+    <div class="field"><label for="abc-c">C · Konsequenz – Gefühl und Verhalten</label>
+      <textarea id="abc-c" data-feld="konsequenz" maxlength="500" placeholder="Welches Gefühl, wie stark, und was hast du getan?"></textarea></div>
+    <div class="bubble"><strong>Das Gefühl folgt aus B, nicht aus A.</strong>
+      Zwei Menschen in derselben Situation mit unterschiedlichem B haben unterschiedliches C.</div>
+    <div class="field"><label for="abc-b2">Alternatives B – was wäre auch möglich?</label>
+      <textarea id="abc-b2" data-feld="alternative" maxlength="500" placeholder="Nicht schöner, sondern ebenso gut begründet."></textarea></div>
+    <div class="field"><label for="abc-c2">Welches C würde daraus folgen?</label>
+      <textarea id="abc-c2" data-feld="folge" maxlength="500"></textarea></div>
+  </div>`;
+}
+
+/* --- Reattribution mit Kuchendiagramm ------------------------------------ */
+const KUCHEN_FARBEN = ["var(--koralle)","var(--himmel)","var(--mint)","var(--butter)","var(--lavendel)"];
+function kuchenSvg(teile){
+  const summe = teile.reduce((a,t) => a + t.wert, 0) || 1;
+  let winkel = -Math.PI/2;
+  const r = 62, cx = 70, cy = 70;
+  const stuecke = teile.map((t,i) => {
+    const anteil = t.wert / summe;
+    if (anteil <= 0) return "";
+    const ende = winkel + anteil * Math.PI * 2;
+    const gross = anteil > 0.5 ? 1 : 0;
+    const x1 = cx + Math.cos(winkel)*r, y1 = cy + Math.sin(winkel)*r;
+    const x2 = cx + Math.cos(ende)*r,   y2 = cy + Math.sin(ende)*r;
+    const d = anteil >= 0.999
+      ? `M${cx} ${cy-r} A${r} ${r} 0 1 1 ${cx-0.01} ${cy-r} Z`
+      : `M${cx} ${cy} L${x1} ${y1} A${r} ${r} 0 ${gross} 1 ${x2} ${y2} Z`;
+    winkel = ende;
+    return `<path d="${d}" fill="${KUCHEN_FARBEN[i % KUCHEN_FARBEN.length]}"
+      stroke="var(--ink-dunkel)" stroke-width="3" stroke-linejoin="round"/>`;
+  }).join("");
+  return `<svg viewBox="0 0 140 140" style="width:150px;height:150px" role="img"
+      aria-label="Kuchendiagramm: ${teile.map(t => t.label + " " + Math.round(t.wert/summe*100) + " Prozent").join(", ")}">
+    ${stuecke}</svg>`;
+}
+function reattributionHtml(){
+  return `<div class="card stack" data-titel="Reattribution">
+    <div class="field"><label for="re-symptom">Welches Körpersymptom beunruhigt dich?</label>
+      <input type="text" id="re-symptom" data-feld="symptom" maxlength="140" placeholder="z. B. Herzstolpern"></div>
+    <div class="field"><label for="re-katastrophe">Deine Katastrophenerklärung</label>
+      <input type="text" id="re-katastrophe" data-feld="katastrophe" maxlength="140" placeholder="z. B. Mit meinem Herz stimmt etwas nicht"></div>
+    <div class="field"><label for="re-p0">Wie viel Prozent gibst du ihr? <span id="re-p0-wert">60</span> %</label>
+      <input type="range" id="re-p0" data-feld="prozentKatastrophe" data-kuchen="0" min="0" max="100" step="5" value="60"></div>
+    <h3 style="margin:0">Harmlose Erklärungen</h3>
+    ${[1,2,3].map(i => `
+      <div class="field">
+        <label for="re-a${i}">Erklärung ${i}</label>
+        <input type="text" id="re-a${i}" data-feld="alternative${i}" maxlength="140"
+               placeholder="${["z. B. zu wenig Schlaf","z. B. Koffein","z. B. Anspannung seit heute früh"][i-1]}">
+        <label for="re-p${i}" class="small" style="margin-top:6px">Anteil <span id="re-p${i}-wert">${[20,15,5][i-1]}</span> %</label>
+        <input type="range" id="re-p${i}" data-feld="prozent${i}" data-kuchen="${i}" min="0" max="100" step="5" value="${[20,15,5][i-1]}">
+      </div>`).join("")}
+    <div class="center" id="kuchen-box">${kuchenSvg([
+      {label:"Katastrophe",wert:60},{label:"Erklärung 1",wert:20},
+      {label:"Erklärung 2",wert:15},{label:"Erklärung 3",wert:5}])}</div>
+    <p class="small muted">Es geht nicht darum, die Katastrophe auf null zu drücken. Es geht darum,
+      dass sie Konkurrenz bekommt – und die gibt es immer.</p>
+  </div>`;
+}
+
+/* --- Verhaltensexperiment ------------------------------------------------ */
+function experimentHtml(){
+  const f = [
+    ["vorhersage","Meine Vorhersage: „Wenn ich … tue, dann passiert …“","Überprüfbar formulieren."],
+    ["woran","Woran würde ich erkennen, dass es eingetreten ist?","Vorher festlegen – das ist der wichtige Teil."],
+    ["ohne","Auf welches Sicherheitsverhalten verzichte ich dabei?",""],
+    ["ergebnis","Was ist tatsächlich passiert?","Nach dem Experiment ausfüllen."],
+    ["schluss","Was schließe ich daraus? (ein Satz)",""]
+  ];
+  return `<div class="card stack" data-titel="Experiment">
+    ${f.map(([k,l,p]) => `<div class="field">
+      <label for="ex-${k}">${esc(l)}</label>
+      <textarea id="ex-${k}" data-feld="${k}" maxlength="600" placeholder="${esc(p)}"></textarea>
+    </div>`).join("")}
+    <div class="field">
+      <label for="ex-wahr">Wie wahrscheinlich hältst du deine Vorhersage? <span id="ex-wahr-wert">60</span> %</label>
+      <input type="range" id="ex-wahr" data-feld="wahrscheinlichkeit" min="0" max="100" step="5" value="60">
+    </div>
+    <div class="field">
+      <label for="ex-danach">Und jetzt, nach dem Experiment? <span id="ex-danach-wert">30</span> %</label>
+      <input type="range" id="ex-danach" data-feld="wahrscheinlichkeitDanach" min="0" max="100" step="5" value="30">
+    </div>
+  </div>`;
+}
+
+/* --- Notfallkarte – erscheint danach in der Ruhe-Insel ------------------- */
+function notfallkarteHtml(){
+  const n = S.notfallkarte || {};
+  return `<div class="card stack" data-titel="Notfallkarte">
+    <div class="field"><label for="nk-was">Was gerade passiert (in deinen Worten)</label>
+      <textarea id="nk-was" maxlength="300" placeholder="z. B. Mein Körper hat Alarm ausgelöst. Es ist unangenehm und es geht vorbei.">${esc(n.was||"")}</textarea></div>
+    <div class="field"><label for="nk-hilft">Drei Dinge, die mir zuverlässig helfen</label>
+      <textarea id="nk-hilft" maxlength="400" placeholder="Eins pro Zeile – konkret, nicht allgemein.">${esc(n.hilft||"")}</textarea></div>
+    <div class="field"><label for="nk-wen">Wen ich anrufen kann</label>
+      <input type="text" id="nk-wen" maxlength="160" value="${esc(n.wen||"")}" placeholder="Name und Nummer"></div>
+    <div class="field"><label for="nk-satz">Der eine Satz, der mich erreicht</label>
+      <input type="text" id="nk-satz" maxlength="160" value="${esc(n.satz||"")}" placeholder="z. B. Die Welle steigt und sie fällt wieder."></div>
+    <button class="btn sm mint" id="btn-nk-speichern">Notfallkarte speichern</button>
+    <p class="small muted">Sie erscheint danach sofort in der Ruhe-Insel – ganz oben, ohne Suchen.</p>
+  </div>`;
+}
+
+/* --- Frühwarnzeichen ----------------------------------------------------- */
+function fruehwarnHtml(){
+  const f = S.fruehwarnplan || { zeichen:["","",""], schritte:["","",""], ab:"" };
+  return `<div class="card stack" data-titel="Frühwarnplan">
+    ${[0,1,2].map(i => `
+      <div class="field">
+        <label for="fw-z${i}">Frühwarnzeichen ${i+1}</label>
+        <input type="text" id="fw-z${i}" maxlength="160" value="${esc((f.zeichen||[])[i]||"")}"
+          placeholder="${["z. B. ich sage Verabredungen ab","z. B. ich schlafe schlechter","z. B. ich prüfe wieder meinen Puls"][i]}">
+        <label for="fw-s${i}" class="small" style="margin-top:6px">Was ich dann sofort tue</label>
+        <input type="text" id="fw-s${i}" maxlength="160" value="${esc((f.schritte||[])[i]||"")}"
+          placeholder="klein und heute machbar">
+      </div>`).join("")}
+    <div class="field"><label for="fw-ab">Ab wann hole ich mir Unterstützung?</label>
+      <textarea id="fw-ab" maxlength="300" placeholder="z. B. Wenn ich zwei Wochen lang wieder Busse meide, rufe ich in der Praxis an.">${esc(f.ab||"")}</textarea></div>
+    <button class="btn sm mint" id="btn-fw-speichern">Plan speichern</button>
+  </div>`;
+}
+
+/* --- Die Regeln als Übung ------------------------------------------------ */
+function regelnHtml(art){
+  const gold = art === "gold";
+  const liste = gold ? REGELN_GOLD : REGELN_RUECKSCHLAG;
+  return `<div class="card stack" data-titel="${gold ? "Zehn Regeln" : "Rückschläge"}">
+    <h2>${gold ? "Die zehn goldenen Regeln zur Angstbewältigung" : "Umgang mit Rückschlägen"}</h2>
+    ${gold ? `<p class="small muted">In der Ich-Form – als Selbstgespräch gedacht. Laut gelesen wirken
+      sie deutlich besser als nur gedacht.</p>` : ""}
+    <ol class="regeln">${liste.map(r => `<li>${esc(r)}</li>`).join("")}</ol>
+    <div class="field">
+      <label for="rg-wahl">${gold ? "Welche Regel gilt heute besonders für dich?"
+        : "Welchen kleineren Schritt machst du als Nächstes?"}</label>
+      <textarea id="rg-wahl" data-feld="${gold ? "regelDesTages" : "naechsterSchritt"}" maxlength="400"></textarea>
+    </div>
+  </div>`;
+}
+
 /* Landkarte der Vermeidung – SUD 0–100, ergibt eine sortierte Leiter */
 function vermeidungHtml(){
   return `<div class="card stack" id="verm-box">
@@ -3381,7 +3878,8 @@ function screenBibliothek(){
   const kats = ["alle","elite","atem","bewegung","kognitiv","achtsamkeit","mut","verbundenheit","mini"];
   const liste = QUESTS.filter(q => BIB_FILTER === "alle" || q.kategorie === BIB_FILTER);
   return `<div class="stack" style="padding-top:14px">
-    <h1>Bibliothek</h1>
+    <h1>Übungen</h1>
+    ${kursKarteHtml()}
     <p class="small muted">${QUESTS.length} Übungen. Du kannst jederzeit jede davon freiwillig starten –
       sie zählen genauso wie die Tagesvorschläge.</p>
     <div class="chips">
@@ -3535,12 +4033,15 @@ function verlaufSvg(){
 let JOURNAL_SUCHE = "";
 let JOURNAL_FILTER = "alle";
 function screenJournal(){
-  const typen = [["alle","Alles"],["gedankenprotokoll","Gedankenprotokolle"],["angsttagebuch","Angst-Tagebuch"],
-    ["expo-review","Mutproben"],["katastrophe","Vier Fragen"],["teufelskreis","Teufelskreise"],["sonstiges","Notizen"]];
+  const typen = [["alle","Alles"],["panikprotokoll","Panik-Protokolle"],["gedankenprotokoll","Gedankenprotokolle"],
+    ["abc","A-B-C"],["reattribution","Kuchendiagramme"],["experiment","Experimente"],
+    ["angsttagebuch","Angst-Tagebuch"],["expo-review","Mutproben"],["katastrophe","Vier Fragen"],
+    ["teufelskreis","Teufelskreise"],["sonstiges","Notizen"]];
   const such = JOURNAL_SUCHE.toLowerCase();
   const eintraege = S.journal.slice().reverse().filter(j => {
     const typOk = JOURNAL_FILTER === "alle" ||
-      (JOURNAL_FILTER === "sonstiges" ? !["gedankenprotokoll","angsttagebuch","expo-review","katastrophe","teufelskreis"].includes(j.type)
+      (JOURNAL_FILTER === "sonstiges" ? !["gedankenprotokoll","angsttagebuch","expo-review","katastrophe",
+        "teufelskreis","panikprotokoll","abc","reattribution","experiment"].includes(j.type)
         : j.type === JOURNAL_FILTER);
     if (!typOk) return false;
     if (!such) return true;
@@ -3583,9 +4084,18 @@ const FELD_LABEL = {
   befuerchtet:"Befürchtet", passiert:"Tatsächlich passiert", hoehepunkt:"Höhepunkt",
   bedeutung:"Bedeutung", naechstes:"Nächster Schritt", plan:"Plan", vorher:"Vorher", nachher:"Nachher",
   handlung:"Handlung", gedanken:"Gedanke", sehen:"Sehen", hoeren:"Hören", fuehlen:"Fühlen",
+  staerke:"Stärke", verhalten:"Verhalten", abgeklungen:"Abgeklungen durch", ausloeser:"A · Auslöser",
+  bewertung:"B · Bewertung", konsequenz:"C · Konsequenz", alternative:"Alternatives B", folge:"Folge daraus",
+  symptom:"Symptom", katastrophe:"Katastrophenerklärung", prozentKatastrophe:"Anteil Katastrophe (%)",
+  alternative1:"Erklärung 1", alternative2:"Erklärung 2", alternative3:"Erklärung 3",
+  vorhersage:"Vorhersage", woran:"Woran erkennbar", ohne:"Ohne", ergebnis:"Ergebnis", schluss:"Schluss",
+  wahrscheinlichkeit:"Wahrscheinlichkeit vorher (%)", wahrscheinlichkeitDanach:"Wahrscheinlichkeit danach (%)",
+  regelDesTages:"Regel des Tages", naechsterSchritt:"Nächster Schritt",
   riechen:"Riechen", schmecken:"Schmecken", notiz:"Notiz", anlass:"Anlass"
 };
 const TYP_LABEL = { gedankenprotokoll:"Gedankenprotokoll", angsttagebuch:"Angst-Tagebuch",
+  panikprotokoll:"Panik-Protokoll", abc:"A-B-C-Schema", reattribution:"Kuchendiagramm",
+  experiment:"Verhaltensexperiment", regeln:"Regeln",
   "expo-review":"Rückblick Mutprobe", katastrophe:"Vier Fragen", teufelskreis:"Teufelskreis",
   grounding:"5-4-3-2-1", werte:"Werte-Kompass", blaetter:"Gedanken auf Blättern", notiz:"Notiz" };
 function journalKarte(j){
@@ -4082,6 +4592,117 @@ function screenMedaillen(){
   </div>`;
 }
 
+/* --- E.15  Behandlungspfad ----------------------------------------------
+   Sechs Module in der Reihenfolge einer Verhaltenstherapie bei Panik und
+   Agoraphobie. Nichts ist gesperrt: Die Reihenfolge ist eine Empfehlung.
+   ------------------------------------------------------------------------ */
+function screenKurs(){
+  const f = kursFortschritt();
+  const prozent = Math.round(f.fertig / f.gesamt * 100);
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Behandlungspfad</h1>
+    <div class="card stack" data-titel="Überblick">
+      <p class="small">Die sechs Schritte, in denen eine kognitive Verhaltenstherapie bei
+        Panikstörung und Agoraphobie üblicherweise vorgeht. Du kannst sie in dieser Reihenfolge
+        durchgehen – gesperrt ist nichts.</p>
+      <div class="xpbar" role="img" aria-label="${f.fertig} von ${f.gesamt} Modulen abgeschlossen">
+        <i style="width:${prozent}%"></i></div>
+      <p class="center small" style="margin:0"><strong>${f.fertig} von ${f.gesamt} Modulen</strong></p>
+      <div class="warnbox">Das ist ein strukturiertes Selbsthilfe-Programm, keine Behandlung.
+        Es folgt dem Aufbau einer Verhaltenstherapie, ersetzt sie aber nicht.</div>
+    </div>
+
+    ${KURS_MODULE.map((m,i) => {
+      const fertig = modulFertig(m.id);
+      const offen = KURS_MODULE.findIndex(x => !modulFertig(x.id));
+      const dran = !fertig && i === offen;
+      return `<button class="modulkarte ${fertig?'fertig':''} ${dran?'dran':''}" data-modul="${m.id}">
+        <span class="nr">${fertig ? "✓" : i+1}</span>
+        <span class="grow">
+          <strong>${esc(m.titel)}</strong>
+          <span class="small muted">${esc(m.ziel)}</span>
+          <span class="small" style="display:block;margin-top:4px">
+            ${m.karten.length} Karten · ${m.quests.length} Übungen${dran ? " · <strong>als Nächstes</strong>" : ""}</span>
+        </span>
+      </button>`;
+    }).join("")}
+
+    <div class="card stack" data-titel="Zum Nachlesen">
+      <h2>Die Regeln</h2>
+      <p class="small">Zwei Listen, die im Ernstfall mehr helfen als jede Erklärung.</p>
+      <button class="btn block primary" data-go="regeln">Die zehn goldenen Regeln</button>
+      <button class="btn block" data-go="regeln-rueckschlag">Umgang mit Rückschlägen</button>
+    </div>
+  </div>`;
+}
+
+function screenKursModul(id){
+  const m = modulVon(id);
+  if (!m) return screenKurs();
+  const nr = KURS_MODULE.indexOf(m) + 1;
+  const fertig = modulFertig(m.id);
+  const karten = m.karten.map(k => WISSENSKARTEN.find(w => w.id === k)).filter(Boolean);
+  const quests = m.quests.map(questById).filter(Boolean);
+  const erledigt = quests.filter(q => S.completions.some(c => c.questId === q.id)).length;
+  return `<div class="stack" style="padding-top:14px">
+    <button class="btn sm ghost" data-go="kurs">← Behandlungspfad</button>
+    <div class="card stack" data-titel="Modul ${nr}">
+      <h1>${esc(m.titel)}</h1>
+      <p><strong>Ziel:</strong> ${esc(m.ziel)}</p>
+      <div class="bubble"><strong>${esc(m.merksatz)}</strong></div>
+    </div>
+
+    <div class="card stack" data-titel="Verstehen">
+      <h2>Dazu solltest du wissen</h2>
+      ${karten.map(k => `<details class="lernkarte">
+        <summary>${esc(k.titel)}</summary>
+        <p class="small" style="margin:8px 0 0">${esc(k.text)}</p>
+      </details>`).join("")}
+    </div>
+
+    <div class="card stack" data-titel="Üben">
+      <h2>Übungen dieses Moduls <span class="small muted">(${erledigt}/${quests.length})</span></h2>
+      ${quests.map(q => `<button class="quest ${S.completions.some(c=>c.questId===q.id)?'done':''}" data-go-quest="${q.id}">
+        <span class="ic">${katIcon(q.kategorie)}</span>
+        <span class="grow"><h3>${esc(mitNamen(q.titel))}</h3>
+          <span class="small muted">${q.dauerMin} Min · ${esc(kategorieName(q.kategorie))}</span></span>
+      </button>`).join("")}
+    </div>
+
+    <div class="card stack" data-titel="Abschluss">
+      ${fertig
+        ? `<p><strong>Modul abgeschlossen.</strong> Du kannst jederzeit zurückkommen –
+             die Karten und Übungen bleiben offen.</p>`
+        : `<p class="small">Hak das Modul ab, wenn du die Karten gelesen und mindestens eine der
+             Übungen gemacht hast. Du entscheidest das, nicht die App.</p>
+           <button class="btn primary block" data-modul-fertig="${m.id}">Modul abschließen (+25 Geist)</button>`}
+    </div>
+  </div>`;
+}
+
+/* --- E.16  Die Regeln als Nachschlagewerk -------------------------------- */
+function screenRegeln(art){
+  const gold = art !== "rueckschlag";
+  const liste = gold ? REGELN_GOLD : REGELN_RUECKSCHLAG;
+  return `<div class="stack" style="padding-top:14px">
+    <h1>${gold ? "Zehn goldene Regeln" : "Umgang mit Rückschlägen"}</h1>
+    <div class="card stack" data-titel="${gold ? "Selbstgespräch" : "Rückschlag"}">
+      ${gold
+        ? `<p class="small">Zur Angstbewältigung, in der Ich-Form. Sie sind als Selbstgespräch
+             gedacht – laut gelesen wirken sie besser als nur gedacht.</p>`
+        : `<p class="small">Ein Rückschlag ist kein Rückfall in den Anfang. Er ist der Moment, in dem
+             sich entscheidet, ob Vermeidung wieder wächst.</p>`}
+      <ol class="regeln">${liste.map(r => `<li>${esc(r)}</li>`).join("")}</ol>
+    </div>
+    <div class="row">
+      <button class="btn grow" data-go="${gold ? "regeln-rueckschlag" : "regeln"}">
+        ${gold ? "Umgang mit Rückschlägen" : "Zehn goldene Regeln"}</button>
+      <button class="btn grow" data-go-quest="${gold ? "goldene-regeln" : "rueckschlag-regeln"}">Als Übung machen</button>
+    </div>
+    <button class="btn ghost block" data-go="kurs">Zum Behandlungspfad</button>
+  </div>`;
+}
+
 /* --- E.13  Einstellungen ------------------------------------------------ */
 function screenEinstellungen(){
   return `<div class="stack" style="padding-top:14px">
@@ -4243,7 +4864,16 @@ function inselInhalt(){
           <span><span class="phase" id="breath-phase">Einatmen</span><span class="count" id="breath-count">4</span></span>
         </div>
       </div>
+      ${S.notfallkarte && (S.notfallkarte.satz || S.notfallkarte.was) ? `
+      <div class="card stack">
+        <h2 style="font-size:1.1rem;margin:0">Deine Notfallkarte</h2>
+        ${S.notfallkarte.satz ? `<p style="font-size:1.25rem;font-weight:700;margin:0">„${esc(S.notfallkarte.satz)}“</p>` : ""}
+        ${S.notfallkarte.was ? `<p style="margin:0">${esc(S.notfallkarte.was)}</p>` : ""}
+        ${S.notfallkarte.hilft ? `<p class="small" style="margin:0;white-space:pre-line">${esc(S.notfallkarte.hilft)}</p>` : ""}
+        ${S.notfallkarte.wen ? `<p class="small muted" style="margin:0">Anrufen: ${esc(S.notfallkarte.wen)}</p>` : ""}
+      </div>` : ""}
       <div class="stack">
+        <button class="btn block" data-insel="regeln">Die zehn Regeln</button>
         <button class="btn block" data-insel="grounding">5-4-3-2-1 – hier ankommen</button>
         <button class="btn block" data-insel="saetze">Meine Mut-Sätze</button>
         <button class="btn block" data-insel="was">Was gerade passiert</button>
@@ -4259,6 +4889,15 @@ function inselInhalt(){
         <p class="small muted"><span id="gi-nr">1</span> von ${GROUNDING_INSEL.length}</p>
         <button class="btn block" id="gi-weiter">Weiter</button>
       </div>
+      <button class="btn block" data-insel="atem">Zurück zum Atem</button>`;
+  }
+  if (ISLAND_VIEW === "regeln"){
+    /* Im Akutmodus reichen die ersten sechs – der Rest ist Übungsplanung. */
+    return `<h2>Die zehn goldenen Regeln</h2>
+      <div class="card stack">
+        <ol class="regeln">${REGELN_GOLD.slice(0,6).map(r => `<li>${esc(r)}</li>`).join("")}</ol>
+      </div>
+      <p class="muted small">Lies sie langsam. Eine reicht.</p>
       <button class="btn block" data-insel="atem">Zurück zum Atem</button>`;
   }
   if (ISLAND_VIEW === "saetze"){
@@ -4404,6 +5043,8 @@ function sammleWerkzeug(){
 const JOURNAL_TYP = {
   gedankenprotokoll:"gedankenprotokoll", katastrophe:"katastrophe", teufelskreis:"teufelskreis",
   angsttagebuch:"angsttagebuch", exporeview:"expo-review", sprosse:"expo-review",
+  panikprotokoll:"panikprotokoll", abc:"abc", reattribution:"reattribution",
+  experiment:"experiment", "regeln-gold":"regeln", "regeln-rueckschlag":"regeln",
   grounding:"grounding", werte:"werte", blaetter:"blaetter"
 };
 
@@ -4574,6 +5215,9 @@ function bindeView(){
 
   /* Mein Gipfel */
   bindeGipfel();
+
+  /* Behandlungspfad und KVT-Werkzeuge */
+  bindeKvt();
 
   /* Einstellungen */
   bindeEinstellungen();
@@ -4788,6 +5432,76 @@ function bindeGipfel(){
       S.gipfel = null; speichern(); $("#overlay-root").innerHTML=""; render();
       toast("Verworfen. Ein neuer Gipfel ist jederzeit möglich.");
     });
+  });
+}
+
+/* --- G.5c  Behandlungspfad und KVT-Werkzeuge ----------------------------- */
+function bindeKvt(){
+  /* Module */
+  $$("[data-modul]").forEach(b => b.addEventListener("click", () => gehe("kurs-modul", b.dataset.modul)));
+  $$("[data-modul-fertig]").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.modulFertig;
+    if (!S.kursModule.includes(id)) S.kursModule.push(id);
+    speichern();
+    punkteGutschreiben({ geist:25 }, { questId:"kurs-" + id });
+    const f = kursFortschritt();
+    if (f.fertig >= f.gesamt) setTimeout(() => overlay(`
+      <h2>Alle sechs Module durch</h2>
+      <p>Du hast den kompletten Behandlungspfad einmal durchgearbeitet – verstehen, eigenes Modell,
+         Gedanken prüfen, Sicherheitsverhalten, Vermeidung, Vorbeugen.</p>
+      <p class="small muted">Das ist kein Abschluss, sondern eine Grundlage: Die Übungen wirken durch
+         Wiederholung. Die Module bleiben offen, du kannst jederzeit zurück.</p>
+      <button class="btn primary block" data-close>Weiter</button>`), 800);
+    render();
+  }));
+
+  /* Schieberegler mit Live-Anzeige */
+  regler("pp-staerke","pp-staerke-wert");
+  regler("ex-wahr","ex-wahr-wert");
+  regler("ex-danach","ex-danach-wert");
+
+  /* Kuchendiagramm live nachzeichnen */
+  const kuchenFelder = $$("[data-kuchen]");
+  if (kuchenFelder.length){
+    const zeichne = () => {
+      const teile = [
+        { label:"Katastrophe", wert:Number(($("#re-p0")||{}).value||0) },
+        { label:"Erklärung 1", wert:Number(($("#re-p1")||{}).value||0) },
+        { label:"Erklärung 2", wert:Number(($("#re-p2")||{}).value||0) },
+        { label:"Erklärung 3", wert:Number(($("#re-p3")||{}).value||0) }
+      ];
+      const box = $("#kuchen-box");
+      if (box) box.innerHTML = kuchenSvg(teile);
+    };
+    kuchenFelder.forEach(el => el.addEventListener("input", () => {
+      const a = $("#" + el.id + "-wert"); if (a) a.textContent = el.value;
+      zeichne();
+    }));
+  }
+
+  /* Notfallkarte */
+  const nk = $("#btn-nk-speichern");
+  if (nk) nk.addEventListener("click", () => {
+    S.notfallkarte = {
+      was:   $("#nk-was").value.trim(),
+      hilft: $("#nk-hilft").value.trim(),
+      wen:   $("#nk-wen").value.trim(),
+      satz:  $("#nk-satz").value.trim()
+    };
+    speichern(); pruefeAchievements();
+    toast("Notfallkarte gespeichert – sie steht jetzt in der Ruhe-Insel.");
+  });
+
+  /* Frühwarnplan */
+  const fw = $("#btn-fw-speichern");
+  if (fw) fw.addEventListener("click", () => {
+    S.fruehwarnplan = {
+      zeichen: [0,1,2].map(i => ($("#fw-z"+i)||{}).value ? $("#fw-z"+i).value.trim() : ""),
+      schritte:[0,1,2].map(i => ($("#fw-s"+i)||{}).value ? $("#fw-s"+i).value.trim() : ""),
+      ab: $("#fw-ab").value.trim()
+    };
+    speichern(); pruefeAchievements();
+    toast("Frühwarnplan gespeichert.");
   });
 }
 

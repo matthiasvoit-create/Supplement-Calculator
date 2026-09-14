@@ -29,6 +29,53 @@ Diese Punkte stehen über jedem Spielmechanismus:
   Angst zu provozieren. Nur das freiwillige Reflektieren danach zahlt auf Geist ein.
   Sie ist außerdem bewusst vom Y2K-Look ausgenommen: im Panikmodus gilt gedämpft und reizarm.
 
+## Behandlungspfad
+
+Sechs Module in der Reihenfolge, in der eine kognitive Verhaltenstherapie bei Panikstörung und
+Agoraphobie üblicherweise vorgeht:
+
+1. **Verstehen, was passiert** — Fehlalarm, Adrenalinabbau, Hyperventilation, Teufelskreis
+2. **Dein eigenes Modell** — Panik-Protokoll, Angst-Tagebuch, eigener Teufelskreis
+3. **Gedanken prüfen** — A-B-C-Schema, Gedankenprotokoll, Reattribution, Dekatastrophisieren
+4. **Sicherheitsverhalten abbauen** — erkennen, weglassen, Unsicherheit aushalten, Aufmerksamkeit nach außen
+5. **Vermeidung abbauen** — Landkarte, Expositionsleiter, Verhaltensexperiment, Rückblick
+6. **Dranbleiben und vorbeugen** — Notfallkarte, Frühwarnzeichen, Wochen-Check, Rückschlagregeln
+
+Jedes Modul hat ein Lernziel, aufklappbare Wissenskarten, die zugehörigen Übungen und einen
+Merksatz. Nichts ist gesperrt — die Reihenfolge ist eine Empfehlung, kein Gate. Abschließen
+entscheidet die Person, nicht die App.
+
+### Die beiden Regellisten
+
+**Die zehn goldenen Regeln zur Angstbewältigung** stehen in der Ich-Form als Selbstgespräch und
+sind sowohl eine Übung als auch — in den ersten sechs Punkten — ein Eintrag in der Ruhe-Insel.
+**Umgang mit Rückschlägen** ist die zweite Liste; sie ist in die Du-Form der App übertragen,
+inhaltlich unverändert.
+
+### Konkrete KVT-Werkzeuge
+
+| Übung | Technik |
+|---|---|
+| Panik-Protokoll | Verlaufsprotokoll einer Attacke: Situation → erstes Körpersignal → Gedanke → Verhalten → Abklingen |
+| A-B-C-Schema | Auslöser, Bewertung, Konsequenz — plus alternatives B und dessen Folge |
+| Kuchendiagramm | Reattribution: Katastrophenerklärung gegen mindestens drei harmlose, Prozente live als SVG-Diagramm |
+| Verhaltensexperiment | Überprüfbare Vorhersage vorher schriftlich, Erfolgskriterium vorher, Abgleich nachher |
+| Aufmerksamkeit nach außen | Aufmerksamkeitstraining gegen die Innenwendung der Wahrnehmung |
+| Die Angst vor der Angst prüfen | Erwartungsangst: vorhergesagte gegen tatsächliche Schwere |
+| Notfallkarte | Vier Felder, erscheinen danach ganz oben in der Ruhe-Insel |
+| Frühwarnzeichen | Rückfallprophylaxe: drei Zeichen, drei Sofortschritte, Schwelle für Unterstützung |
+| Wochen-Check | Vermeidung sichtbar machen, bevor der Radius unbemerkt kleiner wird |
+
+### Psychoedukation zu den Störungsbildern
+
+Elf zusätzliche Karten beschreiben Panikstörung, Agoraphobie, den Unterschied zu generalisierter
+Angst, Häufigkeit, das Drei-Ebenen-Modell, Rückversicherung, Verhaltensexperimente, den Ablauf
+einer Verhaltenstherapie, deren Wirksamkeit, Medikamente (SSRI/SNRI als Leitlinienoption,
+Abhängigkeitsrisiko von Benzodiazepinen) und den Weg zum Therapieplatz in Deutschland.
+
+Alle beschreibend, nie beurteilend — die App stellt weiterhin keine Diagnose und gibt keine
+Medikamentenempfehlung; die Einordnung macht eine Fachperson.
+
 ## Mein Gipfel
 
 Neben dem Tagespensum lässt sich **ein** selbst gesetztes Ziel anlegen: eine gemiedene Situation,
@@ -87,7 +134,7 @@ ergänzen, der Rest passt sich an. Wechseln ist jederzeit möglich und ändert n
 
 | Abschnitt | Inhalt |
 |---|---|
-| `§A INHALTE` | Texte, Krisenkontakte, Attribute, Level, 68 Quests (davon 13 Elite), 19 Wissenskarten, Coping-Sätze, 35 Abzeichen, 12 Medaillen |
+| `§A INHALTE` | Texte, Krisenkontakte, Attribute, Level, 79 Quests (13 Elite), 30 Wissenskarten, zwei Regellisten, Behandlungspfad, Coping-Sätze, 42 Abzeichen, 12 Medaillen |
 | `§B STATE` | Datenmodell, `localStorage`, `migrate()` |
 | `§C LOGIK` | Tagesplan, Punkte, Serie mit Schilden, Level-Ups |
 | `§D AVATAR` | Vier Arten × sieben Stufen als Inline-SVG, Symbole, Abzeichen |
@@ -120,6 +167,11 @@ Alle Inhalte stehen als Konstanten-Objekte in `§A` und lassen sich ohne Logikwi
 | Sicherheitsnetz lockern, Nicht nachschauen | Abbau von Sicherheits- und Rückversicherungsverhalten |
 | Rückblick nach der Mutprobe | Auswertung als eigentlicher Wirkfaktor der Exposition |
 | Mein Gipfel | Graduierte Exposition über Etappen plus Erwartungsverletzung (Craske): Vorhersage vorher, Abgleich nachher |
+| Behandlungspfad | Aufbau des Standardprotokolls für Panikstörung und Agoraphobie (Margraf/Schneider; kognitives Panikmodell nach Clark) |
+| Panik-Protokoll, A-B-C, Kuchendiagramm | Selbstbeobachtung, kognitive Grundformel, Reattribution |
+| Verhaltensexperiment | Überprüfbare Vorhersage statt Argument — das wirksamste Einzelwerkzeug der KVT |
+| Notfallkarte, Frühwarnzeichen | Rückfallprophylaxe, fester Bestandteil jeder Verhaltenstherapie |
+| Die zehn goldenen Regeln | Klassische Regelliste der Angstbewältigung, als Selbstgespräch in der Ich-Form |
 | Freude einplanen, Drei Lichter, Menschen-Zeit | Verhaltensaktivierung und soziale Schutzfaktoren |
 | Elite-Aktivitäten | Soziale Bindung als Schutzfaktor, Verhaltensaktivierung, bei Club/Kino/Café zusätzlich Alltagsexposition |
 
