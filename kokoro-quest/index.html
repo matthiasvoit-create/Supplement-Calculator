@@ -62,8 +62,16 @@
   --at-mut:#B79BE0;
   --at-verbundenheit:#F0C64B;
 
-  --radius:26px;
-  --radius-sm:18px;
+  /* Y2K: Fenster sind eckiger als Buttons – die Rundung lebt in Pillen,
+     Stickern und der Figur weiter. */
+  --radius:12px;
+  --radius-sm:9px;
+  --radius-pille:999px;
+  --chrome-a:#A0D8F1;        /* Titelleiste links  */
+  --chrome-b:#FFB7C5;        /* Titelleiste rechts */
+  --y2k-grid:rgba(59,48,84,.10);
+  --hart:4px 4px 0 var(--ink-dunkel);
+  --hart-klein:3px 3px 0 var(--ink-dunkel);
   --outline:3px;
   --maxw:620px;
   --font:"Hiragino Maru Gothic ProN","Quicksand","Trebuchet MS",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -89,6 +97,11 @@
     --focus:#9AD1FF;
     --shadow:0 6px 0 rgba(0,0,0,.25), 0 10px 24px rgba(0,0,0,.35);
     --shadow-sm:0 3px 0 rgba(0,0,0,.22), 0 6px 14px rgba(0,0,0,.28);
+    --chrome-a:#6E8FC0;
+    --chrome-b:#B57C97;
+    --y2k-grid:rgba(243,238,255,.07);
+    --hart:4px 4px 0 #120C1F;
+    --hart-klein:3px 3px 0 #120C1F;
     --at-koerper:#F09FAE;
     --at-geist:#8CC0DC;
     --at-mut:#B9A6DE;
@@ -112,18 +125,20 @@ body{
   min-height:100vh;
   overflow-x:hidden;              /* nie horizontal scrollen */
 }
-body::before{                      /* dekorative Wölkchen im Hintergrund */
+body::before{                      /* Y2K-Grund: Verlauf, feines Raster, Halbton */
   content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
   background:
-    radial-gradient(60px 40px at 12% 18%, var(--bg-deko) 60%, transparent 61%),
-    radial-gradient(90px 55px at 85% 10%, var(--bg-deko) 60%, transparent 61%),
-    radial-gradient(70px 45px at 75% 78%, var(--bg-deko) 60%, transparent 61%),
-    radial-gradient(50px 34px at 20% 88%, var(--bg-deko) 60%, transparent 61%);
-  opacity:.9;
+    radial-gradient(circle at 12% 14%, var(--sakura) 0 2px, transparent 2.5px) 0 0/18px 18px,
+    linear-gradient(var(--y2k-grid) 1px, transparent 1px) 0 0/26px 26px,
+    linear-gradient(90deg, var(--y2k-grid) 1px, transparent 1px) 0 0/26px 26px,
+    linear-gradient(160deg, var(--himmel) 0%, var(--bg) 38%, var(--bg) 62%, var(--sakura) 130%);
+  opacity:.55;
 }
+@media (prefers-color-scheme: dark){ body::before{opacity:.32} }
 img,svg{max-width:100%}
 h1,h2,h3{font-weight:800;line-height:1.25;margin:0 0 .4em}
-h1{font-size:1.5rem}
+h1{font-size:1.5rem;letter-spacing:.01em;text-shadow:2.5px 2.5px 0 var(--butter)}
+@media (prefers-color-scheme: dark){h1{text-shadow:2.5px 2.5px 0 rgba(201,182,228,.45)}}
 h2{font-size:1.25rem}
 h3{font-size:1.05rem}
 p{margin:0 0 .8em}
@@ -146,10 +161,13 @@ a{color:var(--text);text-underline-offset:3px}
    ========================================================================= */
 .appbar{
   position:sticky;top:0;z-index:30;
-  background:color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter:blur(8px);
-  border-bottom:2px solid var(--line);
+  background-color:var(--chrome-a);
+  background-image:linear-gradient(90deg,var(--chrome-a),var(--chrome-b));
+  border-bottom:var(--outline) solid var(--ink-dunkel);
 }
+.appbar .logo{color:var(--ink-dunkel);text-transform:uppercase;letter-spacing:.08em;
+  text-shadow:1.5px 1.5px 0 #FFF8F3}
+.appbar .btn{background:#FFF8F3;color:var(--ink-dunkel)}
 .appbar .wrap{display:flex;align-items:center;gap:10px;padding-block:10px}
 .logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:1.05rem}
 .logo .dot{width:26px;height:26px;border-radius:50%;background:var(--sakura);
@@ -159,14 +177,32 @@ a{color:var(--text);text-underline-offset:3px}
 /* =========================================================================
    4. KARTEN, BUTTONS, FORMULARE  ·  Sticker-Optik
    ========================================================================= */
+/* Karte = Fenster. Mit data-titel bekommt sie eine Titelleiste im
+   Betriebssystem-Look; ohne bleibt sie ein schlichtes Fenster. */
 .card{
+  position:relative;
   background:var(--surface);
-  border:var(--outline) solid var(--tinte);
+  border:var(--outline) solid var(--ink-dunkel);
   border-radius:var(--radius);
   padding:16px;
-  box-shadow:var(--shadow-sm);
+  box-shadow:var(--hart);
 }
-@media (prefers-color-scheme: dark){.card{border-color:var(--line)}}
+@media (prefers-color-scheme: dark){.card{border-color:#120C1F}}
+.card[data-titel]{padding-top:0}
+.card[data-titel]::before{
+  content:attr(data-titel);
+  display:block;margin:0 -16px 14px;padding:7px 64px 7px 12px;
+  background-color:var(--chrome-a);
+  background-image:linear-gradient(90deg,var(--chrome-a),var(--chrome-b));
+  border-bottom:var(--outline) solid var(--ink-dunkel);
+  border-radius:8px 8px 0 0;
+  font-size:.8rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-dunkel);
+}
+.card[data-titel]::after{               /* die drei Fensterknöpfe */
+  content:"";position:absolute;top:8px;right:12px;width:52px;height:16px;
+  background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='52' height='16' viewBox='0 0 52 16'><g fill='%23FFF8F3' stroke='%233B3054' stroke-width='2'><rect x='1' y='1' width='14' height='14' rx='2'/><rect x='19' y='1' width='14' height='14' rx='2'/><rect x='37' y='1' width='14' height='14' rx='2'/></g><g stroke='%233B3054' stroke-width='2' stroke-linecap='round' fill='none'><path d='M5 11h6'/><path d='M23 5h6v6h-6z'/><path d='M41 5l6 6M47 5l-6 6'/></g></svg>") no-repeat center/contain;
+}
 .card.soft{border-style:solid;background:var(--surface-2)}
 .card h2,.card h3{margin-top:0}
 
@@ -174,19 +210,19 @@ a{color:var(--text);text-underline-offset:3px}
   font:inherit;font-weight:800;
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   min-height:48px;padding:10px 18px;
-  border-radius:999px;
-  border:var(--outline) solid var(--tinte);
+  border-radius:var(--radius-pille);
+  border:var(--outline) solid var(--ink-dunkel);
   background:var(--surface);
   color:var(--text);
   cursor:pointer;
-  box-shadow:0 4px 0 var(--tinte);
+  box-shadow:var(--hart-klein), inset 0 2px 0 rgba(255,255,255,.65);
   transition:transform .12s ease, box-shadow .12s ease;
   text-decoration:none;
 }
 @media (prefers-color-scheme: dark){
-  .btn{border-color:var(--line);box-shadow:0 4px 0 var(--line)}
+  .btn{box-shadow:var(--hart-klein), inset 0 2px 0 rgba(255,255,255,.18)}
 }
-.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--tinte)}
+.btn:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-dunkel), inset 0 2px 0 rgba(255,255,255,.4)}
 .btn[disabled]{opacity:.5;cursor:not-allowed}
 .btn.primary{background:var(--sakura);color:var(--accent-ink)}
 .btn.mint{background:var(--mint);color:#20303A}
@@ -194,8 +230,7 @@ a{color:var(--text);text-underline-offset:3px}
 .btn.butter{background:var(--butter);color:#3B3054}
 .btn.ghost{box-shadow:none;border-style:dashed;background:transparent}
 .btn.block{width:100%}
-.btn.sm{min-height:38px;padding:6px 14px;font-size:.9rem;box-shadow:0 3px 0 var(--tinte)}
-@media (prefers-color-scheme: dark){.btn.sm{box-shadow:0 3px 0 var(--line)}}
+.btn.sm{min-height:38px;padding:6px 14px;font-size:.9rem}
 
 label{display:block;font-weight:700;margin-bottom:4px}
 input[type=text],input[type=tel],input[type=time],input[type=number],textarea,select{
@@ -210,10 +245,11 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px}
 .pill{
   display:inline-flex;align-items:center;gap:6px;
   padding:4px 12px;border-radius:999px;
-  border:2px solid var(--tinte);background:var(--surface-2);
+  border:2px solid var(--ink-dunkel);background:var(--surface-2);
+  box-shadow:2px 2px 0 var(--ink-dunkel);
   font-size:.82rem;font-weight:700;white-space:nowrap;
 }
-@media (prefers-color-scheme: dark){.pill{border-color:var(--line)}}
+@media (prefers-color-scheme: dark){.pill{border-color:#120C1F}}
 .pill.koerper{background:var(--at-koerper);color:#3B2028}
 .pill.geist{background:var(--at-geist);color:#132835}
 .pill.mut{background:var(--at-mut);color:#251838}
@@ -224,28 +260,36 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px}
    ========================================================================= */
 .tabbar{
   position:fixed;left:0;right:0;bottom:50px;z-index:28;
-  background:color-mix(in srgb, var(--surface) 94%, transparent);
-  backdrop-filter:blur(8px);
-  border-top:2px solid var(--line);
+  background-color:var(--surface);
+  background-image:linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  border-top:var(--outline) solid var(--ink-dunkel);
+  box-shadow:0 -3px 0 rgba(255,255,255,.6) inset;
 }
-.tabbar .wrap{display:flex;gap:2px;padding-block:6px}
+.tabbar .wrap{display:flex;gap:4px;padding-block:6px}
 .tab{
   flex:1 1 0;min-width:0;
   display:flex;flex-direction:column;align-items:center;gap:2px;
-  font:inherit;font-size:.72rem;font-weight:700;
-  background:none;border:0;border-radius:14px;color:var(--text-muted);
+  font:inherit;font-size:.62rem;font-weight:800;letter-spacing:.01em;text-transform:uppercase;
+  background:var(--surface);border:2px solid var(--ink-dunkel);border-radius:6px;
+  color:var(--text-muted);
+  box-shadow:2px 2px 0 var(--ink-dunkel), inset 0 2px 0 rgba(255,255,255,.6);
   padding:6px 2px;cursor:pointer;
 }
-.tab .ic{width:24px;height:24px;display:block}
-.tab[aria-current="page"]{color:var(--text);background:var(--surface-2)}
+.tab .ic{width:22px;height:22px;display:block}
+.tab[aria-current="page"]{
+  color:var(--ink-dunkel);background:var(--butter);
+  transform:translate(2px,2px);
+  box-shadow:0 0 0 var(--ink-dunkel), inset 2px 2px 0 rgba(59,48,84,.22);
+}
 
 /* =========================================================================
    6. KRISENLEISTE  ·  auf jedem Screen erreichbar
    ========================================================================= */
 .crisisbar{
   position:fixed;left:0;right:0;bottom:0;z-index:29;
-  background:var(--tinte);color:#FFF8F3;
-  border-top:2px solid var(--tinte);
+  background-color:#3B3054;
+  background-image:linear-gradient(180deg,#4A3C6B,#3B3054);color:#FFF8F3;
+  border-top:var(--outline) solid var(--ink-dunkel);
   font-size:.86rem;
 }
 @media (prefers-color-scheme: dark){.crisisbar{background:#160F26}}
@@ -261,17 +305,16 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px}
 .panic{
   position:fixed;right:14px;bottom:136px;z-index:35;
   width:74px;height:74px;border-radius:50%;
-  border:var(--outline) solid var(--tinte);
-  background:var(--himmel);color:#14293A;
-  font:inherit;font-weight:800;font-size:.74rem;line-height:1.1;
+  border:var(--outline) solid var(--ink-dunkel);
+  background-color:var(--himmel);
+  background-image:radial-gradient(circle at 32% 28%, #fff 0 12%, var(--himmel) 55%);
+  color:#14293A;
+  font:inherit;font-weight:800;font-size:.72rem;line-height:1.1;letter-spacing:.02em;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  box-shadow:0 5px 0 var(--tinte), 0 10px 20px rgba(59,48,84,.28);
+  box-shadow:var(--hart), 0 10px 20px rgba(59,48,84,.25);
   cursor:pointer;
 }
-.panic:active{transform:translateY(3px);box-shadow:0 2px 0 var(--tinte)}
-@media (prefers-color-scheme: dark){
-  .panic{border-color:var(--line);box-shadow:0 5px 0 var(--line), 0 10px 20px rgba(0,0,0,.4)}
-}
+.panic:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-dunkel)}
 .panic svg{width:26px;height:26px}
 
 /* =========================================================================
@@ -292,14 +335,19 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 .levelname{font-weight:800;font-size:1.15rem;text-align:center}
+/* Ladebalken im Y2K-Look: einzelne Blöcke statt glattem Verlauf */
 .xpbar{
-  height:22px;border-radius:999px;border:var(--outline) solid var(--tinte);
-  background:var(--surface-2);overflow:hidden;position:relative;
+  height:24px;border-radius:5px;border:var(--outline) solid var(--ink-dunkel);
+  background:var(--surface);overflow:hidden;position:relative;padding:3px;
+  box-shadow:inset 2px 2px 0 rgba(59,48,84,.14);
 }
-@media (prefers-color-scheme: dark){.xpbar{border-color:var(--line)}}
 .xpbar>i{
-  display:block;height:100%;
-  background:linear-gradient(90deg,var(--sakura),var(--butter));
+  display:block;height:100%;border-radius:2px;
+  background:
+    repeating-linear-gradient(90deg,
+      var(--sakura) 0 9px, transparent 9px 12px),
+    linear-gradient(90deg,var(--sakura),var(--koralle));
+  background-clip:padding-box;
   transition:width .6s cubic-bezier(.2,.9,.3,1);
 }
 
@@ -312,15 +360,15 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px}
    ========================================================================= */
 .quest{
   display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;
-  background:var(--surface);border:var(--outline) solid var(--tinte);
-  border-radius:var(--radius);padding:14px;box-shadow:var(--shadow-sm);
+  background:var(--surface);border:var(--outline) solid var(--ink-dunkel);
+  border-radius:var(--radius);padding:14px;box-shadow:var(--hart);
   font:inherit;color:var(--text);cursor:pointer;
 }
-@media (prefers-color-scheme: dark){.quest{border-color:var(--line)}}
+.quest:hover{background:var(--surface-2)}
 .quest:active{transform:translateY(2px)}
-.quest .ic{width:44px;height:44px;flex:none;border-radius:14px;display:grid;place-items:center;
-  border:2px solid var(--tinte);background:var(--surface-2)}
-@media (prefers-color-scheme: dark){.quest .ic{border-color:var(--line)}}
+.quest .ic{width:44px;height:44px;flex:none;border-radius:8px;display:grid;place-items:center;
+  border:2px solid var(--ink-dunkel);background:var(--surface-2);
+  box-shadow:2px 2px 0 var(--ink-dunkel)}
 .quest .ic svg{width:26px;height:26px}
 .quest h3{margin:0 0 2px;font-size:1rem}
 .quest .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
@@ -444,10 +492,77 @@ body.no-motion .breath{transform:scale(1) !important}
 body.no-motion .confetti{display:none}
 
 /* =========================================================================
+   15b. Y2K-SCHICHT  ·  Fenster, Sticker, Pixel-Deko, Artenwahl
+   ------------------------------------------------------------------------
+   Bewusste Ausnahme: Die Ruhe-Insel (§11) bleibt vom Retro-Look
+   ausgenommen. Im Akutmodus wäre grelles Chrome das Gegenteil von
+   hilfreich – dort gilt weiterhin gedämpft, ruhig, reizarm.
+   ========================================================================= */
+
+/* Auswahl der Figur (Onboarding und Einstellungen) */
+.artwahl{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.artkarte{
+  font:inherit;color:var(--text);text-align:center;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:10px 8px;border:var(--outline) solid var(--ink-dunkel);border-radius:var(--radius);
+  background:var(--surface);box-shadow:var(--hart-klein);
+}
+.artkarte .bild{display:block;width:100%;max-width:120px}
+.artkarte .bild svg{width:100%;height:auto}
+.artkarte strong{font-size:.92rem}
+.artkarte.gewaehlt{
+  background:var(--butter);
+  box-shadow:0 0 0 3px var(--koralle), var(--hart-klein);
+}
+.artkarte.gewaehlt::after{content:"✔ gewählt";font-size:.72rem;font-weight:800;letter-spacing:.04em}
+.artwahl.klein .bild{max-width:86px}
+.artwahl.klein .artkarte{padding:8px 4px}
+
+/* Sticker-Zeile als Trenner: ▶▶▶ */
+.pfeile{display:flex;gap:4px;justify-content:center;color:var(--koralle);
+  font-size:.8rem;letter-spacing:.3em;font-weight:800}
+
+/* Sprechblase im Manga-/Retro-Stil */
+.bubble{
+  position:relative;background:var(--surface);border:var(--outline) solid var(--ink-dunkel);
+  border-radius:var(--radius);padding:12px 14px;box-shadow:var(--hart-klein);
+}
+.bubble::after{
+  content:"";position:absolute;left:26px;bottom:-14px;
+  width:0;height:0;border:11px solid transparent;
+  border-top-color:var(--ink-dunkel);
+}
+
+/* Statusfeld im Fensterlook (z. B. „noch 2 Etappen") */
+.statusfeld{
+  border:2px solid var(--ink-dunkel);border-radius:5px;background:var(--surface);
+  padding:6px 10px;font-size:.86rem;font-weight:700;
+  box-shadow:inset 2px 2px 0 rgba(59,48,84,.12);
+}
+
+/* Formularfelder im Retro-Look: eingelassen statt weich */
+input[type=text],input[type=tel],input[type=time],input[type=number],textarea,select{
+  border:2px solid var(--ink-dunkel);border-radius:6px;
+  box-shadow:inset 2px 2px 0 rgba(59,48,84,.12);
+}
+.warnbox,.why,.statusfeld,.banner{border-radius:8px}
+.warnbox{box-shadow:var(--hart-klein)}
+
+/* Die Ruhe-Insel nimmt am Retro-Look NICHT teil */
+.island .card{box-shadow:none;border-radius:20px;border:2px solid #3E5476}
+.island .card::before,.island .card::after{content:none}
+.island .btn{box-shadow:none;border-radius:20px;border:2px solid #5A7299}
+.island .btn:active{transform:none;box-shadow:none}
+.island h1,.island h2{text-shadow:none;letter-spacing:0}
+.island .xpbar,.island .pill{box-shadow:none}
+
+/* =========================================================================
    15. KLEINE BILDSCHIRME (ab 360 px) & GROSSE
    ========================================================================= */
 @media (max-width:400px){
   .panic{width:66px;height:66px;font-size:.68rem;bottom:132px}
+  .artwahl{grid-template-columns:repeat(2,1fr)}
+  .card[data-titel]::before{font-size:.72rem;padding-right:58px}
   h1{font-size:1.3rem}
 }
 @media (min-width:680px){
@@ -570,8 +685,9 @@ const ATTR_KEYS = ["koerper","geist","mut","verbundenheit"];
 
 /* --- A.4  Avatar-Stufen (kumulative Punkte) ----------------------------- */
 const LEVELS = [
-  { stufe:1, name:"Mochi",       ab:0,    satz:"Hier fängt es an. Mochi ist klein, zittrig – und von Anfang an liebenswert." },
-  { stufe:2, name:"Wackelkind",  ab:150,  satz:"Mochi steht. Noch wacklig, aber die Augen sind offen." },
+  /* {figur} wird zur Laufzeit durch den selbst gewählten Namen ersetzt. */
+  { stufe:1, name:"Frischling",  ab:0,    satz:"Hier fängt es an. {figur} ist klein, zittrig – und von Anfang an liebenswert." },
+  { stufe:2, name:"Wackelkind",  ab:150,  satz:"{figur} steht. Noch wacklig, aber die Augen sind offen." },
   { stufe:3, name:"Lehrling",    ab:400,  satz:"Ein Umhang und eine Laterne: Du hast angefangen, dir selbst Licht zu machen." },
   { stufe:4, name:"Späher",      ab:800,  satz:"Stirnband, Rucksack, aufrechter Gang. Du gehst inzwischen los, bevor du dich sicher fühlst." },
   { stufe:5, name:"Wächter",     ab:1400, satz:"Das Schild mit dem Herz. Du weißt, was dich trägt, wenn es unruhig wird." },
@@ -1211,7 +1327,7 @@ const ACHIEVEMENTS = [
   { id:"atemmeister", name:"Atemhandwerk", text:"Zwanzig Atemübungen gemacht.",
     pruef:s=>zaehleKategorie(s,"atem")>=20 },
   { id:"sammler", name:"Entdeckerin", text:"25 verschiedene Quests ausprobiert.",
-    pruef:s=>new Set(s.completions.map(c=>c.questId)).size>=25 },
+    pruef:s=>new Set(s.completions.map(c=>c.questId).filter(id=>!/^gipfel-/.test(id))).size>=25 },
   { id:"wissensdurst", name:"Wissensdurst", text:"Zehn Wissenskarten gelesen.",
     pruef:s=>zaehleQuest(s,"wissenskarte")>=10 },
   { id:"mutworte", name:"Mutworte", text:"Fünf eigene Mut-Sätze gespeichert.",
@@ -1231,8 +1347,29 @@ const ACHIEVEMENTS = [
   { id:"sanftmut", name:"Sanftmut", text:"Fünf sanfte Tage genutzt – klug dosiert.",
     pruef:s=>(s.stats&&s.stats.sanfteTage||0)>=5 },
   { id:"chronist", name:"Chronistin", text:"Zehn Einträge im Angst-Tagebuch.",
-    pruef:s=>s.journal.filter(j=>j.type==="angsttagebuch").length>=10 }
+    pruef:s=>s.journal.filter(j=>j.type==="angsttagebuch").length>=10 },
+
+  /* --- Mein Gipfel ----------------------------------------------------- */
+  { id:"gipfel-gesetzt", name:"Kurs gesetzt", text:"Einen eigenen Gipfel festgelegt.",
+    pruef:s=>!!s.gipfel || (s.gipfelArchiv||[]).length>0 },
+  { id:"erster-durchgang", name:"Erster Durchgang", text:"Den ersten Durchgang gemacht.",
+    pruef:s=>alleDurchgaenge(s).length>=1 },
+  { id:"dreimal-dieselbe", name:"Noch mal von vorn", text:"Dieselbe Etappe dreimal gegangen – da passiert das Lernen.",
+    pruef:s=>{ const z={}; alleDurchgaenge(s).forEach(d=>{z[d.etappeId]=(z[d.etappeId]||0)+1;});
+      return Object.keys(z).some(k=>z[k]>=3); } },
+  { id:"halbiert", name:"Klüger dosiert", text:"Eine Etappe halbiert statt sie aufzugeben.",
+    pruef:s=>(s.stats&&s.stats.etappenHalbiert||0)>=1 },
+  { id:"vorhersage-pruefer", name:"Nachgeprüft", text:"Zehnmal Befürchtung und Wirklichkeit verglichen.",
+    pruef:s=>alleDurchgaenge(s).filter(d=>d.vorhersage && d.wasPassierte).length>=10 },
+  { id:"gipfelstuermer", name:"Gipfelstürmerin", text:"Einen ganzen Gipfel erreicht.",
+    pruef:s=>(s.gipfelArchiv||[]).length>0 || (s.gipfel && s.gipfel.status==="abgeschlossen") }
 ];
+/* Alle Durchgänge – aktueller Gipfel plus Archiv. */
+function alleDurchgaenge(s){
+  const aktuell = s.gipfel && Array.isArray(s.gipfel.durchgaenge) ? s.gipfel.durchgaenge : [];
+  const alt = (s.gipfelArchiv||[]).reduce((a,g) => a.concat(g.durchgaenge||[]), []);
+  return aktuell.concat(alt);
+}
 
 /* ===========================================================================
    §B  STATE  ·  Datenmodell, localStorage, Migration
@@ -1265,7 +1402,7 @@ function leererState(){
   return {
     version: VERSION,
     createdAt: new Date().toISOString(),
-    profile: { name:"", avatarName:"Mochi", startDate: heute(), intensity:"normal", wert:"" },
+    profile: { name:"", avatarName:"", art:"mochi", startDate: heute(), intensity:"normal", wert:"" },
     xp: { koerper:0, geist:0, mut:0, verbundenheit:0 },
     totalXp: 0,
     level: 1,
@@ -1276,6 +1413,8 @@ function leererState(){
     copingCards: [],
     avoidanceMap: [],
     emergencyContacts: [],
+    gipfel: null,                 // die eine aktive Herausforderung
+    gipfelArchiv: [],             // abgeschlossene Gipfel
     playlists: { ruhe:[], kraft:[] },
     daily: { date:null, questIds:[], sanft:false, done:[] },
     stats: { sanfteTage:0, islandOpened:0, letzterWochenSchild:0 },
@@ -1302,8 +1441,17 @@ function migrate(state){
   out.playlists = Object.assign({}, std.playlists, state.playlists || {});
 
   // Arrays absichern
-  ["completions","achievements","journal","copingCards","avoidanceMap","emergencyContacts"]
+  ["completions","achievements","journal","copingCards","avoidanceMap","emergencyContacts","gipfelArchiv"]
     .forEach(k => { if (!Array.isArray(out[k])) out[k] = []; });
+  /* Gipfel absichern: fehlende Teilstrukturen ergänzen, Unfertiges verwerfen */
+  if (out.gipfel && typeof out.gipfel === "object"){
+    out.gipfel.etappen     = Array.isArray(out.gipfel.etappen) ? out.gipfel.etappen : [];
+    out.gipfel.durchgaenge = Array.isArray(out.gipfel.durchgaenge) ? out.gipfel.durchgaenge : [];
+    out.gipfel.notfallplan = Object.assign({ kontakt:"", ausstiegssatz:"" }, out.gipfel.notfallplan || {});
+    out.gipfel.status      = out.gipfel.status || "aktiv";
+    out.gipfel.zielSud     = Number(out.gipfel.zielSud) || 0;
+    if (!out.gipfel.titel) out.gipfel = null;
+  } else out.gipfel = null;
   ["ruhe","kraft"].forEach(k => { if(!Array.isArray(out.playlists[k])) out.playlists[k]=[]; });
   if (!Array.isArray(out.daily.questIds)) out.daily.questIds = [];
   if (!Array.isArray(out.daily.done)) out.daily.done = [];
@@ -1321,6 +1469,7 @@ function migrate(state){
   out.avoidanceMap = out.avoidanceMap.map(a => a.id ? a : Object.assign({id:neueId()}, a));
   out.journal      = out.journal.map(j => j.id ? j : Object.assign({id:neueId()}, j));
 
+  if (!ARTEN[out.profile.art]) out.profile.art = "mochi";   // unbekannte Art abfangen
   out.level = levelFuer(out.totalXp).stufe;
   return out;
 }
@@ -1361,6 +1510,11 @@ function speichern(){
    =========================================================================== */
 
 /* --- Level -------------------------------------------------------------- */
+/* Stufe 1 heißt bei jeder Art anders; ab Stufe 2 ist der Bogen gemeinsam. */
+const levelName = lvl => lvl.stufe === 1 ? meineArt().stufe1Name : lvl.name;
+/* Ersetzt {figur} durch den selbst gewählten Namen der Figur. */
+const mitFigur = text => String(text).replace(/\{figur\}/g, figurName());
+
 function levelFuer(total){
   let l = LEVELS[0];
   for (const lv of LEVELS) if (total >= lv.ab) l = lv;
@@ -1505,27 +1659,40 @@ function sanftUmschalten(){
    Reflektieren danach zahlt auf Geist ein.                                 */
 function questAbschliessen(quest, extra){
   extra = extra || {};
-  const mult = serienMultiplikator();
-  const gewinn = {};
-  let summe = 0;
-  for (const k of ATTR_KEYS){
-    if (quest.attribute[k]){
-      const p = Math.round(quest.attribute[k] * mult);
-      gewinn[k] = p; S.xp[k] += p; summe += p;
-    }
-  }
-  S.totalXp += summe;
-
-  S.completions.push({
+  if (!S.daily.done.includes(quest.id)) S.daily.done.push(quest.id);
+  return punkteGutschreiben(quest.attribute, {
     questId: quest.id,
-    date: heute(),
     durationMin: extra.durationMin != null ? extra.durationMin : quest.dauerMin,
     moodBefore: extra.moodBefore != null ? extra.moodBefore : null,
     moodAfter:  extra.moodAfter  != null ? extra.moodAfter  : null,
     note: extra.note || ""
   });
-  if (!S.daily.done.includes(quest.id)) S.daily.done.push(quest.id);
+}
 
+/* Der gemeinsame Kern: Punkte verbuchen, Serie fortschreiben, Level prüfen.
+   Wird von Quests UND vom Gipfel benutzt, damit beide gleich abrechnen.
+   opts.ohneSerie = true rechnet ohne Serien-Multiplikator (Gipfel-Bonus). */
+function punkteGutschreiben(attribute, opts){
+  opts = opts || {};
+  const mult = opts.ohneSerie ? 1 : serienMultiplikator();
+  const gewinn = {};
+  let summe = 0;
+  for (const k of ATTR_KEYS){
+    if (attribute[k]){
+      const p = Math.round(attribute[k] * mult);
+      gewinn[k] = p; S.xp[k] += p; summe += p;
+    }
+  }
+  S.totalXp += summe;
+  if (opts.questId){
+    S.completions.push({
+      questId: opts.questId, date: heute(),
+      durationMin: opts.durationMin != null ? opts.durationMin : 0,
+      moodBefore: opts.moodBefore != null ? opts.moodBefore : null,
+      moodAfter:  opts.moodAfter  != null ? opts.moodAfter  : null,
+      note: opts.note || ""
+    });
+  }
   const altesLevel = S.level;
   serieFortschreiben();
   S.level = levelFuer(S.totalXp).stufe;
@@ -1555,6 +1722,96 @@ function pruefeAchievements(ctx){
   }
   if (neu.length) speichern();
   return neu;
+}
+
+
+/* --- C.7  Mein Gipfel: Punkte und Zustandsübergänge ---------------------- */
+/* Punkte für einen Durchgang. Ein Abbruch zahlt 60 % – nie null, weil
+   Anfangen der schwere Teil ist und ein Abbruch nie bestraft werden darf. */
+function durchgangPunkte(etappe, abgebrochen, mitAuswertung){
+  const basis = Math.round(25 + 0.4 * (Number(etappe.sud)||0));
+  const mut = abgebrochen ? Math.round(basis * 0.6) : basis;
+  const attr = { mut: mut };
+  if (mitAuswertung) attr.geist = 15;
+  return attr;
+}
+function gipfelAnlegen(G){
+  S.gipfel = {
+    id: neueId(), titel: G.titel.trim(), warum: G.warum.trim(), wert: S.profile.wert,
+    zielSud: Number(G.zielSud)||0, erstelltAm: heute(), status: "aktiv",
+    sicherheitscheck: { bestaetigt:true, aerztlichAbgeklaert: !!G.abgeklaert },
+    notfallplan: { kontakt:G.kontakt.trim(), ausstiegssatz:G.ausstiegssatz.trim() },
+    verbuendeter: G.verbuendeter.trim(),
+    etappen: G.etappen.slice().sort((a,b)=>a.sud-b.sud)
+      .map(e => ({ id:e.id, text:e.text, sud:e.sud, geplanteMin:e.geplanteMin,
+                   ohneSicherheit:e.ohneSicherheit, status:"offen" })),
+    durchgaenge: [], abgeschlossenAm:null, bonus:0
+  };
+  speichern();
+  punkteGutschreiben({ geist:30 }, { questId:"gipfel-plan", label:"Gipfel festgelegt" });
+}
+function durchgangEintragen(){
+  const g = S.gipfel, d = DSTATE;
+  const e = etappeVon(d.etappeId);
+  if (!g || !e) return;
+  const passiert = ($("#dg-passiert") && $("#dg-passiert").value.trim()) || "";
+  const erkenntnis = ($("#dg-erkenntnis") && $("#dg-erkenntnis").value.trim()) || "";
+  const eintrag = {
+    id: neueId(), etappeId: e.id, date: heute(),
+    vorhersage: d.vorhersage, wahrscheinlichkeit: d.wahrscheinlichkeit,
+    sudVorher: d.sudVorher,
+    sudHoch: Number(($("#dg-hoch")||{}).value || 7),
+    sudNachher: Number(($("#dg-nach")||{}).value || 4),
+    dauerMin: Math.max(1, Math.round((Date.now() - d.start)/60000)),
+    abgebrochen: !!d.abgebrochen, wasPassierte: passiert, erkenntnis: erkenntnis
+  };
+  g.durchgaenge.push(eintrag);
+  /* Der Durchgang landet zusätzlich im Journal – dort ist er durchsuchbar. */
+  journalEintrag("expo-review", {
+    situation: e.text, befuerchtet: d.vorhersage, passiert: passiert,
+    hoehepunkt: String(eintrag.sudHoch), bedeutung: erkenntnis,
+    naechstes: eintrag.abgebrochen ? "Abgebrochen – Etappe eventuell verkleinern." : ""
+  });
+  speichern();
+  punkteGutschreiben(durchgangPunkte(e, eintrag.abgebrochen, !!(passiert || erkenntnis)),
+    { questId:"gipfel-durchgang", durationMin:eintrag.dauerMin,
+      moodBefore:eintrag.sudVorher, moodAfter:eintrag.sudNachher, note:erkenntnis });
+  DSTATE = null;
+  gehe("gipfel");
+  if (eintrag.abgebrochen) setTimeout(() => overlay(`
+    <h2>Angefangen ist der schwere Teil</h2>
+    <p>Du warst in der Situation. Das zählt – die Punkte sind dir gutgeschrieben.</p>
+    <p class="small muted">Wenn dieselbe Etappe dich mehrfach überfordert, ist die Etappe zu groß,
+       nicht du zu schwach. „Etappe halbieren“ macht daraus zwei kleinere Schritte.</p>
+    <button class="btn primary block" data-close>Verstanden</button>`), 700);
+}
+function etappeAbschliessen(id){
+  const e = etappeVon(id); if (!e) return;
+  e.status = "geschafft"; speichern();
+  punkteGutschreiben({ mut:40 }, { questId:"gipfel-etappe" });
+  render();
+}
+function gipfelAbschliessen(){
+  const g = S.gipfel; if (!g) return;
+  g.status = "abgeschlossen";
+  g.abgeschlossenAm = heute();
+  const B = GIPFEL_BONUS(g.zielSud);
+  const teile = { mut: Math.round(B*0.7), geist: Math.round(B*0.2), verbundenheit: Math.round(B*0.1) };
+  g.bonus = teile.mut + teile.geist + teile.verbundenheit;
+  speichern();
+  /* Ohne Serien-Multiplikator: der Gipfel soll nicht davon abhängen,
+     ob gerade eine Serie läuft. */
+  punkteGutschreiben(teile, { questId:"gipfel-abschluss", ohneSerie:true });
+  konfetti();
+  render();
+}
+function gipfelArchivieren(){
+  if (!S.gipfel) return;
+  S.gipfelArchiv = S.gipfelArchiv || [];
+  S.gipfelArchiv.push(S.gipfel);
+  S.gipfel = null;
+  speichern(); render();
+  toast("Im Archiv. Platz für den nächsten.");
 }
 
 /* --- Journal & Karten --------------------------------------------------- */
@@ -1592,50 +1849,182 @@ const wangen = (x1,x2,y) => `
   <ellipse cx="${x1}" cy="${y}" rx="9" ry="6" fill="var(--koralle)" opacity=".5"/>
   <ellipse cx="${x2}" cy="${y}" rx="9" ry="6" fill="var(--koralle)" opacity=".5"/>`;
 
-/* --- Stufe 1: Mochi – kleiner zitternder Reisklößchen-Blob --------------- */
-function avatar1(){ return `
-<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Mochi: ein kleines, zitterndes Reisklößchen mit halb geschlossenen Augen">
+/* ---------------------------------------------------------------------------
+   Bausteine für die Arten: Ohren, Kiemen, Flügel, Schwänze.
+   P = { cx, cy, r } Kopfmitte und -radius, { bx, by } Rumpfmitte.
+   s = -1 für links, +1 für rechts.
+   ------------------------------------------------------------------------- */
+function ohr(P, s, laenge, rund, farbe, innen){
+  const { cx, cy, r } = P;
+  const p1x = cx + s*0.84*r, p1y = cy - 0.52*r;
+  const p2x = cx + s*0.26*r, p2y = cy - 0.96*r;
+  const mx = (p1x+p2x)/2, my = (p1y+p2y)/2;
+  const ux = (mx-cx)/r, uy = (my-cy)/r;
+  const tx = mx + ux*laenge, ty = my + uy*laenge;
+  const d = rund
+    ? `M${p1x} ${p1y} Q${tx + s*0.26*r} ${ty + 0.12*r} ${tx} ${ty} Q${tx - s*0.34*r} ${ty + 0.18*r} ${p2x} ${p2y} Z`
+    : `M${p1x} ${p1y} L${tx} ${ty} L${p2x} ${p2y} Z`;
+  const i1x = p1x + (mx-p1x)*0.40, i1y = p1y + (my-p1y)*0.40;
+  const i2x = p2x + (mx-p2x)*0.40, i2y = p2y + (my-p2y)*0.40;
+  const itx = mx + ux*laenge*0.58, ity = my + uy*laenge*0.58;
+  return `<path d="${d}" fill="${farbe}" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>` +
+    (innen ? `<path d="M${i1x} ${i1y} L${itx} ${ity} L${i2x} ${i2y} Z" fill="${innen}" opacity=".9"/>` : "");
+}
+function kieme(P, s, grad, laenge, farbe){
+  const { cx, cy, r } = P;
+  const w = grad*Math.PI/180;
+  const sx = cx + s*Math.cos(w)*r*0.94, sy = cy + Math.sin(w)*r*0.94;
+  const ex = cx + s*Math.cos(w)*(r+laenge), ey = cy + Math.sin(w)*(r+laenge) - 8;
+  const kx = (sx+ex)/2 + s*6, ky = (sy+ey)/2 - 10;
+  const d = `M${sx} ${sy} Q${kx} ${ky} ${ex} ${ey}`;
+  return `<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="10" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="${farbe}" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="${ex}" cy="${ey}" r="7.5" fill="${farbe}" stroke="var(--ink)" stroke-width="3"/>`;
+}
+function fluegel(P, s, farbe){
+  const { bx, by } = P;
+  const x = v => bx + s*v;
+  return `<path d="M${x(14)} ${by-22} C${x(54)} ${by-30} ${x(78)} ${by-8} ${x(76)} ${by+18}
+    Q${x(64)} ${by+6} ${x(54)} ${by+16} Q${x(42)} ${by+4} ${x(32)} ${by+14}
+    Q${x(22)} ${by+2} ${x(13)} ${by+10} Z"
+    fill="${farbe}" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>`;
+}
+function katzenschwanz(P, farbe){
+  const { bx, by } = P;
+  const d = `M${bx+26} ${by+18} q40 6 34-38 q-3-16 -16-12`;
+  return `<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="17" stroke-linecap="round"/>
+    <path d="${d}" fill="none" stroke="${farbe}" stroke-width="11" stroke-linecap="round"/>
+    <path d="M${bx+52} ${by+12} l6 6 M${bx+63} ${by-8} l8 3 M${bx+62} ${by-26} l8 1"
+      stroke="var(--ink)" stroke-width="4" stroke-linecap="round" opacity=".55"/>`;
+}
+function schwanzflosse(P, farbe){
+  const { bx, by } = P;
+  return `<path d="M${bx+8} ${by-6} q46-20 62 6 q-18 26 -62 12 z"
+    fill="${farbe}" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M${bx+30} ${by-2} q16 4 26 8" fill="none" stroke="var(--ink)" stroke-width="3" opacity=".4"/>`;
+}
+
+/* ---------------------------------------------------------------------------
+   §D.1  DIE ARTEN
+   Vier eigenständige Wesen. Gemeinsam ist ihnen der Stufenbogen (Haltung und
+   Ausrüstung), unterschiedlich sind Silhouette, Farben und Gesicht.
+   Neue Art hinzufügen: hier einen Eintrag ergänzen – der Rest passt sich an.
+   ------------------------------------------------------------------------- */
+const ARTEN = {
+  mochi: {
+    id:"mochi", name:"Reisklößchen", stufe1Name:"Mochi", vorschlagName:"Mochi",
+    kurz:"Rund, weich und von Anfang an liebenswert.",
+    haupt:"var(--sakura)", kleid:"var(--mint)", akzent:"var(--koralle)",
+    hinten: () => "",
+    kopfAufsatz: P => `<path d="M${P.cx+2} ${P.cy-P.r+4} q8-16 20-12 q-8 14 -20 12z"
+      fill="var(--mint)" stroke="var(--ink)" stroke-width="3.4" stroke-linejoin="round"/>`,
+    gesicht: () => "",
+    mund: (cx,y) => `<path d="M${cx-7} ${y} q7 7 14 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>`
+  },
+  fledermaus: {
+    id:"fledermaus", name:"Fledermaus", stufe1Name:"Fluse", vorschlagName:"Fluse",
+    kurz:"Hängt kopfüber, hört alles – und ist mutiger, als sie aussieht.",
+    haupt:"var(--lavendel)", kleid:"var(--butter)", akzent:"var(--sakura)",
+    hinten: P => fluegel(P,-1,"var(--lavendel)") + fluegel(P,1,"var(--lavendel)"),
+    kopfAufsatz: P => ohr(P,-1,P.r*0.95,true,"var(--lavendel)","var(--sakura)") +
+                      ohr(P, 1,P.r*0.95,true,"var(--lavendel)","var(--sakura)"),
+    /* Fängchen hängen am Mund, nicht in der Luft */
+    gesicht: (cx,augenY,mundY) => `<path d="M${cx-7} ${mundY+2} l2.5 7 l2.5-7z M${cx+2} ${mundY+2} l2.5 7 l2.5-7z"
+      fill="#fff" stroke="var(--ink)" stroke-width="1.8" stroke-linejoin="round"/>`,
+    mund: (cx,y) => `<path d="M${cx-8} ${y} q8 7 16 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>`
+  },
+  axolotl: {
+    id:"axolotl", name:"Axolotl", stufe1Name:"Kiemchen", vorschlagName:"Kiemchen",
+    kurz:"Lächelt immer, bleibt im Wasser ruhig – und wächst nach.",
+    haupt:"var(--mint)", kleid:"var(--himmel)", akzent:"var(--koralle)",
+    hinten: P => schwanzflosse(P,"var(--mint)"),
+    kopfAufsatz: P => [-1,1].map(s =>
+      kieme(P,s,-38,24,"var(--koralle)") + kieme(P,s,-6,26,"var(--koralle)") + kieme(P,s,24,22,"var(--koralle)")
+    ).join(""),
+    gesicht: () => "",
+    mund: (cx,y) => `<path d="M${cx-14} ${y-3} q14 13 28 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>`
+  },
+  katze: {
+    id:"katze", name:"Katze", stufe1Name:"Fussel", vorschlagName:"Fussel",
+    kurz:"Vorsichtig, neugierig, und sitzt gern dort, wo es warm ist.",
+    haupt:"var(--butter)", kleid:"var(--himmel)", akzent:"var(--sakura)",
+    hinten: P => katzenschwanz(P,"var(--butter)"),
+    kopfAufsatz: P => ohr(P,-1,P.r*0.6,false,"var(--butter)","var(--sakura)") +
+                      ohr(P, 1,P.r*0.6,false,"var(--butter)","var(--sakura)"),
+    /* Näschen zwischen Augen und Mund, Schnurrhaare am Kopfrand */
+    gesicht: (cx,augenY,mundY,r) => { const w = r*1.02; const y = (augenY+mundY)/2; return `
+      <path d="M${cx-4} ${mundY-1} l8 0 l-4 5z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M${cx-w} ${y-3} l${-r*0.36} -4 M${cx-w} ${y+4} l${-r*0.38} 3
+               M${cx+w} ${y-3} l${r*0.36} -4 M${cx+w} ${y+4} l${r*0.38} 3"
+        stroke="var(--ink)" stroke-width="3" stroke-linecap="round" opacity=".6"/>`; },
+    mund: (cx,y) => `<path d="M${cx-9} ${y+4} q4.5 6 9 0 q4.5 6 9 0" fill="none" stroke="var(--ink)" stroke-width="4.4" stroke-linecap="round"/>`
+  }
+};
+const ART_IDS = ["mochi","fledermaus","axolotl","katze"];
+const artVon = id => ARTEN[id] || ARTEN.mochi;
+/* Die aktuell gewählte Art – der Speicherstand entscheidet. */
+const meineArt = () => artVon(S && S.profile ? S.profile.art : "mochi");
+const figurName = () => (S && S.profile && S.profile.avatarName) || meineArt().stufe1Name;
+
+/* ---------------------------------------------------------------------------
+   §D.2  DIE SIEBEN STUFEN
+   Dieselbe Figur, nur größer, aufrechter, mutiger, bunter – mit mehr
+   Ausrüstung. Die Art liefert Silhouette und Farben, die Stufe den Rest.
+   ------------------------------------------------------------------------- */
+
+/* Stufe 1 – kleiner, zitternder Blob mit halb geschlossenen Augen */
+function avatar1(A){
+  const P = { cx:100, cy:132, r:36, bx:100, by:150 };
+  return `
   <ellipse cx="100" cy="196" rx="44" ry="9" fill="var(--lavendel)" opacity=".35"/>
   <g class="tremble">
-    <path d="M56 160 q0-58 44-58 t44 58 q0 24-44 24 t-44-24z" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
+    ${A.hinten(P)}
+    ${A.kopfAufsatz(P)}
+    <path d="M56 160 q0-58 44-58 t44 58 q0 24-44 24 t-44-24z" fill="${A.haupt}" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
     ${augen(84,116,140,0,true)}
-    <path d="M94 158 q6 5 12 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${A.gesicht(100,142,156,36)}
+    ${A.mund(100,156)}
     ${wangen(72,128,152)}
     <path d="M150 118 q7 10 0 15 q-7-5 0-15z" fill="var(--himmel)" stroke="var(--ink)" stroke-width="3"/>
     <path d="M46 128 q6 9 0 13 q-6-4 0-13z" fill="var(--himmel)" stroke="var(--ink)" stroke-width="3"/>
     <path d="M66 178 q-8 4 -10 10" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
     <path d="M134 178 q8 4 10 10" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
-  </g>
-</svg>`; }
+  </g>`;
+}
 
-/* --- Stufe 2: Wackelkind – steht, unsicher, Augen offen ----------------- */
-function avatar2(){ return `
-<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Wackelkind: Mochi steht auf kleinen Beinen, die Augen sind offen">
+/* Stufe 2 – steht, noch unsicher, aber die Augen sind offen */
+function avatar2(A){
+  const P = { cx:100, cy:96, r:48, bx:100, by:162 };
+  return `
   <ellipse cx="100" cy="204" rx="40" ry="8" fill="var(--lavendel)" opacity=".35"/>
   <g class="idle">
-    <rect x="86" y="176" width="12" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <rect x="102" y="176" width="12" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <rect x="72" y="140" width="56" height="44" rx="21" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
-    <ellipse cx="64" cy="156" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <ellipse cx="136" cy="156" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <circle cx="100" cy="96" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    ${A.hinten(P)}
+    <rect x="86" y="176" width="12" height="22" rx="6" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="102" y="176" width="12" height="22" rx="6" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="72" y="140" width="56" height="44" rx="21" fill="${A.kleid}" stroke="var(--ink)" stroke-width="${SW}"/>
+    <ellipse cx="64" cy="156" rx="9" ry="12" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <ellipse cx="136" cy="156" rx="9" ry="12" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    ${A.kopfAufsatz(P)}
+    <circle cx="100" cy="96" r="48" fill="${A.haupt}" stroke="var(--ink)" stroke-width="${SW}"/>
     ${augen(82,118,98,10,false)}
-    <path d="M94 118 q6 6 12 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${A.gesicht(100,98,118,48)}
+    ${A.mund(100,118)}
     ${wangen(68,132,112)}
-    <path d="M100 44 q6-10 14-8 q-6 8-14 8z" fill="var(--mint)" stroke="var(--ink)" stroke-width="3"/>
-  </g>
-</svg>`; }
+  </g>`;
+}
 
-/* --- Stufe 3: Lehrling – Umhang und erste Laterne ----------------------- */
-function avatar3(){ return `
-<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Lehrling: Mochi trägt einen kleinen Umhang und hält eine Laterne">
+/* Stufe 3 – kleiner Umhang, erste Laterne in der Hand */
+function avatar3(A){
+  const P = { cx:100, cy:94, r:48, bx:100, by:159 };
+  return `
   <ellipse cx="100" cy="204" rx="42" ry="8" fill="var(--lavendel)" opacity=".35"/>
   <g class="idle">
+    ${A.hinten(P)}
     <path d="M70 136 q30 14 60 0 l14 56 q-44 14 -88 0z" fill="var(--lavendel)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
-    <rect x="86" y="178" width="12" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <rect x="102" y="178" width="12" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <rect x="76" y="138" width="48" height="42" rx="20" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
-    <ellipse cx="140" cy="154" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="86" y="178" width="12" height="22" rx="6" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="102" y="178" width="12" height="22" rx="6" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="76" y="138" width="48" height="42" rx="20" fill="${A.kleid}" stroke="var(--ink)" stroke-width="${SW}"/>
+    <ellipse cx="140" cy="154" rx="9" ry="12" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
     <g class="float-slow">
       <line x1="144" y1="160" x2="152" y2="166" stroke="var(--ink)" stroke-width="3" stroke-linecap="round"/>
       <path d="M144 166 a10 10 0 0 1 18 0" fill="none" stroke="var(--ink)" stroke-width="3"/>
@@ -1643,64 +2032,72 @@ function avatar3(){ return `
       <circle cx="153" cy="183" r="6" fill="#fff" opacity=".75"/>
       <circle cx="153" cy="183" r="24" fill="var(--butter)" opacity=".28"/>
     </g>
-    <ellipse cx="62" cy="154" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <circle cx="100" cy="94" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
-    <path d="M60 104 q40-38 80 0" fill="none" stroke="var(--ink)" stroke-width="0"/>
+    <ellipse cx="62" cy="154" rx="9" ry="12" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    ${A.kopfAufsatz(P)}
+    <circle cx="100" cy="94" r="48" fill="${A.haupt}" stroke="var(--ink)" stroke-width="${SW}"/>
     ${augen(82,118,96,10,false)}
-    <path d="M92 118 q8 7 16 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${A.gesicht(100,96,118,48)}
+    ${A.mund(100,118)}
     ${wangen(68,132,110)}
     <path d="M58 76 q6-42 42-42 t42 42 q-14-16 -42-16 t-42 16z" fill="var(--lavendel)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
-  </g>
-</svg>`; }
+  </g>`;
+}
 
-/* --- Stufe 4: Späher – Stirnband, Rucksack, aufrecht -------------------- */
-function avatar4(){ return `
-<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Späher: Mochi mit Stirnband und Rucksack, aufrecht und neugierig">
+/* Stufe 4 – Stirnband, Rucksack, aufrechter Stand */
+function avatar4(A){
+  const P = { cx:100, cy:92, r:48, bx:100, by:159 };
+  return `
   <ellipse cx="100" cy="206" rx="42" ry="8" fill="var(--lavendel)" opacity=".35"/>
   <g class="idle">
+    ${A.hinten(P)}
     <rect x="52" y="132" width="34" height="46" rx="14" fill="var(--himmel)" stroke="var(--ink)" stroke-width="${SW}"/>
     <rect x="60" y="146" width="18" height="14" rx="5" fill="var(--butter)" stroke="var(--ink)" stroke-width="3"/>
-    <rect x="84" y="180" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <rect x="103" y="180" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <rect x="74" y="136" width="52" height="46" rx="21" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <rect x="84" y="180" width="13" height="22" rx="6" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="103" y="180" width="13" height="22" rx="6" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="74" y="136" width="52" height="46" rx="21" fill="${A.kleid}" stroke="var(--ink)" stroke-width="${SW}"/>
     <path d="M80 140 l10 40 M120 140 l-10 40" stroke="var(--ink)" stroke-width="3" opacity=".5"/>
-    <ellipse cx="64" cy="150" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <ellipse cx="138" cy="144" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4" transform="rotate(-25 138 144)"/>
-    <circle cx="100" cy="92" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <ellipse cx="64" cy="150" rx="9" ry="12" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <ellipse cx="138" cy="144" rx="9" ry="12" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4" transform="rotate(-25 138 144)"/>
+    ${A.kopfAufsatz(P)}
+    <circle cx="100" cy="92" r="48" fill="${A.haupt}" stroke="var(--ink)" stroke-width="${SW}"/>
     <path d="M54 78 q46-16 92 0 l0 12 q-46-16 -92 0z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
     <path d="M146 80 q14 4 18 16 q-16-4 -18-16z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="3.4" stroke-linejoin="round"/>
     ${augen(82,118,100,10,false)}
-    <path d="M92 122 q8 8 16 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${A.gesicht(100,100,122,48)}
+    ${A.mund(100,122)}
     ${wangen(68,132,114)}
-  </g>
-</svg>`; }
+  </g>`;
+}
 
-/* --- Stufe 5: Wächter – Schild mit Herz, ruhiger Blick ------------------ */
-function avatar5(){ return `
-<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Wächter: Mochi hält ein Schild mit einem Herz, der Blick ist ruhig">
+/* Stufe 5 – Schild mit Herz-Symbol, ruhiger Blick */
+function avatar5(A){
+  const P = { cx:100, cy:90, r:48, bx:100, by:158 };
+  return `
   <ellipse cx="100" cy="206" rx="44" ry="9" fill="var(--lavendel)" opacity=".35"/>
   <g class="idle">
+    ${A.hinten(P)}
     <path d="M74 132 q28 12 54 0 l12 58 q-40 12 -78 0z" fill="var(--himmel)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
-    <rect x="84" y="182" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <rect x="103" y="182" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <rect x="74" y="134" width="52" height="48" rx="22" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
-    <ellipse cx="136" cy="152" rx="9" ry="12" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <g>
-      <path d="M46 128 q22-12 44 0 v26 q0 22 -22 32 q-22-10 -22-32z" fill="var(--butter)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
-      <path d="M68 168 s-14-9-14-19 a7.5 7.5 0 0 1 14-4 a7.5 7.5 0 0 1 14 4 c0 10-14 19-14 19z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="3.4" stroke-linejoin="round"/>
-    </g>
-    <circle cx="100" cy="90" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <rect x="84" y="182" width="13" height="22" rx="6" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="103" y="182" width="13" height="22" rx="6" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="74" y="134" width="52" height="48" rx="22" fill="${A.kleid}" stroke="var(--ink)" stroke-width="${SW}"/>
+    <ellipse cx="136" cy="152" rx="9" ry="12" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <path d="M46 128 q22-12 44 0 v26 q0 22 -22 32 q-22-10 -22-32z" fill="var(--butter)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
+    <path d="M68 168 s-14-9-14-19 a7.5 7.5 0 0 1 14-4 a7.5 7.5 0 0 1 14 4 c0 10-14 19-14 19z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="3.4" stroke-linejoin="round"/>
+    ${A.kopfAufsatz(P)}
+    <circle cx="100" cy="90" r="48" fill="${A.haupt}" stroke="var(--ink)" stroke-width="${SW}"/>
     <path d="M70 84 q12-7 24 0" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
     <path d="M106 84 q12-7 24 0" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round"/>
     ${augen(82,118,100,9,false)}
-    <path d="M92 120 q8 6 16 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${A.gesicht(100,100,120,48)}
+    ${A.mund(100,120)}
     ${wangen(68,132,113)}
-  </g>
-</svg>`; }
+  </g>`;
+}
 
-/* --- Stufe 6: Champion – Aura, die vier Attribut-Symbole schweben mit --- */
-function avatar6(){ return `
-<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Champion: Mochi leuchtet, die vier Attribut-Symbole schweben um die Figur">
+/* Stufe 6 – leuchtende Aura, die vier Attribut-Symbole schweben mit */
+function avatar6(A){
+  const P = { cx:100, cy:88, r:48, bx:100, by:155 };
+  return `
   <defs>
     <radialGradient id="aura" cx="50%" cy="50%">
       <stop offset="0%" stop-color="var(--butter)" stop-opacity=".85"/>
@@ -1717,23 +2114,27 @@ function avatar6(){ return `
     <path d="M24 104 l3.4 8 8.6 .6 -6.6 5.6 2.2 8.4 -7.6-4.8 -7.6 4.8 2.2-8.4 -6.6-5.6 8.6-.6z" fill="var(--at-verbundenheit)" stroke="var(--ink)" stroke-width="2.6" stroke-linejoin="round"/>
   </g>
   <g class="idle">
+    ${A.hinten(P)}
     <path d="M72 128 q28 14 56 0 l14 62 q-42 14 -84 0z" fill="var(--lavendel)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
-    <rect x="84" y="182" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <rect x="103" y="182" width="13" height="22" rx="6" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4"/>
-    <rect x="72" y="130" width="56" height="50" rx="24" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <rect x="84" y="182" width="13" height="22" rx="6" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="103" y="182" width="13" height="22" rx="6" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4"/>
+    <rect x="72" y="130" width="56" height="50" rx="24" fill="${A.kleid}" stroke="var(--ink)" stroke-width="${SW}"/>
     <path d="M100 138 l5 12 13 1 -10 8 3 13 -11-7 -11 7 3-13 -10-8 13-1z" fill="var(--butter)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
-    <ellipse cx="60" cy="146" rx="9" ry="13" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4" transform="rotate(24 60 146)"/>
-    <ellipse cx="140" cy="146" rx="9" ry="13" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4" transform="rotate(-24 140 146)"/>
-    <circle cx="100" cy="88" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <ellipse cx="60" cy="146" rx="9" ry="13" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4" transform="rotate(24 60 146)"/>
+    <ellipse cx="140" cy="146" rx="9" ry="13" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4" transform="rotate(-24 140 146)"/>
+    ${A.kopfAufsatz(P)}
+    <circle cx="100" cy="88" r="48" fill="${A.haupt}" stroke="var(--ink)" stroke-width="${SW}"/>
     ${augen(82,118,96,10,false)}
-    <path d="M90 118 q10 9 20 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${A.gesicht(100,96,118,48)}
+    ${A.mund(100,118)}
     ${wangen(68,132,110)}
-  </g>
-</svg>`; }
+  </g>`;
+}
 
-/* --- Stufe 7: Superheld – Cape, Sprung-Pose, Sterne --------------------- */
-function avatar7(){ return `
-<svg class="avatar" viewBox="0 0 200 220" role="img" aria-label="Superheld: Mochi springt mit wehendem Cape, umgeben von Sternen">
+/* Stufe 7 – Cape, Sprung-Pose, Sterne */
+function avatar7(A){
+  const P = { cx:100, cy:84, r:48, bx:100, by:154 };
+  return `
   <ellipse cx="100" cy="212" rx="34" ry="6" fill="var(--lavendel)" opacity=".3"/>
   <g class="float-slow">
     <path d="M28 60 l3 8 8 .6 -6 5.2 1.9 8 -6.9-4.4 -6.9 4.4 1.9-8 -6-5.2 8-.6z" fill="var(--butter)" stroke="var(--ink)" stroke-width="2.4" stroke-linejoin="round"/>
@@ -1743,25 +2144,45 @@ function avatar7(){ return `
     <circle cx="150" cy="104" r="3.4" fill="var(--lavendel)" stroke="var(--ink)" stroke-width="2"/>
   </g>
   <g class="idle">
+    ${A.hinten(P)}
     <path d="M120 116 q46 6 54 52 q-30-6 -44-22 q-8-14 -10-30z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
     <path d="M78 120 q-40 12 -46 54 q28-10 40-26 q6-14 6-28z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="${SW}" stroke-linejoin="round"/>
-    <path d="M84 178 q-8 16 -22 22" fill="none" stroke="var(--sakura)" stroke-width="15" stroke-linecap="round"/>
-    <path d="M84 178 q-8 16 -22 22" fill="none" stroke="var(--ink)" stroke-width="4" stroke-linecap="round" opacity=".0"/>
-    <path d="M116 178 q10 12 26 10" fill="none" stroke="var(--sakura)" stroke-width="15" stroke-linecap="round"/>
-    <rect x="72" y="128" width="56" height="52" rx="24" fill="var(--mint)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <path d="M84 178 q-8 16 -22 22" fill="none" stroke="${A.haupt}" stroke-width="15" stroke-linecap="round"/>
+    <path d="M116 178 q10 12 26 10" fill="none" stroke="${A.haupt}" stroke-width="15" stroke-linecap="round"/>
+    <rect x="72" y="128" width="56" height="52" rx="24" fill="${A.kleid}" stroke="var(--ink)" stroke-width="${SW}"/>
     <path d="M100 168 s-14-10-14-19 a7.5 7.5 0 0 1 14-4 a7.5 7.5 0 0 1 14 4 c0 9-14 19-14 19z" fill="var(--koralle)" stroke="var(--ink)" stroke-width="3" stroke-linejoin="round"/>
-    <path d="M64 140 q-16-22 -6-40" fill="none" stroke="var(--sakura)" stroke-width="15" stroke-linecap="round"/>
-    <ellipse cx="136" cy="150" rx="9" ry="13" fill="var(--sakura)" stroke="var(--ink)" stroke-width="4" transform="rotate(-30 136 150)"/>
-    <circle cx="100" cy="84" r="48" fill="var(--sakura)" stroke="var(--ink)" stroke-width="${SW}"/>
+    <path d="M64 140 q-16-22 -6-40" fill="none" stroke="${A.haupt}" stroke-width="15" stroke-linecap="round"/>
+    <ellipse cx="136" cy="150" rx="9" ry="13" fill="${A.haupt}" stroke="var(--ink)" stroke-width="4" transform="rotate(-30 136 150)"/>
+    ${A.kopfAufsatz(P)}
+    <circle cx="100" cy="84" r="48" fill="${A.haupt}" stroke="var(--ink)" stroke-width="${SW}"/>
     <path d="M56 74 q44-30 88 0 q-6-26 -44-26 q-38 0 -44 26z" fill="var(--lavendel)" stroke="var(--ink)" stroke-width="4" stroke-linejoin="round"/>
     ${augen(82,118,92,10,false)}
-    <path d="M88 114 q12 12 24 0" fill="none" stroke="var(--ink)" stroke-width="${SW}" stroke-linecap="round"/>
+    ${A.gesicht(100,92,114,48)}
+    ${A.mund(100,114)}
     ${wangen(68,132,106)}
-  </g>
-</svg>`; }
+  </g>`;
+}
 
 const AVATARE = [avatar1, avatar2, avatar3, avatar4, avatar5, avatar6, avatar7];
-const avatarSvg = stufe => AVATARE[clamp(stufe,1,7)-1]();
+const STUFEN_BESCHREIBUNG = [
+  "klein und zittrig, die Augen halb zu",
+  "steht auf kleinen Beinen, die Augen sind offen",
+  "trägt einen kleinen Umhang und hält eine Laterne",
+  "mit Stirnband und Rucksack, aufrecht und neugierig",
+  "hält ein Schild mit einem Herz, der Blick ist ruhig",
+  "leuchtet, die vier Attribut-Symbole schweben mit",
+  "springt mit wehendem Cape, umgeben von Sternen"
+];
+/* Baut die Figur: Stufe bestimmt Haltung und Ausrüstung, Art die Silhouette. */
+function avatarSvg(stufe, artId){
+  const s = clamp(stufe,1,7);
+  const A = artId ? artVon(artId) : meineArt();
+  const name = (S && S.profile && S.profile.avatarName) || A.stufe1Name;
+  return `<svg class="avatar" viewBox="0 0 200 220" role="img"
+    aria-label="${esc(name)}, ${esc(A.name)} auf Stufe ${s}: ${STUFEN_BESCHREIBUNG[s-1]}">
+    ${AVATARE[s-1](A)}
+  </svg>`;
+}
 
 /* --- Attribut- und Kategorie-Symbole ------------------------------------ */
 const SYMBOLE = {
@@ -1873,9 +2294,10 @@ function zeigeLevelUp(level){
   const anzahl = S.completions.length;
   overlay(`
     <div class="center">${avatarSvg(level.stufe)}</div>
-    <h2 class="center">Neue Stufe: ${esc(level.name)}</h2>
-    <p class="center">Du hast ${anzahl} Mal geübt, auch wenn es unbequem war. Deshalb sieht Mochi jetzt so aus.</p>
-    <p class="center muted">${esc(level.satz)}</p>
+    <h2 class="center">Neue Stufe: ${esc(levelName(level))}</h2>
+    <p class="center">Du hast ${anzahl} Mal geübt, auch wenn es unbequem war.
+       Deshalb sieht ${esc(figurName())} jetzt so aus.</p>
+    <p class="center muted">${esc(mitFigur(level.satz))}</p>
     <button class="btn primary block" data-close>Weiter</button>`);
   melde("Neue Stufe erreicht: " + level.name);
 }
@@ -1899,8 +2321,9 @@ function gehe(name, param){
 
 const TABS = [
   { id:"heim",       label:"Heim",       icon:`<path d="M4 11l8-7 8 7v8a1 1 0 0 1-1 1h-5v-6H10v6H5a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>` },
-  { id:"bibliothek", label:"Bibliothek", icon:`<path d="M5 4h5a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5zM19 4h-5a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>` },
-  { id:"fortschritt",label:"Fortschritt",icon:`<path d="M4 19V9M10 19V5M16 19v-7M22 19H2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>` },
+  { id:"bibliothek", label:"Übungen", icon:`<path d="M5 4h5a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H5zM19 4h-5a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h5z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>` },
+  { id:"fortschritt",label:"Verlauf", icon:`<path d="M4 19V9M10 19V5M16 19v-7M22 19H2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>` },
+  { id:"gipfel",     label:"Gipfel",  icon:`<path d="M2 19L9 6l4 6 2-3 5 10z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 6l2.4 3.6" stroke="currentColor" stroke-width="2.2"/>` },
   { id:"journal",    label:"Journal",    icon:`<path d="M6 3h9l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/><path d="M9 12h7M9 16h7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>` }
 ];
 function renderTabs(){
@@ -1922,6 +2345,9 @@ function render(){
   switch (ROUTE.name){
     case "heim":        html = screenHeim(); break;
     case "quest":       html = screenQuest(ROUTE.param); break;
+    case "gipfel":      html = screenGipfel(); break;
+    case "gipfel-setup":html = screenGipfelSetup(); break;
+    case "durchgang":   html = screenDurchgang(); break;
     case "bibliothek":  html = screenBibliothek(); break;
     case "fortschritt": html = screenFortschritt(); break;
     case "journal":     html = screenJournal(); break;
@@ -1970,18 +2396,37 @@ function screenOnboarding(){
        <button class="btn ghost block" data-onb="0">Zurück</button>
      </div>`,
     `<div class="card stack">
+       <h1>Wer begleitet dich?</h1>
+       <p>Such dir ein Wesen aus. Es startet klein und ängstlich und wächst mit dem, was du übst –
+          die Art ändert nur, wie es aussieht, nicht wie viel du schaffen musst.</p>
+       <div class="artwahl">
+         ${ART_IDS.map(id => { const A = ARTEN[id]; return `
+           <button class="artkarte ${S.profile.art===id?'gewaehlt':''}" data-art="${id}"
+             aria-pressed="${S.profile.art===id}">
+             <span class="bild">${avatarSvg(1,id)}</span>
+             <strong>${esc(A.name)}</strong>
+             <span class="small muted">${esc(A.kurz)}</span>
+           </button>`; }).join("")}
+       </div>
+       <p class="small muted">Du kannst die Art später in den Einstellungen wechseln – dein
+          Fortschritt bleibt dabei vollständig erhalten.</p>
+       <button class="btn primary block" data-onb="3">Weiter</button>
+       <button class="btn ghost block" data-onb="1">Zurück</button>
+     </div>`,
+    `<div class="card stack">
        <h1>Wie soll deine Figur heißen?</h1>
        <div class="center">${avatarSvg(1)}</div>
        <div class="field">
          <label for="onb-avatar">Name der Figur</label>
-         <input type="text" id="onb-avatar" maxlength="24" value="${esc(S.profile.avatarName||"Mochi")}" placeholder="Mochi">
+         <input type="text" id="onb-avatar" maxlength="24" value="${esc(S.profile.avatarName)}"
+                placeholder="${esc(meineArt().vorschlagName)}">
        </div>
        <div class="field">
          <label for="onb-name">Und wie dürfen wir dich nennen? (freiwillig)</label>
          <input type="text" id="onb-name" maxlength="24" value="${esc(S.profile.name)}" placeholder="Dein Vorname oder Spitzname">
        </div>
-       <button class="btn primary block" data-onb="3">Weiter</button>
-       <button class="btn ghost block" data-onb="1">Zurück</button>
+       <button class="btn primary block" data-onb="4">Weiter</button>
+       <button class="btn ghost block" data-onb="2">Zurück</button>
      </div>`,
     `<div class="card stack">
        <h1>Wofür machst du das?</h1>
@@ -1994,8 +2439,8 @@ function screenOnboarding(){
          <label for="onb-wert-eigen">Oder eigener Wert</label>
          <input type="text" id="onb-wert-eigen" maxlength="30" placeholder="z. B. Für meine Kinder da sein">
        </div>
-       <button class="btn primary block" data-onb="4">Weiter</button>
-       <button class="btn ghost block" data-onb="2">Zurück</button>
+       <button class="btn primary block" data-onb="5">Weiter</button>
+       <button class="btn ghost block" data-onb="3">Zurück</button>
      </div>`,
     `<div class="card stack">
        <h1>Notfallkontakte</h1>
@@ -2004,7 +2449,7 @@ function screenOnboarding(){
           jederzeit änderbar.</p>
        <div id="onb-kontakte">${kontakteFormular()}</div>
        <button class="btn primary block" data-onb="fertig">Fertig – zur App</button>
-       <button class="btn ghost block" data-onb="3">Zurück</button>
+       <button class="btn ghost block" data-onb="4">Zurück</button>
        <p class="small muted center">Krisennummern sind unabhängig davon immer in der Fußzeile.</p>
      </div>`
   ];
@@ -2056,9 +2501,9 @@ function screenHeim(){
   const quests = S.daily.questIds.map(questById).filter(Boolean);
 
   return `<div class="stack" style="padding-top:14px">
-    <div class="card stack">
+    <div class="card stack" data-titel="Status">
       <div class="stage">${avatarSvg(lvl.stufe)}</div>
-      <p class="levelname">${esc(S.profile.avatarName||"Mochi")} · Stufe ${lvl.stufe}: ${esc(lvl.name)}</p>
+      <p class="levelname">${esc(figurName())} · Stufe ${lvl.stufe}: ${esc(levelName(lvl))}</p>
       <div class="xpbar" role="img" aria-label="Fortschritt zur nächsten Stufe: ${fort.prozent} Prozent">
         <i style="width:${fort.prozent}%"></i>
       </div>
@@ -2082,6 +2527,8 @@ function screenHeim(){
 
     ${quests.map((q,i) => questKarte(q, i, true)).join("")}
 
+    ${gipfelHeimKarte()}
+
     <div class="card soft stack">
       <h3>Wissenskarte</h3>
       <p class="small">${esc(karteDesTages().titel)} – eine kurze Erklärung, drei Minuten.</p>
@@ -2089,6 +2536,34 @@ function screenHeim(){
     </div>
   </div>`;
 }
+/* Der Gipfel bekommt auf dem Heim-Screen eine eigene Karte – er ist das
+   Erste, was morgens sichtbar sein soll. */
+function gipfelHeimKarte(){
+  if (!S.gipfel){
+    return `<div class="card soft stack" data-titel="Mein Gipfel">
+      <h3 style="margin:0">Ein eigenes großes Ziel</h3>
+      <p class="small">Eine Situation, der du ausweichst – zerlegt in Etappen, Schritt für Schritt.
+         Dafür gibt es den größten Punktegewinn der App.</p>
+      <button class="btn sm" data-go="gipfel">Gipfel ansehen</button>
+    </div>`;
+  }
+  if (S.gipfel.status === "abgeschlossen"){
+    return `<div class="card soft stack" data-titel="Mein Gipfel">
+      <h3 style="margin:0">Geschafft: ${esc(S.gipfel.titel)}</h3>
+      <button class="btn sm primary" data-go="gipfel">Urkunde ansehen</button>
+    </div>`;
+  }
+  const f = gipfelFortschritt();
+  const n = naechsteEtappe();
+  return `<div class="card stack" data-titel="Mein Gipfel">
+    <h3 style="margin:0">${esc(S.gipfel.titel)}</h3>
+    <div class="xpbar" role="img" aria-label="${f.prozent} Prozent der Etappen geschafft">
+      <i style="width:${f.prozent}%"></i></div>
+    <p class="small">Etappe ${f.geschafft} von ${f.gesamt}${n ? " · als Nächstes: " + esc(n.text) : ""}</p>
+    <button class="btn sm primary" data-go="gipfel">Zum Gipfel</button>
+  </div>`;
+}
+
 function questKarte(q, index, mitTausch){
   const erledigt = S.daily.done.includes(q.id) ||
     S.completions.some(c => c.questId===q.id && c.date===heute());
@@ -2131,7 +2606,7 @@ function screenQuest(id){
 
   if (QSTATE.phase === "fertig"){
     return `<div class="stack" style="padding-top:14px">
-      <div class="card stack">
+      <div class="card stack" data-titel="Erledigt">
         <h1>Geschafft: ${esc(q.titel)}</h1>
         <p class="center" style="font-size:2rem">🌸</p>
         <div class="why"><h3>Warum das wirkt</h3><p>${esc(q.warumEsWirkt)}</p></div>
@@ -2145,7 +2620,7 @@ function screenQuest(id){
 
   return `<div class="stack" style="padding-top:14px">
     <button class="btn sm ghost" data-go="heim">← Zurück</button>
-    <div class="card stack">
+    <div class="card stack" data-titel="${esc(kategorieName(q.kategorie))}">
       <h1>${esc(q.titel)}</h1>
       <div class="row">
         <span class="pill">${q.dauerMin} Min</span>
@@ -2157,7 +2632,7 @@ function screenQuest(id){
     </div>
 
     ${QSTATE.phase === "vor" ? `
-    <div class="card stack">
+    <div class="card stack" data-titel="Check-in">
       <h2>Wie geht es dir gerade?</h2>
       <label for="mood-vor">Anspannung / Angst von 0 (ruhig) bis 10 (sehr stark)</label>
       <input type="range" id="mood-vor" min="0" max="10" step="1" value="${QSTATE.moodBefore}">
@@ -2165,7 +2640,7 @@ function screenQuest(id){
       <p class="small muted">Nur für deinen eigenen Verlauf. Es gibt hier kein „zu hoch“ und kein „zu niedrig“.</p>
     </div>` : ""}
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Anleitung">
       <h2>So geht's</h2>
       <ol class="steps">${q.anleitung.map(s => `<li>${esc(s)}</li>`).join("")}</ol>
     </div>
@@ -2173,7 +2648,7 @@ function screenQuest(id){
     ${werkzeugHtml(q)}
 
     ${QSTATE.phase === "nach" ? `
-    <div class="card stack">
+    <div class="card stack" data-titel="Danach">
       <h2>Und jetzt?</h2>
       <label for="mood-nach">Anspannung / Angst von 0 bis 10</label>
       <input type="range" id="mood-nach" min="0" max="10" step="1" value="${QSTATE.moodAfter}">
@@ -2218,7 +2693,7 @@ function werkzeugHtml(q){
 function atemHtml(q){
   const a = q.atem || { ein:4, halten:0, aus:6, minuten:5 };
   const dauer = a.minuten ? a.minuten + " Minuten" : a.runden + " Runden";
-  return `<div class="card stack" data-atem='${JSON.stringify(a)}'>
+  return `<div class="card stack" data-titel="Atem" data-atem='${JSON.stringify(a)}'>
     <h2>Atemblase</h2>
     <div class="breath-stage">
       <div class="breath" id="breath" role="img" aria-label="Atemanimation">
@@ -2231,7 +2706,7 @@ function atemHtml(q){
 }
 /* Einfacher Countdown */
 function timerHtml(min){
-  return `<div class="card stack" data-timer="${min}">
+  return `<div class="card stack" data-titel="Timer" data-timer="${min}">
     <h2>Timer</h2>
     <p class="center" style="font-size:2.4rem;font-weight:800" id="timer-anzeige">${String(min).padStart(2,"0")}:00</p>
     <div class="row">
@@ -2551,7 +3026,7 @@ function screenBibliothek(){
 function screenFortschritt(){
   return `<div class="stack" style="padding-top:14px">
     <h1>Fortschritt</h1>
-    <div class="card stack">
+    <div class="card stack" data-titel="Radar">
       <h2>Deine vier Attribute</h2>
       ${radarSvg()}
       <div class="row">
@@ -2560,21 +3035,21 @@ function screenFortschritt(){
       <p class="small muted">${ATTR_KEYS.map(k => ATTRIBUTE[k].name + ": " + ATTRIBUTE[k].wirkprinzip).join(" ")}</p>
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Kalender">
       <h2>Aktive Tage</h2>
       ${heatmapHtml()}
       <p class="small muted">Die letzten 13 Wochen. Leere Felder sind Pausen – keine Lücken, die
         irgendetwas beweisen.</p>
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Verlauf">
       <h2>Verlauf deiner Angstwerte</h2>
       ${verlaufSvg()}
       <p class="small muted">Aus deinem Angst-Tagebuch. Die Kurve ist eine Beobachtung,
         keine Bewertung – auch Zacken nach oben gehören dazu.</p>
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Sammlung">
       <h2>Abzeichen <span class="small muted">(${S.achievements.length}/${ACHIEVEMENTS.length})</span></h2>
       <div class="badges">
         ${ACHIEVEMENTS.map((a,i) => {
@@ -2588,7 +3063,7 @@ function screenFortschritt(){
       </div>
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Zahlen">
       <h2>Zahlen</h2>
       <p>Übungen insgesamt: <strong>${S.completions.length}</strong><br>
          Längste Serie: <strong>${S.streak.longest}</strong> Tage<br>
@@ -2701,13 +3176,13 @@ function screenJournal(){
       ${typen.map(([k,l]) => `<button class="btn sm ${JOURNAL_FILTER===k?'primary':''}" data-jfilter="${k}">${esc(l)}</button>`).join("")}
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Mut-Sätze">
       <h2>Deine Mut-Sätze</h2>
       <div>${copingListeHtml()}</div>
       <button class="btn sm" data-go-quest="mut-saetze">Sätze bearbeiten</button>
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Landkarte">
       <h2>Landkarte der Vermeidung</h2>
       ${leiterHtml()}
       <button class="btn sm" data-go-quest="landkarte-vermeidung">Landkarte bearbeiten</button>
@@ -2745,17 +3220,424 @@ function journalKarte(j){
   </div>`;
 }
 
-/* --- E.12  Einstellungen ------------------------------------------------ */
+/* ===========================================================================
+   §E.12  MEIN GIPFEL  ·  die selbst gesetzte Herausforderung
+   ---------------------------------------------------------------------------
+   Eine einzige, selbst gewählte Konfrontation, die über mehrere Etappen und
+   Wiederholungen geht – nicht an einem Tag. Der Punkte-Bonus am Ende ist
+   bewusst groß, aber so gebaut, dass er niemanden ins Risiko zieht:
+     · ein Abbruch zahlt echte Punkte, nie null
+     · kein Countdown, kein Ablaufdatum, kein Vergleich mit anderen
+     · der Gipfel-Bonus läuft OHNE Serien-Multiplikator, damit die größte
+       Leistung der App nicht davon abhängt, ob gerade eine Serie läuft
+     · Etappen zahlen einzeln – wer die Leiter wirklich geht, bekommt mehr,
+       ohne dass jemand für den direkten Weg getadelt oder gesperrt wird
+   Fachlich: graduierte Exposition in vivo. Zusätzlich zur Habituation
+   („bleiben, bis die Angst nachlässt") wird mit Erwartungsverletzung
+   gearbeitet – Vorhersage vorher, Abgleich nachher.
+   =========================================================================== */
+
+const GIPFEL_BONUS = z => 150 + 3 * clamp(Number(z)||0, 0, 100);
+const GIPFEL_CHECKS = [
+  "Ich will mich einer Situation stellen, die ich meide – ich will keine Körpersymptome absichtlich auslösen.",
+  "Was ich vorhabe, ist an sich nicht gefährlich: nichts im Straßenverkehr, nichts im Wasser, nichts in der Höhe ohne Sicherung.",
+  "Ich darf jederzeit aufhören. Das ist eingeplant und kein Scheitern."
+];
+const GIPFEL_AUSGESCHLOSSEN =
+  "Nicht geeignet sind Vorhaben, die Panik-Symptome erzeugen sollen: absichtlich schnell atmen, " +
+  "sich bis zum Schwindel drehen, die Luft anhalten, sich hochkoffeinieren. Solche Übungen wirken, " +
+  "gehören aber in therapeutische Begleitung – nicht in eine App, die du allein bedienst.";
+
+const gipfelAktiv = () => S.gipfel && S.gipfel.status === "aktiv";
+const etappeVon = id => (S.gipfel ? (S.gipfel.etappen || []).find(e => e.id === id) : null);
+const durchgaengeVon = id => (S.gipfel ? (S.gipfel.durchgaenge || []).filter(d => d.etappeId === id) : []);
+/* Die niedrigste Etappe, die noch offen ist – der natürliche nächste Schritt. */
+function naechsteEtappe(){
+  if (!gipfelAktiv()) return null;
+  const offen = S.gipfel.etappen.filter(e => e.status !== "geschafft");
+  return offen.length ? offen[0] : null;
+}
+function gipfelFortschritt(){
+  if (!S.gipfel) return { geschafft:0, gesamt:0, prozent:0 };
+  const gesamt = S.gipfel.etappen.length || 1;
+  const geschafft = S.gipfel.etappen.filter(e => e.status === "geschafft").length;
+  return { geschafft, gesamt, prozent: Math.round(geschafft/gesamt*100) };
+}
+
+/* --- Berg-Grafik: die Figur klettert mit jeder Etappe höher -------------- */
+function bergSvg(){
+  const { geschafft, gesamt } = gipfelFortschritt();
+  const n = Math.max(1, gesamt);
+  const pos = i => {
+    const t = i / n;
+    return [38 + t*122 + (i % 2 ? 12 : -4), 176 - t*128];
+  };
+  const stationen = S.gipfel.etappen.map((e,i) => {
+    const [x,y] = pos(i);
+    const fertig = e.status === "geschafft";
+    return `<g>
+      <circle cx="${x}" cy="${y}" r="9" fill="${fertig ? 'var(--mint)' : 'var(--surface)'}"
+        stroke="var(--ink-dunkel)" stroke-width="3"/>
+      ${fertig ? `<path d="M${x-4} ${y} l3 4 l6-7" fill="none" stroke="var(--ink-dunkel)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>` : ""}
+      <text x="${x+14}" y="${y+4}" font-size="10" font-weight="800" fill="var(--text)">${i+1}</text>
+    </g>`;
+  }).join("");
+  const [fx,fy] = pos(geschafft);
+  return `<svg viewBox="0 0 320 200" style="width:100%;height:auto" role="img"
+      aria-label="Berg mit ${gesamt} Etappen, ${geschafft} davon geschafft">
+    <rect x="0" y="0" width="320" height="200" fill="var(--himmel)" opacity=".28" rx="8"/>
+    <path d="M0 186 L96 62 L150 120 L206 34 L320 186 Z" fill="var(--lavendel)"
+      stroke="var(--ink-dunkel)" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M206 34 L186 60 q12 8 22 0 q10 8 20 0 Z" fill="#FFF8F3" stroke="var(--ink-dunkel)" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M206 30 l26 8 -26 10z" fill="var(--koralle)" stroke="var(--ink-dunkel)" stroke-width="3" stroke-linejoin="round"/>
+    <line x1="206" y1="24" x2="206" y2="52" stroke="var(--ink-dunkel)" stroke-width="3" stroke-linecap="round"/>
+    <path d="M38 178 L170 44" fill="none" stroke="var(--ink-dunkel)" stroke-width="3" stroke-dasharray="5 8" stroke-linecap="round" opacity=".6"/>
+    ${stationen}
+    <g transform="translate(${fx-30},${fy-62}) scale(0.3)">${avatarSvg(S.level)}</g>
+  </svg>`;
+}
+
+/* --- Übersicht ----------------------------------------------------------- */
+function screenGipfel(){
+  if (!S.gipfel) return screenGipfelEinladung();
+  if (S.gipfel.status === "pausiert"){
+    return `<div class="stack" style="padding-top:14px">
+      <h1>Mein Gipfel</h1>
+      <div class="card stack" data-titel="Pausiert">
+        <h2 style="margin:0">${esc(S.gipfel.titel)}</h2>
+        <p>Dieser Gipfel ist pausiert. Er hat nicht an Wert verloren – er hat nur gewartet.</p>
+        <button class="btn primary block" id="btn-gipfel-weiter">Wieder aufnehmen</button>
+      </div></div>`;
+  }
+  if (S.gipfel.status === "abgeschlossen") return screenGipfelUrkunde();
+
+  const g = S.gipfel;
+  const f = gipfelFortschritt();
+  const naechste = naechsteEtappe();
+  const bonus = GIPFEL_BONUS(g.zielSud);
+
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Mein Gipfel</h1>
+    <div class="card stack" data-titel="Ziel">
+      <h2 style="margin:0">${esc(g.titel)}</h2>
+      ${g.warum ? `<p class="small"><strong>Warum:</strong> ${esc(g.warum)}</p>` : ""}
+      ${bergSvg()}
+      <div class="row">
+        <span class="statusfeld">Etappe ${f.geschafft} von ${f.gesamt}</span>
+        <span class="statusfeld">Start-SUD ${g.zielSud}</span>
+        <span class="statusfeld">Gipfel-Bonus ${bonus}</span>
+      </div>
+      <div class="xpbar" role="img" aria-label="${f.prozent} Prozent der Etappen geschafft">
+        <i style="width:${f.prozent}%"></i>
+      </div>
+    </div>
+
+    ${naechste ? `
+    <div class="card stack" data-titel="Als Nächstes">
+      <h3 style="margin:0">Etappe ${g.etappen.indexOf(naechste)+1}: ${esc(naechste.text)}</h3>
+      <p class="small muted">SUD ${naechste.sud} · geplant ${naechste.geplanteMin} Minuten
+        ${naechste.ohneSicherheit ? "· ohne: " + esc(naechste.ohneSicherheit) : ""}</p>
+      <p class="small">Bisherige Durchgänge: <strong>${durchgaengeVon(naechste.id).length}</strong>.
+        ${durchgaengeVon(naechste.id).length < 2
+          ? "Zwei bis drei Durchgänge pro Etappe bringen am meisten – der zweite ist fast immer leichter als der erste."
+          : "Du kannst die Etappe abhaken, wenn sie sich deutlich kleiner anfühlt als beim ersten Mal."}</p>
+      <button class="btn primary block" data-durchgang="${esc(naechste.id)}">Durchgang starten</button>
+      ${durchgaengeVon(naechste.id).length ? `
+        <button class="btn mint block" data-etappe-fertig="${esc(naechste.id)}">Diese Etappe ist geschafft</button>` : ""}
+      <button class="btn ghost block" data-etappe-teilen="${esc(naechste.id)}">Etappe ist zu groß – halbieren</button>
+    </div>` : `
+    <div class="card stack" data-titel="Gipfel in Sicht">
+      <p>Alle Etappen sind geschafft. Wenn sich das für dich richtig anfühlt, kannst du
+         den Gipfel jetzt als erreicht eintragen.</p>
+      <button class="btn primary block" id="btn-gipfel-abschluss">Gipfel erreicht</button>
+    </div>`}
+
+    ${g.durchgaenge.length ? `
+    <div class="card stack" data-titel="Deine Kurve">
+      <h3 style="margin:0">Angst-Höhepunkt über die Durchgänge</h3>
+      ${gipfelKurve()}
+      <p class="small muted">Das ist der Beweis in deiner eigenen Handschrift: Der Höhepunkt sinkt,
+        wenn du dieselbe Situation wiederholst. Nicht sofort, aber über die Durchgänge hinweg.</p>
+    </div>` : ""}
+
+    <div class="card stack" data-titel="Alle Etappen">
+      <ol class="stack" style="padding-left:20px">
+        ${g.etappen.map((e,i) => `<li>
+          <div class="row between">
+            <span class="grow"><strong>${esc(e.text)}</strong>
+              <span class="small muted">· SUD ${e.sud} · ${durchgaengeVon(e.id).length} Durchgänge
+              ${e.status === "geschafft" ? "· geschafft ✓" : ""}</span></span>
+          </div></li>`).join("")}
+      </ol>
+      <button class="btn sm ghost" id="btn-etappe-neu">Etappe ergänzen</button>
+    </div>
+
+    <div class="card stack" data-titel="Notfallplan">
+      ${g.notfallplan.ausstiegssatz ? `<p><strong>Mein Ausstiegssatz:</strong> „${esc(g.notfallplan.ausstiegssatz)}“</p>` : ""}
+      ${g.notfallplan.kontakt ? `<p class="small"><strong>Erreichbar:</strong> ${esc(g.notfallplan.kontakt)}</p>` : ""}
+      ${g.verbuendeter ? `<p class="small"><strong>Weiß Bescheid:</strong> ${esc(g.verbuendeter)}</p>` : ""}
+      <p class="small muted">Geplant gehen ist etwas anderes als fliehen. Wenn du vorher entscheidest,
+        wann und wie du gehst, bleibt es dein Schritt.</p>
+      <button class="btn sm ghost" id="btn-gipfel-plan">Plan bearbeiten</button>
+    </div>
+
+    <button class="btn ghost block" id="btn-gipfel-pause">Gipfel pausieren oder verwerfen</button>
+  </div>`;
+}
+
+function gipfelKurve(){
+  const d = S.gipfel.durchgaenge.slice(-14);
+  if (d.length < 2) return `<p class="small muted">Ab dem zweiten Durchgang entsteht hier eine Kurve.</p>`;
+  const w=300,h=130,pad=24;
+  const pkt = (v,i) => [ pad + i*(w-2*pad)/(d.length-1), h-pad - (Number(v)/10)*(h-2*pad) ];
+  const linie = k => d.map((x,i) => pkt(x[k],i).join(",")).join(" ");
+  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:auto" role="img"
+      aria-label="Höhepunkt der Angst über ${d.length} Durchgänge, zuletzt ${d[d.length-1].sudHoch} von 10">
+    <line x1="${pad}" y1="${h-pad}" x2="${w-pad}" y2="${h-pad}" stroke="var(--line)" stroke-width="2"/>
+    <line x1="${pad}" y1="${pad}" x2="${pad}" y2="${h-pad}" stroke="var(--line)" stroke-width="2"/>
+    <text x="4" y="${pad+4}" font-size="10" fill="var(--text-muted)">10</text>
+    <text x="8" y="${h-pad}" font-size="10" fill="var(--text-muted)">0</text>
+    <polyline points="${linie('sudHoch')}" fill="none" stroke="var(--koralle)" stroke-width="3" stroke-linejoin="round"/>
+    <polyline points="${linie('sudNachher')}" fill="none" stroke="var(--at-geist)" stroke-width="3" stroke-dasharray="5 5" stroke-linejoin="round"/>
+    ${d.map((x,i) => { const p = pkt(x.sudHoch,i);
+      return `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--sakura)" stroke="var(--ink-dunkel)" stroke-width="2"/>`; }).join("")}
+  </svg>
+  <p class="small muted"><span style="color:var(--koralle);font-weight:800">—</span> Höhepunkt ·
+     <span style="color:var(--at-geist);font-weight:800">- -</span> danach</p>`;
+}
+
+/* --- Einladung, wenn es noch keinen Gipfel gibt -------------------------- */
+function screenGipfelEinladung(){
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Mein Gipfel</h1>
+    <div class="card stack" data-titel="Neu">
+      <p>Neben den täglichen Übungen kannst du dir <strong>ein</strong> großes Ziel setzen:
+         eine Situation, der du seit Langem ausweichst und die du wieder können möchtest.</p>
+      <p>Du zerlegst sie in Etappen, gehst jede davon mehrmals, und trägst jedes Mal ein,
+         was du befürchtet hast und was tatsächlich passiert ist. Am Ende steht der Gipfel –
+         und der größte Punktegewinn, den die App vergibt.</p>
+      <div class="warnbox">${esc(GIPFEL_AUSGESCHLOSSEN)}</div>
+      <button class="btn primary block" id="btn-gipfel-start">Gipfel festlegen</button>
+      <p class="small muted">Immer nur einer gleichzeitig – damit aus Zielen keine Sammlung wird.</p>
+    </div>
+    ${(S.gipfelArchiv||[]).length ? `
+    <div class="card stack" data-titel="Geschafft">
+      ${S.gipfelArchiv.map(a => `<p><strong>${esc(a.titel)}</strong>
+        <span class="small muted">· ${datumDe(a.abgeschlossenAm||a.erstelltAm)} · ${a.bonus} Punkte</span></p>`).join("")}
+    </div>` : ""}
+  </div>`;
+}
+
+/* --- Einrichtung in vier Schritten --------------------------------------- */
+let GSETUP = null;
+function screenGipfelSetup(){
+  if (!GSETUP) GSETUP = {
+    schritt:0, titel:"", warum:"", zielSud:70, checks:[false,false,false], abgeklaert:false,
+    etappen:[], verbuendeter:"", kontakt:"", ausstiegssatz:""
+  };
+  const G = GSETUP;
+  const schritte = [
+    `<div class="card stack" data-titel="Schritt 1 von 4">
+       <h2>Was ist dein Gipfel?</h2>
+       <div class="field"><label for="gs-titel">So konkret wie möglich</label>
+         <input type="text" id="gs-titel" maxlength="120" value="${esc(G.titel)}"
+           placeholder="z. B. allein mit dem Zug nach Hamburg fahren"></div>
+       <div class="field"><label for="gs-warum">Warum willst du das können?</label>
+         <textarea id="gs-warum" maxlength="400" placeholder="${esc(S.profile.wert ? 'Dein Wert: ' + S.profile.wert : 'Was wäre danach wieder möglich?')}">${esc(G.warum)}</textarea></div>
+       <div class="field">
+         <label for="gs-sud">Wie viel Angst löst allein die Vorstellung aus? <span id="gs-sud-wert">${G.zielSud}</span> von 100</label>
+         <input type="range" id="gs-sud" min="0" max="100" step="5" value="${G.zielSud}">
+       </div>
+       <div id="gs-hinweis">${G.zielSud >= 80 ? gipfelBegleitungHinweis() : ""}</div>
+       <button class="btn primary block" data-gs="1">Weiter</button>
+       <button class="btn ghost block" data-go="gipfel">Abbrechen</button>
+     </div>`,
+    `<div class="card stack" data-titel="Schritt 2 von 4">
+       <h2>Kurzer Sicherheits-Check</h2>
+       <div class="warnbox">${esc(GIPFEL_AUSGESCHLOSSEN)}</div>
+       ${GIPFEL_CHECKS.map((t,i) => `<label class="row" style="align-items:flex-start;gap:8px">
+         <input type="checkbox" data-check="${i}" style="width:auto;margin-top:4px" ${G.checks[i]?"checked":""}>
+         <span class="grow">${esc(t)}</span></label>`).join("")}
+       <label class="row" style="align-items:flex-start;gap:8px">
+         <input type="checkbox" id="gs-abgeklaert" style="width:auto;margin-top:4px" ${G.abgeklaert?"checked":""}>
+         <span class="grow small muted">Körperliche Beschwerden (Herz, Atem, Schwindel) sind bei mir
+           ärztlich abgeklärt. – Freiwillig, aber gut zu wissen.</span></label>
+       <button class="btn primary block" data-gs="2">Weiter</button>
+       <button class="btn ghost block" data-gs="0">Zurück</button>
+     </div>`,
+    `<div class="card stack" data-titel="Schritt 3 von 4">
+       <h2>In Etappen zerlegen</h2>
+       <p class="small">Drei bis sieben Schritte. Die erste Etappe sollte bei etwa 40 oder darunter
+          liegen – klein genug, dass du sie dir heute zutraust.</p>
+       ${S.avoidanceMap.length ? `<button class="btn sm mint block" id="gs-import">
+         ${S.avoidanceMap.length} Einträge aus deiner Landkarte übernehmen</button>` : ""}
+       <div id="gs-etappen">${setupEtappenHtml()}</div>
+       <div class="field"><label for="gs-et-text">Neue Etappe</label>
+         <input type="text" id="gs-et-text" maxlength="140" placeholder="z. B. drei Haltestellen mit dem Bus"></div>
+       <div class="row">
+         <div class="grow"><label for="gs-et-sud">SUD <span id="gs-et-sud-wert">40</span></label>
+           <input type="range" id="gs-et-sud" min="0" max="100" step="5" value="40"></div>
+         <div style="width:96px"><label for="gs-et-min">Minuten</label>
+           <input type="number" id="gs-et-min" min="1" max="240" value="20"></div>
+       </div>
+       <div class="field"><label for="gs-et-ohne">Ohne welche Absicherung?</label>
+         <input type="text" id="gs-et-ohne" maxlength="80" placeholder="z. B. ohne Wasserflasche"></div>
+       <button class="btn sm mint" id="gs-et-add">Etappe hinzufügen</button>
+       <button class="btn primary block" data-gs="3">Weiter</button>
+       <button class="btn ghost block" data-gs="1">Zurück</button>
+     </div>`,
+    `<div class="card stack" data-titel="Schritt 4 von 4">
+       <h2>Dein Notfallplan</h2>
+       <p class="small">Nicht, weil etwas schiefgeht – sondern damit du weißt, dass du jederzeit
+          aussteigen kannst. Genau das macht das Bleiben leichter.</p>
+       <div class="field"><label for="gs-ausstieg">Mein Ausstiegssatz</label>
+         <input type="text" id="gs-ausstieg" maxlength="120" value="${esc(G.ausstiegssatz)}"
+           placeholder="z. B. Ich bleibe noch zwei Minuten und gehe dann bewusst."></div>
+       <div class="field"><label for="gs-kontakt">Wen kann ich anrufen?</label>
+         <input type="text" id="gs-kontakt" maxlength="80" value="${esc(G.kontakt)}"
+           placeholder="${esc(S.emergencyContacts[0] ? S.emergencyContacts[0].name : 'Name')}"></div>
+       <div class="field"><label for="gs-verbuendeter">Wer weiß Bescheid?</label>
+         <input type="text" id="gs-verbuendeter" maxlength="80" value="${esc(G.verbuendeter)}"
+           placeholder="Freiwillig – geteilt ist es leichter"></div>
+       ${S.copingCards.length ? `<p class="small muted">Deine ${S.copingCards.length} Mut-Sätze
+         sind während jedes Durchgangs eingeblendet.</p>` :
+         `<p class="small muted">Tipp: Leg dir vorher ein paar Mut-Sätze an – sie erscheinen
+          dann während jedes Durchgangs.</p>`}
+       <button class="btn primary block" data-gs="fertig">Gipfel anlegen (+30 Geist)</button>
+       <button class="btn ghost block" data-gs="2">Zurück</button>
+     </div>`
+  ];
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Gipfel festlegen</h1>${schritte[G.schritt]}</div>`;
+}
+function gipfelBegleitungHinweis(){
+  return `<div class="warnbox">Das ist eine große Sache. In dieser Größenordnung ist es mit
+    therapeutischer Begleitung deutlich leichter – das ist keine Absage an dich, sondern die
+    passende Werkzeugkiste. Du kannst trotzdem loslegen: kleine Etappen zählen genauso.</div>`;
+}
+function setupEtappenHtml(){
+  const G = GSETUP;
+  if (!G.etappen.length) return `<p class="small muted">Noch keine Etappen.</p>`;
+  return `<ol class="stack" style="padding-left:20px">${G.etappen.map(e => `<li>
+    <div class="row between"><span class="grow"><strong>${esc(e.text)}</strong>
+      <span class="small muted">· SUD ${e.sud} · ${e.geplanteMin} Min</span></span>
+      <button class="btn sm ghost" data-gs-del="${esc(e.id)}" aria-label="Etappe entfernen">×</button>
+    </div></li>`).join("")}</ol>`;
+}
+
+/* --- Ein Durchgang ------------------------------------------------------- */
+let DSTATE = null;
+function screenDurchgang(){
+  if (!DSTATE || !S.gipfel) return screenGipfel();
+  const e = etappeVon(DSTATE.etappeId);
+  if (!e) return screenGipfel();
+  const nr = S.gipfel.etappen.indexOf(e) + 1;
+
+  if (DSTATE.phase === "vor") return `<div class="stack" style="padding-top:14px">
+    <h1>Etappe ${nr}</h1>
+    <div class="card stack" data-titel="Vorbereitung">
+      <h2 style="margin:0">${esc(e.text)}</h2>
+      <p class="small muted">Geplant: ${e.geplanteMin} Minuten${e.ohneSicherheit ? " · ohne " + esc(e.ohneSicherheit) : ""}</p>
+      <div class="field"><label for="dg-vorhersage">Was befürchtest du konkret?</label>
+        <textarea id="dg-vorhersage" maxlength="400" placeholder="Möglichst wörtlich – das wird gleich der Vergleich."></textarea></div>
+      <div class="field">
+        <label for="dg-wahr">Wie wahrscheinlich hältst du das? <span id="dg-wahr-wert">50</span> %</label>
+        <input type="range" id="dg-wahr" min="0" max="100" step="5" value="50">
+      </div>
+      <div class="field">
+        <label for="dg-vorher">Angst jetzt gerade <span id="dg-vorher-wert">5</span> von 10</label>
+        <input type="range" id="dg-vorher" min="0" max="10" value="5">
+      </div>
+      <div class="warnbox">Bleib in der Situation, bis die Angst spürbar nachlässt oder die geplante
+        Zeit vorbei ist. Und: Aufhören ist erlaubt und zählt – der Knopf dafür ist die ganze Zeit da.</div>
+      <button class="btn primary block" id="btn-dg-los">Los geht's</button>
+      <button class="btn ghost block" data-go="gipfel">Doch nicht jetzt</button>
+    </div></div>`;
+
+  if (DSTATE.phase === "laeuft"){
+    const saetze = S.copingCards.length ? S.copingCards.map(c => c.text) : COPING_VORLAGEN.slice(0,3);
+    return `<div class="stack" style="padding-top:14px">
+      <div class="card stack" data-titel="Läuft">
+        <h2 style="margin:0">${esc(e.text)}</h2>
+        <p class="center" style="font-size:2.6rem;font-weight:800" id="dg-uhr">00:00</p>
+        <p class="center small muted">geplant: ${e.geplanteMin} Minuten</p>
+        <div class="stack">
+          ${saetze.map(t => `<div class="bubble"><strong>„${esc(t)}“</strong></div>`).join("")}
+        </div>
+        <button class="btn primary block" id="btn-dg-durch">Ich bin durch</button>
+        <button class="btn block" id="btn-dg-stop">Ich höre hier auf</button>
+        <p class="small muted center">Beides zählt. Aufhören gibt Punkte, nicht null –
+          angefangen zu haben ist der schwere Teil.</p>
+      </div></div>`;
+  }
+
+  /* Auswertung */
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Rückblick</h1>
+    <div class="card stack" data-titel="Auswertung">
+      ${DSTATE.vorhersage ? `<div class="why"><strong>Du hattest befürchtet:</strong>
+        <br>„${esc(DSTATE.vorhersage)}“ – für ${DSTATE.wahrscheinlichkeit} % wahrscheinlich gehalten.</div>` : ""}
+      <div class="field">
+        <label for="dg-hoch">Angst auf dem Höhepunkt <span id="dg-hoch-wert">7</span> von 10</label>
+        <input type="range" id="dg-hoch" min="0" max="10" value="7">
+      </div>
+      <div class="field">
+        <label for="dg-nach">Angst am Ende <span id="dg-nach-wert">4</span> von 10</label>
+        <input type="range" id="dg-nach" min="0" max="10" value="4">
+      </div>
+      <div class="field"><label for="dg-passiert">Was ist tatsächlich passiert?</label>
+        <textarea id="dg-passiert" maxlength="600"></textarea></div>
+      <div class="field"><label for="dg-erkenntnis">Was sagt dir das über deine Befürchtung?</label>
+        <textarea id="dg-erkenntnis" maxlength="600" placeholder="Der Vergleich ist der eigentliche Wirkstoff."></textarea></div>
+      <button class="btn primary block" id="btn-dg-fertig">Durchgang eintragen</button>
+    </div></div>`;
+}
+
+/* --- Urkunde ------------------------------------------------------------- */
+function screenGipfelUrkunde(){
+  const g = S.gipfel;
+  const anzahl = g.durchgaenge.length;
+  return `<div class="stack" style="padding-top:14px">
+    <h1>Gipfel erreicht</h1>
+    <div class="card stack center" data-titel="Urkunde">
+      <div>${avatarSvg(7)}</div>
+      <h2 style="margin:0">${esc(g.titel)}</h2>
+      <p>Du hast dafür <strong>${anzahl}</strong> Durchgänge gemacht – über
+         <strong>${g.etappen.length}</strong> Etappen, an ${new Set(g.durchgaenge.map(d=>d.date)).size} Tagen.</p>
+      <p class="small muted">Nicht angstfrei. Handlungsfähig. Das ist der Unterschied.</p>
+      <div class="row" style="justify-content:center">
+        <span class="pill mut">+${g.bonus} Gipfel-Bonus</span>
+        <span class="pill">${datumDe(g.abgeschlossenAm)}</span>
+      </div>
+      <button class="btn primary block" id="btn-gipfel-archiv">Ins Archiv legen</button>
+      <p class="small muted">Danach ist Platz für einen neuen Gipfel. Wiederhol den alten
+        gelegentlich – einmal im Monat reicht, damit er dir nicht wieder entgleitet.</p>
+    </div></div>`;
+}
+
+/* --- E.13  Einstellungen ------------------------------------------------ */
 function screenEinstellungen(){
   return `<div class="stack" style="padding-top:14px">
     <h1>Einstellungen</h1>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Profil">
       <h2>Du und deine Figur</h2>
       <div class="field"><label for="set-name">Dein Name</label>
         <input type="text" id="set-name" maxlength="24" value="${esc(S.profile.name)}"></div>
       <div class="field"><label for="set-avatar">Name der Figur</label>
         <input type="text" id="set-avatar" maxlength="24" value="${esc(S.profile.avatarName)}"></div>
+      <div class="field">
+        <label>Art der Figur</label>
+        <div class="artwahl klein">
+          ${ART_IDS.map(id => { const A = ARTEN[id]; return `
+            <button class="artkarte ${S.profile.art===id?'gewaehlt':''}" data-art="${id}"
+              aria-pressed="${S.profile.art===id}">
+              <span class="bild">${avatarSvg(Math.max(2,S.level),id)}</span>
+              <strong>${esc(A.name)}</strong>
+            </button>`; }).join("")}
+        </div>
+        <p class="small muted">Wechseln ist jederzeit möglich und ändert nichts an deinem Fortschritt.</p>
+      </div>
       <div class="field"><label for="set-wert">Dein Wert</label>
         <input type="text" id="set-wert" maxlength="40" value="${esc(S.profile.wert)}"></div>
       <div class="field"><label for="set-intensitaet">Grundeinstellung</label>
@@ -2766,7 +3648,7 @@ function screenEinstellungen(){
       <button class="btn sm mint" id="btn-profil-speichern">Speichern</button>
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Darstellung">
       <h2>Darstellung</h2>
       <label class="row"><input type="checkbox" id="set-motion" style="width:auto" ${S.settings.reducedMotion?"checked":""}>
         Bewegungen abschalten (Hüpfen, Konfetti, Atemblase animiert)</label>
@@ -2779,14 +3661,14 @@ function screenEinstellungen(){
       <button class="btn sm mint" id="btn-settings-speichern">Speichern</button>
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Kontakte">
       <h2>Notfallkontakte</h2>
       <p class="small muted">Erscheinen in der Ruhe-Insel zum direkten Antippen.</p>
       ${kontakteFormular()}
       <button class="btn sm mint" id="btn-kontakte-speichern">Kontakte speichern</button>
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Daten">
       <h2>Daten</h2>
       <p class="small">Alles liegt nur in diesem Browser. Wenn du den Verlauf löschst oder das Gerät
         wechselst, ist der Fortschritt weg – deshalb ab und zu sichern.</p>
@@ -2795,14 +3677,14 @@ function screenEinstellungen(){
       <input type="file" id="file-import" accept="application/json,.json" class="sr-only">
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Zurücksetzen">
       <h2>Alles zurücksetzen</h2>
       <p class="small">Löscht Fortschritt, Journal, Karten und Kontakte auf diesem Gerät. Das lässt sich
         nicht rückgängig machen.</p>
       <button class="btn sm" id="btn-reset">Zurücksetzen …</button>
     </div>
 
-    <div class="card stack">
+    <div class="card stack" data-titel="Rechtliches">
       <h2>Haftungshinweis & Impressum</h2>
       <p class="small">${esc(TEXTE.disclaimerKurz)}</p>
       <p class="small">${esc(TEXTE.disclaimerKoerper)}</p>
@@ -2821,12 +3703,12 @@ function screenKrisen(){
     <h1>Hilfe holen</h1>
     <p>Wenn du gerade nicht weiterweißt, ist ein Anruf der richtige nächste Schritt.
        Diese Stellen sind dafür da – auch nachts, auch wenn du unsicher bist, ob es „schlimm genug“ ist.</p>
-    ${S.emergencyContacts.length ? `<div class="card stack">
+    ${S.emergencyContacts.length ? `<div class="card stack" data-titel="Deine Kontakte">
       <h2>Deine eigenen Kontakte</h2>
       ${S.emergencyContacts.map(k => `<a class="btn block" href="tel:${esc((k.phone||"").replace(/[^0-9+]/g,""))}">
         ${esc(k.name||"Kontakt")} anrufen</a>`).join("")}
     </div>` : ""}
-    <div class="card stack">
+    <div class="card stack" data-titel="Krisennummern">
       <h2>Krisennummern</h2>
       ${KRISENKONTAKTE.map(k => `<div class="card soft stack">
         <strong>${esc(k.name)}</strong>
@@ -3067,21 +3949,27 @@ function bindeView(){
 
   /* Onboarding */
   $$("[data-onb]").forEach(b => b.addEventListener("click", () => {
-    if (ONB_STEP === 2){
+    if (ONB_STEP === 3){
       const a = $("#onb-avatar"), n = $("#onb-name");
-      if (a) S.profile.avatarName = a.value.trim() || "Mochi";
+      if (a) S.profile.avatarName = a.value.trim() || meineArt().vorschlagName;
       if (n) S.profile.name = n.value.trim();
     }
-    if (ONB_STEP === 3){
+    if (ONB_STEP === 4){
       const eigen = $("#onb-wert-eigen");
       if (eigen && eigen.value.trim()) S.profile.wert = eigen.value.trim();
     }
-    if (ONB_STEP === 4) kontakteUebernehmen();
+    if (ONB_STEP === 5) kontakteUebernehmen();
     if (b.dataset.onb === "fertig"){
       S.onboarded = true; S.profile.startDate = heute();
       speichern(); gehe("heim"); return;
     }
     ONB_STEP = Number(b.dataset.onb);
+    speichern(); render();
+  }));
+  $$("[data-art]").forEach(b => b.addEventListener("click", () => {
+    S.profile.art = b.dataset.art;
+    /* Noch kein eigener Name vergeben? Dann den Vorschlag der Art übernehmen. */
+    if (!S.profile.avatarName) S.profile.avatarName = meineArt().vorschlagName;
     speichern(); render();
   }));
   $$("[data-wert]").forEach(b => b.addEventListener("click", () => {
@@ -3203,9 +4091,225 @@ function bindeView(){
   const final = $("#btn-quest-final");
   if (final) final.addEventListener("click", () => questEintragen());
 
+  /* Mein Gipfel */
+  bindeGipfel();
+
   /* Einstellungen */
   bindeEinstellungen();
 }
+/* --- G.5b  Mein Gipfel: Bedienung --------------------------------------- */
+let DUHR = null;
+function uhrStoppen(){ if (DUHR){ clearInterval(DUHR); DUHR = null; } }
+/* Schieberegler mit Live-Beschriftung koppeln */
+function regler(id, ausgabeId, nachher){
+  const el = $("#"+id); if (!el) return;
+  el.addEventListener("input", () => {
+    const a = $("#"+ausgabeId); if (a) a.textContent = el.value;
+    if (nachher) nachher(el.value);
+  });
+}
+function bindeGipfel(){
+  uhrStoppen();
+
+  const start = $("#btn-gipfel-start");
+  if (start) start.addEventListener("click", () => { GSETUP = null; gehe("gipfel-setup"); });
+
+  /* ---- Einrichtung ---- */
+  regler("gs-sud","gs-sud-wert", v => {
+    GSETUP.zielSud = Number(v);
+    const box = $("#gs-hinweis");
+    if (box) box.innerHTML = Number(v) >= 80 ? gipfelBegleitungHinweis() : "";
+  });
+  regler("gs-et-sud","gs-et-sud-wert");
+  $$("[data-check]").forEach(c => c.addEventListener("change", () => {
+    GSETUP.checks[Number(c.dataset.check)] = c.checked;
+  }));
+  const imp = $("#gs-import");
+  if (imp) imp.addEventListener("click", () => {
+    S.avoidanceMap.slice().sort((a,b)=>a.sud-b.sud).forEach(e => {
+      if (!GSETUP.etappen.some(x => x.text === e.situation))
+        GSETUP.etappen.push({ id:neueId(), text:e.situation, sud:e.sud, geplanteMin:20, ohneSicherheit:"" });
+    });
+    render(); toast("Aus der Landkarte übernommen.");
+  });
+  const etAdd = $("#gs-et-add");
+  if (etAdd) etAdd.addEventListener("click", () => {
+    const t = $("#gs-et-text").value.trim();
+    if (!t){ toast("Bitte eine Etappe eintragen."); return; }
+    GSETUP.etappen.push({ id:neueId(), text:t, sud:Number($("#gs-et-sud").value),
+      geplanteMin:Math.max(1,Number($("#gs-et-min").value)||20),
+      ohneSicherheit:$("#gs-et-ohne").value.trim() });
+    render();
+  });
+  $$("[data-gs-del]").forEach(b => b.addEventListener("click", () => {
+    GSETUP.etappen = GSETUP.etappen.filter(e => e.id !== b.dataset.gsDel); render();
+  }));
+  $$("[data-gs]").forEach(b => b.addEventListener("click", () => {
+    const G = GSETUP, ziel = b.dataset.gs;
+    if (G.schritt === 0){
+      G.titel = $("#gs-titel").value; G.warum = $("#gs-warum").value;
+      G.zielSud = Number($("#gs-sud").value);
+      if (ziel !== "0" && !G.titel.trim()){ toast("Ein Satz reicht – aber einer muss es sein."); return; }
+    }
+    if (G.schritt === 1){
+      G.abgeklaert = $("#gs-abgeklaert").checked;
+      if (ziel === "2" && !G.checks.every(Boolean)){
+        toast("Bitte alle drei Punkte bestätigen."); return;
+      }
+    }
+    if (G.schritt === 2 && ziel === "3" && !G.etappen.length){
+      toast("Mindestens eine Etappe – lieber eine kleine als keine."); return;
+    }
+    if (G.schritt === 3){
+      G.ausstiegssatz = $("#gs-ausstieg").value;
+      G.kontakt = $("#gs-kontakt").value;
+      G.verbuendeter = $("#gs-verbuendeter").value;
+    }
+    if (ziel === "fertig"){ gipfelAnlegen(G); GSETUP = null; gehe("gipfel"); return; }
+    G.schritt = Number(ziel); render();
+  }));
+
+  /* ---- Durchgang ---- */
+  $$("[data-durchgang]").forEach(b => b.addEventListener("click", () => {
+    DSTATE = { etappeId:b.dataset.durchgang, phase:"vor", vorhersage:"",
+               wahrscheinlichkeit:50, sudVorher:5, start:Date.now(), abgebrochen:false };
+    gehe("durchgang");
+  }));
+  regler("dg-wahr","dg-wahr-wert");
+  regler("dg-vorher","dg-vorher-wert");
+  regler("dg-hoch","dg-hoch-wert");
+  regler("dg-nach","dg-nach-wert");
+  const los = $("#btn-dg-los");
+  if (los) los.addEventListener("click", () => {
+    DSTATE.vorhersage = $("#dg-vorhersage").value.trim();
+    DSTATE.wahrscheinlichkeit = Number($("#dg-wahr").value);
+    DSTATE.sudVorher = Number($("#dg-vorher").value);
+    DSTATE.start = Date.now();
+    DSTATE.phase = "laeuft";
+    render();
+  });
+  if (DSTATE && DSTATE.phase === "laeuft" && $("#dg-uhr")){
+    const zeige = () => {
+      const s = Math.floor((Date.now() - DSTATE.start)/1000);
+      const el = $("#dg-uhr");
+      if (el) el.textContent = String(Math.floor(s/60)).padStart(2,"0") + ":" + String(s%60).padStart(2,"0");
+    };
+    zeige(); DUHR = setInterval(zeige, 1000);
+  }
+  const durch = $("#btn-dg-durch");
+  if (durch) durch.addEventListener("click", () => {
+    uhrStoppen(); DSTATE.abgebrochen = false; DSTATE.phase = "nach"; render();
+  });
+  const stop = $("#btn-dg-stop");
+  if (stop) stop.addEventListener("click", () => {
+    uhrStoppen(); DSTATE.abgebrochen = true; DSTATE.phase = "nach"; render();
+  });
+  const fertig = $("#btn-dg-fertig");
+  if (fertig) fertig.addEventListener("click", durchgangEintragen);
+
+  /* ---- Etappen verwalten ---- */
+  $$("[data-etappe-fertig]").forEach(b => b.addEventListener("click", () =>
+    etappeAbschliessen(b.dataset.etappeFertig)));
+  $$("[data-etappe-teilen]").forEach(b => b.addEventListener("click", () => {
+    const e = etappeVon(b.dataset.etappeTeilen); if (!e) return;
+    overlay(`<h2>Etappe halbieren</h2>
+      <p class="small">Wenn eine Etappe dich überfordert, ist die Etappe zu groß – nicht du zu schwach.
+         Beschreib einen kleineren Zwischenschritt.</p>
+      <div class="field"><label for="halb-text">Kleinerer Schritt</label>
+        <input type="text" id="halb-text" maxlength="140" placeholder="z. B. nur bis zur nächsten Haltestelle"></div>
+      <button class="btn primary block" id="halb-ok">Als neue Etappe davor einfügen</button>
+      <button class="btn ghost block" data-close>Abbrechen</button>`);
+    $("#halb-ok").addEventListener("click", () => {
+      const t = $("#halb-text").value.trim();
+      if (!t){ toast("Ein kurzer Satz genügt."); return; }
+      const idx = S.gipfel.etappen.indexOf(e);
+      S.gipfel.etappen.splice(idx, 0, { id:neueId(), text:t,
+        sud:Math.max(0, e.sud-20), geplanteMin:Math.max(5, Math.round(e.geplanteMin/2)),
+        ohneSicherheit:e.ohneSicherheit, status:"offen" });
+      S.stats.etappenHalbiert = (S.stats.etappenHalbiert||0) + 1;
+      speichern(); pruefeAchievements();
+      $("#overlay-root").innerHTML = ""; render();
+      toast("Kleinerer Schritt eingefügt.");
+    });
+  }));
+  const neu = $("#btn-etappe-neu");
+  if (neu) neu.addEventListener("click", () => {
+    overlay(`<h2>Etappe ergänzen</h2>
+      <div class="field"><label for="et-text">Was nimmst du dir vor?</label>
+        <input type="text" id="et-text" maxlength="140"></div>
+      <div class="field"><label for="et-sud">SUD <span id="et-sud-wert">50</span></label>
+        <input type="range" id="et-sud" min="0" max="100" step="5" value="50"></div>
+      <div class="field"><label for="et-min">Minuten</label>
+        <input type="number" id="et-min" min="1" max="240" value="20"></div>
+      <button class="btn primary block" id="et-ok">Hinzufügen</button>
+      <button class="btn ghost block" data-close>Abbrechen</button>`);
+    $("#et-sud").addEventListener("input", e2 => { $("#et-sud-wert").textContent = e2.target.value; });
+    $("#et-ok").addEventListener("click", () => {
+      const t = $("#et-text").value.trim();
+      if (!t){ toast("Bitte kurz beschreiben."); return; }
+      S.gipfel.etappen.push({ id:neueId(), text:t, sud:Number($("#et-sud").value),
+        geplanteMin:Math.max(1,Number($("#et-min").value)||20), ohneSicherheit:"", status:"offen" });
+      S.gipfel.etappen.sort((a,b) => (a.status==="geschafft"?-1:0) - (b.status==="geschafft"?-1:0) || a.sud-b.sud);
+      speichern(); $("#overlay-root").innerHTML = ""; render();
+    });
+  });
+
+  /* ---- Abschluss, Archiv, Pause ---- */
+  const ab = $("#btn-gipfel-abschluss");
+  if (ab) ab.addEventListener("click", () => {
+    overlay(`<h2>Gipfel erreicht?</h2>
+      <p>Du entscheidest das, nicht die App. Wenn es sich richtig anfühlt: eintragen.</p>
+      <p class="small muted">Bonus: ${GIPFEL_BONUS(S.gipfel.zielSud)} Punkte – ohne Serien-Multiplikator,
+        damit er nicht davon abhängt, ob gerade eine Serie läuft.</p>
+      <button class="btn primary block" id="ab-ok">Ja, eingetragen</button>
+      <button class="btn ghost block" data-close>Noch nicht</button>`);
+    $("#ab-ok").addEventListener("click", () => { $("#overlay-root").innerHTML=""; gipfelAbschliessen(); });
+  });
+  const weiter = $("#btn-gipfel-weiter");
+  if (weiter) weiter.addEventListener("click", () => {
+    S.gipfel.status = "aktiv"; speichern(); render(); toast("Schön, dass du weitermachst.");
+  });
+  const arch = $("#btn-gipfel-archiv");
+  if (arch) arch.addEventListener("click", gipfelArchivieren);
+  const plan = $("#btn-gipfel-plan");
+  if (plan) plan.addEventListener("click", () => {
+    const g = S.gipfel;
+    overlay(`<h2>Notfallplan</h2>
+      <div class="field"><label for="np-satz">Mein Ausstiegssatz</label>
+        <input type="text" id="np-satz" maxlength="120" value="${esc(g.notfallplan.ausstiegssatz)}"></div>
+      <div class="field"><label for="np-kontakt">Wen kann ich anrufen?</label>
+        <input type="text" id="np-kontakt" maxlength="80" value="${esc(g.notfallplan.kontakt)}"></div>
+      <div class="field"><label for="np-verb">Wer weiß Bescheid?</label>
+        <input type="text" id="np-verb" maxlength="80" value="${esc(g.verbuendeter)}"></div>
+      <button class="btn primary block" id="np-ok">Speichern</button>
+      <button class="btn ghost block" data-close>Abbrechen</button>`);
+    $("#np-ok").addEventListener("click", () => {
+      g.notfallplan.ausstiegssatz = $("#np-satz").value.trim();
+      g.notfallplan.kontakt = $("#np-kontakt").value.trim();
+      g.verbuendeter = $("#np-verb").value.trim();
+      speichern(); $("#overlay-root").innerHTML=""; render(); toast("Gespeichert.");
+    });
+  });
+  const pause = $("#btn-gipfel-pause");
+  if (pause) pause.addEventListener("click", () => {
+    overlay(`<h2>Gipfel pausieren</h2>
+      <p>Pausieren ändert nichts an deinen Punkten und deinem Fortschritt – der Gipfel wartet einfach.</p>
+      <p class="small muted">Verwerfen löscht das Ziel samt Etappen. Deine bereits eingetragenen
+         Durchgänge bleiben im Journal erhalten.</p>
+      <button class="btn primary block" data-close>Weitermachen</button>
+      <button class="btn block" id="gp-pause">Pausieren</button>
+      <button class="btn ghost block" id="gp-weg">Verwerfen</button>`);
+    $("#gp-pause").addEventListener("click", () => {
+      S.gipfel.status = "pausiert"; speichern(); $("#overlay-root").innerHTML=""; render();
+      toast("Pausiert. Er wartet auf dich.");
+    });
+    $("#gp-weg").addEventListener("click", () => {
+      S.gipfel = null; speichern(); $("#overlay-root").innerHTML=""; render();
+      toast("Verworfen. Ein neuer Gipfel ist jederzeit möglich.");
+    });
+  });
+}
+
 function bindeCoping(){
   $$("[data-cp-del]").forEach(b => b.addEventListener("click", () => {
     S.copingCards = S.copingCards.filter(c => c.id !== b.dataset.cpDel);
@@ -3263,7 +4367,7 @@ function bindeEinstellungen(){
   const p = $("#btn-profil-speichern");
   if (p) p.addEventListener("click", () => {
     S.profile.name = $("#set-name").value.trim();
-    S.profile.avatarName = $("#set-avatar").value.trim() || "Mochi";
+    S.profile.avatarName = $("#set-avatar").value.trim() || meineArt().vorschlagName;
     S.profile.wert = $("#set-wert").value.trim();
     const alteIntensitaet = S.profile.intensity;
     S.profile.intensity = $("#set-intensitaet").value;

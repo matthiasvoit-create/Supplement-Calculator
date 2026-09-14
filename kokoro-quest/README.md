@@ -2,7 +2,8 @@
 
 Eine gamifizierte Self-Care-App gegen Angst und Panik. Tägliche kleine Übungen aus
 Verhaltenstherapie, Körperarbeit und Achtsamkeit; der Fortschritt wird als Avatar-Entwicklung
-im Anime-/Tokyo-Pop-Stil sichtbar — vom zitternden Reisklößchen bis zum Superhelden.
+sichtbar — vom zitternden kleinen Wesen bis zum Superhelden. Optik: Y2K/Kawaii —
+Fensterrahmen im Betriebssystem-Look, Pastellverläufe, harte Konturen und Schlagschatten.
 
 Eine einzige Datei: **`index.html`**. Doppelklick genügt. Kein Build, keine Abhängigkeiten,
 keine Netzwerk-Requests, kein Tracking. Alle Daten bleiben im Browser (`localStorage`,
@@ -26,15 +27,38 @@ Diese Punkte stehen über jedem Spielmechanismus:
   einer Pause begrüßt ein eigener Screen die Rückkehr.
 - **Akutmodus ohne Punkte.** Die Ruhe-Insel vergibt nichts — damit nie ein Anreiz entsteht,
   Angst zu provozieren. Nur das freiwillige Reflektieren danach zahlt auf Geist ein.
+  Sie ist außerdem bewusst vom Y2K-Look ausgenommen: im Panikmodus gilt gedämpft und reizarm.
+
+## Mein Gipfel
+
+Neben dem Tagespensum lässt sich **ein** selbst gesetztes Ziel anlegen: eine gemiedene Situation,
+zerlegt in 3–7 Etappen, jede davon mehrfach gegangen. Vor jedem Durchgang wird eine Vorhersage
+notiert (was genau wird befürchtet, wie wahrscheinlich), danach der Abgleich mit der Realität —
+Erwartungsverletzung nach Craske, zusätzlich zur klassischen Habituation. Die Kurve der
+Angst-Höhepunkte über die Durchgänge macht das Lernen sichtbar.
+
+Punkte: Plan anlegen 30 Geist · Durchgang `25 + 0,4 × SUD` Mut · Auswertung +15 Geist ·
+Etappe geschafft +40 Mut · **Gipfel `150 + 3 × SUD`**. Drei Sicherungen gegen falsche Anreize:
+ein Abbruch zahlt 60 % statt null, der Gipfel-Bonus läuft ohne Serien-Multiplikator, und es gibt
+keinen Countdown. Beim Anlegen steht ein Sicherheits-Check, der Symptomprovokation ausschließt;
+ab SUD 80 oder nach wiederholtem Abbruch weist die App ruhig auf Fachbegleitung hin, ohne zu sperren.
+„Etappe halbieren" ist ein eigener Knopf mit eigenem Abzeichen — Verkleinern statt Aufgeben.
+
+## Vier Wesen zur Auswahl
+
+Reisklößchen, Fledermaus, Axolotl oder Katze. Der Stufenbogen (Haltung, Ausrüstung: Umhang,
+Laterne, Stirnband, Schild, Aura, Cape) ist allen gemeinsam; die Art liefert Silhouette, Farben
+und Gesicht — Ohren, Flügel, Kiemen, Schwanz. Neue Art hinzufügen: einen Eintrag in `ARTEN`
+ergänzen, der Rest passt sich an. Wechseln ist jederzeit möglich und ändert nichts am Fortschritt.
 
 ## Aufbau der Datei
 
 | Abschnitt | Inhalt |
 |---|---|
-| `§A INHALTE` | Texte, Krisenkontakte, Attribute, Level, 54 Quests, 19 Wissenskarten, Coping-Sätze, 25 Achievements |
+| `§A INHALTE` | Texte, Krisenkontakte, Attribute, Level, 54 Quests, 19 Wissenskarten, Coping-Sätze, 31 Achievements |
 | `§B STATE` | Datenmodell, `localStorage`, `migrate()` |
 | `§C LOGIK` | Tagesplan, Punkte, Serie mit Schilden, Level-Ups |
-| `§D AVATAR` | Sieben Inline-SVG-Stufen, Symbole, Abzeichen |
+| `§D AVATAR` | Vier Arten × sieben Stufen als Inline-SVG, Symbole, Abzeichen |
 | `§E OBERFLÄCHE` | Router und Screens |
 | `§F RUHE-INSEL` | Notfallmodus |
 | `§G INTERAKTION` | Atem-Engine, Timer, Formulare, Export/Import |
@@ -63,10 +87,20 @@ Alle Inhalte stehen als Konstanten-Objekte in `§A` und lassen sich ohne Logikwi
 | Landkarte der Vermeidung, Eine Sprosse höher | Graduierte Exposition in vivo mit SUD-Hierarchie |
 | Sicherheitsnetz lockern, Nicht nachschauen | Abbau von Sicherheits- und Rückversicherungsverhalten |
 | Rückblick nach der Mutprobe | Auswertung als eigentlicher Wirkfaktor der Exposition |
+| Mein Gipfel | Graduierte Exposition über Etappen plus Erwartungsverletzung (Craske): Vorhersage vorher, Abgleich nachher |
 | Freude einplanen, Drei Lichter, Menschen-Zeit | Verhaltensaktivierung und soziale Schutzfaktoren |
 
 **Bewusst weggelassen:** interozeptive Exposition, jede Form von Diagnostik oder Screening-Auswertung,
 Atem-Anhalten über 10 Sekunden, Benachrichtigungen und alles, was einen Netzwerk-Request bräuchte.
+
+## Gestaltung
+
+Y2K/Kawaii: Karten sind Fenster mit Titelleiste und den drei Knöpfen, Buttons sind beveled mit
+hartem Schlagschatten, der XP-Balken ist ein Blockbalken, die Navigation eine Taskleiste, der
+Hintergrund ein feines Raster mit Halbtonpunkten. Zwei bewusste Abweichungen von der reinen
+Retro-Optik: Überschriften bleiben in Groß- und Kleinschreibung (durchgehende Versalien wirken in
+einer Angst-App wie Anschreien), und als Schwarz dient weiter die Tinte `#3B3054` statt `#000`.
+Fließtext bleibt ≥ 16 px, jeder Kontrast über 4,5:1 — geprüft in beiden Modi.
 
 ## Zeichen und Figuren
 
