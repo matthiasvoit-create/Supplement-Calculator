@@ -1,3 +1,7 @@
+> **Hinweis:** Dieses Verzeichnis ist eine Kopie. Gepflegt wird die App in ihrem
+> eigenen Repository: [`matthiasvoit-create/kokore-quest`](https://github.com/matthiasvoit-create/kokore-quest).
+> Änderungen gehören dorthin, nicht hierher.
+
 # Kokoro Quest
 
 Eine gamifizierte Self-Care-App gegen Angst und Panik. Tägliche kleine Übungen aus
@@ -16,7 +20,8 @@ und die Icons. Sie sind rein additiv: Beim Öffnen der Einzeldatei laufen ihre V
 und der Service Worker registriert sich nur, wenn die Seite wirklich von einem Server kommt
 (nicht über `file://` und nicht eingebettet in einer fremden Seite).
 
-Gehostet — etwa über GitHub Pages aus diesem Ordner — gilt dann:
+Gehostet — über GitHub Pages aus diesem Repo unter
+`https://matthiasvoit-create.github.io/kokore-quest/` — gilt dann:
 
 - **iOS:** Safari → Teilen → „Zum Home-Bildschirm"
 - **Android:** Chrome → Menü → „App installieren"

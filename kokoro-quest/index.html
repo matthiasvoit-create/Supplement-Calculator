@@ -351,6 +351,11 @@ input[type=range]{width:100%;accent-color:var(--accent);height:36px}
   cursor:pointer;
 }
 .panic:active{transform:translate(2px,2px);box-shadow:0 0 0 var(--ink-dunkel)}
+/* Beim Scrollen durchscheinend, damit er keinen Text verdeckt – anklickbar
+   bleibt er die ganze Zeit, und bei Fokus oder Berührung ist er sofort voll da. */
+.panic{transition:opacity .25s ease}
+.panic.blass{opacity:.45}
+.panic.blass:hover,.panic.blass:focus-visible,.panic:active{opacity:1}
 .panic svg{width:26px;height:26px}
 
 /* =========================================================================
@@ -780,6 +785,19 @@ const KRISENKONTAKTE = [
   { land:"Schweiz",     name:"Die Dargebotene Hand",               nummer:"143",            tel:"143",         hinweis:"Rund um die Uhr." },
   { land:"Deutschland", name:"Ärztlicher Bereitschaftsdienst",     nummer:"116 117",        tel:"116117",      hinweis:"Wenn die Praxis zu ist, es aber kein Notfall ist." }
 ];
+
+/* --- A.1b  Anbieterkennzeichnung ----------------------------------------
+   Für eine öffentlich zugängliche Seite in Deutschland verlangt § 5 DDG
+   Name, Anschrift UND eine schnelle elektronische Kontaktmöglichkeit –
+   also eine E-Mail-Adresse. Die fehlt hier noch; bitte eintragen, bevor
+   die Seite öffentlich erreichbar ist.                                     */
+const IMPRESSUM = {
+  name:    "",           // ← vor Veröffentlichung ausfüllen
+  strasse: "",
+  ort:     "",
+  land:    "Deutschland",
+  kontakt: ""            // ← E-Mail-Adresse; § 5 DDG verlangt sie
+};
 
 /* --- A.2  Zentrale Textbausteine ---------------------------------------
    Regel für alle Texte: warm, auf Augenhöhe, nie belehrend, nie
@@ -2400,6 +2418,13 @@ function punkteGutschreiben(attribute, opts){
       note: opts.note || ""
     });
   }
+  /* Sobald echte Arbeit drinsteckt, den Browser um dauerhaften Speicher
+     bitten. Nicht beim ersten Start – das wäre eine Nachfrage ohne Anlass. */
+  if (S.completions.length === 5 && !S.stats.speicherAngefragt){
+    S.stats.speicherAngefragt = true;
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{}); }
+    catch(e){ /* alter Browser: dann eben nicht */ }
+  }
   const altesLevel = S.level;
   serieFortschreiben();
   S.level = levelFuer(S.totalXp).stufe;
@@ -3023,13 +3048,40 @@ function konfetti(){
   document.body.appendChild(box);
   setTimeout(() => box.remove(), 3600);
 }
+/* Hält den Fokus in einem Dialog und sperrt den Hintergrund.
+   Wichtig vor allem für die Ruhe-Insel: Wer mit Tastatur oder Screenreader
+   unterwegs ist, darf im Akutmodus nicht hinter den Dialog rutschen.
+   Liefert eine Aufräumfunktion zurück. */
+function dialogFokusFangen(box){
+  const auswahl = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  const sichtbare = () => Array.from(box.querySelectorAll(auswahl))
+    .filter(el => !el.disabled && el.getClientRects().length > 0);
+  const fang = e => {
+    if (e.key !== "Tab") return;
+    const ziele = sichtbare();
+    if (!ziele.length) return;
+    const erster = ziele[0], letzter = ziele[ziele.length - 1];
+    if (!box.contains(document.activeElement)){ e.preventDefault(); erster.focus(); return; }
+    if (e.shiftKey && document.activeElement === erster){ e.preventDefault(); letzter.focus(); }
+    else if (!e.shiftKey && document.activeElement === letzter){ e.preventDefault(); erster.focus(); }
+  };
+  document.addEventListener("keydown", fang, true);
+  const vorher = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
+  return () => {
+    document.removeEventListener("keydown", fang, true);
+    document.body.style.overflow = vorher;
+  };
+}
+
 /* Allgemeines Overlay mit Fokusfang */
 function overlay(inhaltHtml, beimSchliessen){
   const root = $("#overlay-root");
   root.innerHTML = `<div class="overlay" role="dialog" aria-modal="true">
       <div class="card stack">${inhaltHtml}</div></div>`;
   const box = root.querySelector(".card");
-  const schliessen = () => { root.innerHTML = ""; if (beimSchliessen) beimSchliessen(); };
+  const aufraeumen = dialogFokusFangen(root.querySelector(".overlay"));
+  const schliessen = () => { aufraeumen(); root.innerHTML = ""; if (beimSchliessen) beimSchliessen(); };
   root.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", schliessen));
   root.querySelector(".overlay").addEventListener("keydown", e => {
     if (e.key === "Escape") schliessen();
@@ -3277,8 +3329,8 @@ function screenHeim(){
           ${[0,1,2].map(i => schildSvg(i < S.streak.shields)).join("")}
         </span>
       </div>
-      <p class="small muted center">Ruhetag-Schilde fangen einen ausgelassenen Tag automatisch ab.
-        Der Multiplikator ist bei 14 Tagen gedeckelt – eine Unterbrechung kostet dich also nie viel.</p>
+      <p class="small muted center" style="margin:0">Schilde fangen ausgelassene Tage ab.
+        <button class="btn sm ghost" data-go="handbuch" style="min-height:28px;padding:2px 10px">Wie das zählt</button></p>
     </div>
 
     <h2 style="margin:0">Heute${grussName}</h2>
@@ -3288,6 +3340,8 @@ function screenHeim(){
     ${S.daily.sanft ? `<p class="small muted">${esc(TEXTE.sanftTag)}</p>` : ""}
 
     ${quests.map((q,i) => questKarte(q, i, true)).join("")}
+
+    ${sicherungsHinweis()}
 
     ${kursHeimZeile()}
 
@@ -3300,6 +3354,20 @@ function screenHeim(){
     </div>
   </div>`;
 }
+/* Sanfte Erinnerung ans Sichern. Der Fortschritt liegt nur in diesem
+   Browser – ihn zu verlieren ist der wahrscheinlichste Weg, wie jemand hier
+   aufhört. Erscheint erst, wenn wirklich etwas zu verlieren ist. */
+function sicherungsHinweis(){
+  if (S.completions.length < 20) return "";
+  const zuletzt = S.stats.letzteSicherung;
+  if (zuletzt && tage(zuletzt, heute()) < 30) return "";
+  return `<div class="banner">
+    <strong>Sicher deinen Fortschritt.</strong> ${S.completions.length} Übungen liegen nur in
+    diesem Browser. Ein Verlauf, der gelöscht wird, nimmt sie mit.
+    <button class="btn sm" data-go="einstellungen" style="margin-top:6px">Zu den Daten</button>
+  </div>`;
+}
+
 /* Behandlungspfad: kompakte Zeile auf dem Heim-Screen, volle Karte in den
    Übungen. Verschwindet vom Heim-Screen, sobald alle Module durch sind. */
 function kursHeimZeile(){
@@ -4473,6 +4541,11 @@ function screenGipfelSetup(){
        ${S.avoidanceMap.length ? `<button class="btn sm mint block" id="gs-import">
          ${S.avoidanceMap.length} Einträge aus deiner Landkarte übernehmen</button>` : ""}
        <div id="gs-etappen">${setupEtappenHtml()}</div>
+       ${GSETUP.etappen.length && Math.min(...GSETUP.etappen.map(e=>e.sud)) > 50 ? `
+         <div class="warnbox">Deine niedrigste Etappe liegt bei
+           ${Math.min(...GSETUP.etappen.map(e=>e.sud))}. Das ist ein großer erster Schritt.
+           Überleg, ob es davor noch etwas Kleineres gibt – eine Leiter, deren erste Sprosse
+           zu hoch hängt, benutzt man nicht.</div>` : ""}
        <div class="field"><label for="gs-et-text">Neue Etappe</label>
          <input type="text" id="gs-et-text" maxlength="140" placeholder="z. B. drei Haltestellen mit dem Bus"></div>
        <div class="row">
@@ -5116,6 +5189,7 @@ function screenEinstellungen(){
       <p class="small">Alles liegt nur in diesem Browser. Wenn du den Verlauf löschst oder das Gerät
         wechselst, ist der Fortschritt weg – deshalb ab und zu sichern.</p>
       <button class="btn sm" id="btn-export">Daten sichern (Datei herunterladen)</button>
+      <button class="btn sm" id="btn-export-text">Daten sichern (Text zum Kopieren)</button>
       <label class="btn sm ghost" for="file-import" style="cursor:pointer">Daten laden (Datei auswählen)</label>
       <input type="file" id="file-import" accept="application/json,.json" class="sr-only">
     </div>
@@ -5140,6 +5214,19 @@ function screenEinstellungen(){
       <p class="small">${esc(TEXTE.disclaimerKoerper)}</p>
       <p class="small">${esc(TEXTE.keineExposition)}</p>
       <p class="small">${esc(TEXTE.datenschutz)}</p>
+      ${IMPRESSUM.name ? `
+      <h3 style="margin:0">Anbieter</h3>
+      <p class="small" style="margin:0">
+        ${esc(IMPRESSUM.name)}<br>
+        ${esc(IMPRESSUM.strasse)}<br>
+        ${esc(IMPRESSUM.ort)}<br>
+        ${esc(IMPRESSUM.land)}
+        ${IMPRESSUM.kontakt ? `<br>${esc(IMPRESSUM.kontakt)}` : ""}
+      </p>` : `
+      <p class="small muted">Diese Fassung ist nicht öffentlich veröffentlicht, sondern wird
+        privat weitergegeben. Vor einer Veröffentlichung gehört hier eine Anbieterkennzeichnung
+        hin – Name, Anschrift und E-Mail-Adresse, einzutragen im Objekt <code>IMPRESSUM</code>
+        oben in der Datei.</p>`}
       <p class="small muted">Kokoro Quest ist ein privates, nicht-kommerzielles Übungswerkzeug ohne
         Gewähr auf Vollständigkeit oder Richtigkeit der Inhalte. Krisennummern Stand ${esc(KRISEN_STAND)} –
         bitte vor Weitergabe prüfen.</p>
@@ -5179,16 +5266,16 @@ function screenKrisen(){
    Spielmodus ist Absicht. Hier wird NIE questAbschliessen() aufgerufen.
    =========================================================================== */
 let ISLAND_VIEW = "atem";
+let inselAufraeumen = null;
 function inselOeffnen(){
   ISLAND_VIEW = "atem";
   S.stats.islandOpened = (S.stats.islandOpened||0) + 1;
   speichern();
   inselRendern();
-  document.body.style.overflow = "hidden";
 }
 function inselSchliessen(){
   atemStop();
-  document.body.style.overflow = "";
+  if (inselAufraeumen){ inselAufraeumen(); inselAufraeumen = null; }
   $("#island-root").innerHTML = `<div id="island-abschluss"></div>`;
   inselNachfrage();
 }
@@ -5201,6 +5288,8 @@ function inselRendern(){
       <p class="small muted center">${esc(TEXTE.akutKeinePunkte)}</p>
     </div></section>`;
   inselBinden();
+  if (inselAufraeumen) inselAufraeumen();
+  inselAufraeumen = dialogFokusFangen(root.querySelector(".island"));
   const h = root.querySelector("h1, h2"); if (h) h.setAttribute("tabindex","-1"), h.focus();
 }
 function inselInhalt(){
@@ -5937,6 +6026,7 @@ function bindeEinstellungen(){
   if (k) k.addEventListener("click", () => { kontakteUebernehmen(); toast("Kontakte gespeichert."); });
 
   const ex = $("#btn-export"); if (ex) ex.addEventListener("click", datenExportieren);
+  const ext = $("#btn-export-text"); if (ext) ext.addEventListener("click", datenAlsText);
   const im = $("#file-import"); if (im) im.addEventListener("change", datenImportieren);
 
   const r = $("#btn-reset");
@@ -5974,11 +6064,36 @@ function datenExportieren(){
     a.download = "kokoro-quest-" + heute() + ".json";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
+    sicherungGemerkt();
     toast("Datei wurde erstellt.");
   }catch(e){
     toast("Download hat nicht geklappt.");
   }
 }
+/* Auf manchen Geräten – iPhone, als Einzeldatei geöffnet, in einer
+   eingebetteten Seite – funktioniert der Datei-Download nicht. Dann hilft
+   der Umweg über die Zwischenablage. */
+function datenAlsText(){
+  const json = JSON.stringify(S, null, 2);
+  overlay(`<h2>Daten sichern</h2>
+    <p class="small">Kopier den Text und leg ihn ab, wo du magst – in einer Notiz, einer Mail,
+      einer Datei. Als <code>.json</code> gespeichert liest ihn „Daten laden“ wieder ein.</p>
+    <textarea id="export-json" readonly style="min-height:170px"></textarea>
+    <button class="btn primary block" id="btn-export-copy">In die Zwischenablage kopieren</button>
+    <button class="btn ghost block" data-close>Schließen</button>`);
+  const feld = $("#export-json");
+  feld.value = json;
+  $("#btn-export-copy").addEventListener("click", () => {
+    const fertig = () => { sicherungGemerkt(); toast("Kopiert – sicher den Text jetzt irgendwo ab."); };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(json).then(fertig,
+        () => { feld.select(); toast("Markiert – bitte mit Strg+C kopieren."); });
+    } else { feld.select(); toast("Markiert – bitte mit Strg+C kopieren."); }
+  });
+}
+/* Merkt sich, wann zuletzt gesichert wurde – für die Erinnerung auf dem Heim-Screen. */
+function sicherungGemerkt(){ S.stats.letzteSicherung = heute(); speichern(); }
+
 function datenImportieren(ev){
   const datei = ev.target.files && ev.target.files[0];
   if (!datei) return;
@@ -6036,6 +6151,16 @@ function inselBinden(){
 
 /* --- G.8  Globale Schalter ---------------------------------------------- */
 $("#btn-panic").addEventListener("click", inselOeffnen);
+/* Beim Scrollen kurz durchscheinend werden lassen. */
+(() => {
+  const knopf = $("#btn-panic");
+  let zurueck = null;
+  addEventListener("scroll", () => {
+    knopf.classList.add("blass");
+    clearTimeout(zurueck);
+    zurueck = setTimeout(() => knopf.classList.remove("blass"), 800);
+  }, { passive:true });
+})();
 $("#btn-settings").addEventListener("click", () => gehe("einstellungen"));
 $("#btn-handbuch").addEventListener("click", () => gehe("handbuch"));
 $("#btn-crisis").addEventListener("click", () => gehe("krisen"));
