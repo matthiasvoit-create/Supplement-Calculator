@@ -66,9 +66,8 @@ Kein Medizinprodukt, keine Diagnose, kein Ersatz für ärztliche Beratung. Die B
 
 ---
 
-## Auch in diesem Repository
+## Umgezogen
 
-**[Kokoro Quest](kokoro-quest/)** — eine gamifizierte Self-Care-App gegen Angst und Panik.
-Tägliche Übungen aus Verhaltenstherapie, Körperarbeit und Achtsamkeit, sichtbar gemacht als
-Avatar-Entwicklung. Ebenfalls eine einzige HTML-Datei, offline lauffähig, alle Daten bleiben
-im Browser. Details in [`kokoro-quest/README.md`](kokoro-quest/README.md).
+**Kokoro Quest** ist hier entstanden, weil anfangs nur dieses Repository zur Verfügung stand.
+Die App hat inzwischen ein eigenes Zuhause:
+[`matthiasvoit-create/kokoro-quest`](https://github.com/matthiasvoit-create/kokoro-quest).
